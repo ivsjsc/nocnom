@@ -110,10 +110,8 @@ service cloud.firestore {
       }
     }
 
-    // --- GLOBAL READ CATCH-ALL ---
-    // Cho phép người dùng đã đăng nhập đọc các dữ liệu ở cấp độ gốc nếu không có quy tắc cụ thể nào cấm
-    match /{document=**} {
-      allow read: if isAuthenticated();
-    }
+    // SECURITY: No global catch-all. Unmatched collections are denied.
+    // This is required so /users/{otherUid}/... remains private even when
+    // another authenticated user is signed in.
   }
 }
