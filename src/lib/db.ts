@@ -2,6 +2,7 @@ import { lookupNutrition, normalizeFoodName } from './nutritionKnowledge';
 import { doc, getDoc, onSnapshot, setDoc, serverTimestamp, type Unsubscribe } from 'firebase/firestore';
 import { db } from './firebase';
 import { normalizeExternalImageUrl } from './url';
+import { deleteUserImageByPath } from '../services/imageStorage';
 
 export type VendorExtraInfo = {
   id: string;
@@ -903,6 +904,7 @@ export const mockDb = {
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
   updateDishImage: async (id: string, imageUrl: string) => {
+    const previousDish = dishesData.find(dish => dish.id === id);
     const trimmed = imageUrl.trim();
     const normalized = trimmed ? normalizeExternalImageUrl(trimmed) : null;
 
@@ -941,6 +943,19 @@ export const mockDb = {
       writeLocalCache();
       dishListeners.forEach(l => l(dishesData));
       throw error;
+    }
+
+    if (previousDish?.imagePath && currentSyncUid) {
+      void deleteUserImageByPath({
+        imagePath: previousDish.imagePath,
+        uid: currentSyncUid
+      }).catch(error => {
+        console.warn('[firebase-storage] Replaced dish image cleanup failed', {
+          path: previousDish.imagePath,
+          uid: currentSyncUid,
+          message: error instanceof Error ? error.message : String(error)
+        });
+      });
     }
   },
   updateDishCalories: (id: string, calories: number) => {
@@ -1087,6 +1102,7 @@ export const mockDb = {
     categoryId: string,
     options: AddDishOptions = {}
   ) => {
+    const previousCategories = categoriesData;
     const cleanName = name.trim();
     if (!cleanName) {
       throw new Error('Tên món không được để trống.');
@@ -1137,9 +1153,28 @@ export const mockDb = {
         dishesData = dishesData.map((dish, index) =>
           index === existingIndex ? current : dish
         );
+        categoriesData = previousCategories;
         writeLocalCache();
         dishListeners.forEach(listener => listener(dishesData));
+        categoryListeners.forEach(listener => listener(categoriesData));
         throw error;
+      }
+
+      if (
+        current.imagePath &&
+        current.imagePath !== updated.imagePath &&
+        currentSyncUid
+      ) {
+        void deleteUserImageByPath({
+          imagePath: current.imagePath,
+          uid: currentSyncUid
+        }).catch(error => {
+          console.warn('[firebase-storage] Old dish image cleanup failed', {
+            path: current.imagePath,
+            uid: currentSyncUid,
+            message: error instanceof Error ? error.message : String(error)
+          });
+        });
       }
 
       return {
@@ -1177,8 +1212,10 @@ export const mockDb = {
       await persistUserStateNow();
     } catch (error) {
       dishesData = dishesData.filter(dish => dish.id !== newDish.id);
+      categoriesData = previousCategories;
       writeLocalCache();
       dishListeners.forEach(listener => listener(dishesData));
+      categoryListeners.forEach(listener => listener(categoriesData));
       throw error;
     }
 
