@@ -1,8 +1,13 @@
 import { lookupNutrition, normalizeFoodName } from './nutritionKnowledge';
-import { doc, getDoc, onSnapshot, setDoc, serverTimestamp, type Unsubscribe } from 'firebase/firestore';
-import { db } from './firebase';
 import { normalizeExternalImageUrl } from './url';
 import { deleteUserImageByPath } from '../services/imageStorage';
+import {
+  loadOrMigrateUserState,
+  persistUserStateDomains,
+  subscribeUserStateDomains,
+  USER_STATE_DOMAINS,
+  type UserStateDomain
+} from '../services/userDataStore';
 
 export type VendorExtraInfo = {
   id: string;
@@ -288,31 +293,92 @@ const defaultTimetable: Timetable = {
   sun: { dayName: "Chủ Nhật", options: { A: { dishId: 'd19', stock: 50 }, B: { dishId: 'd20', stock: 30 }, C: { dishId: 'd21', stock: 20 } } }
 };
 
-let dbData = { ...defaultTimetable };
-let dishesData: Dish[] = [...initialDishes];
-let categoriesData: Category[] = [...initialCategories];
-let logsData: LogEntry[] = [];
+const deepClone = <T,>(value: T): T =>
+  JSON.parse(JSON.stringify(value)) as T;
 
-try {
-  const storedDbData = (localStorage.getItem('nocnom_timetable') ?? localStorage.getItem('unifood_timetable'));
-  if (storedDbData) dbData = JSON.parse(storedDbData);
+const normalizeCachedCategories = (categories: Category[]) =>
+  categories.map(category => ({
+    ...category,
+    name: category.name.replace(/\s*\(Mì\/Phở\/Bún\)/gi, '')
+  }));
 
-  const storedDishesData = (localStorage.getItem('nocnom_dishes') ?? localStorage.getItem('unifood_dishes'));
-  if (storedDishesData) dishesData = JSON.parse(storedDishesData);
+const createDefaultUserState = () => ({
+  timetable: deepClone(defaultTimetable),
+  dishes: deepClone(initialDishes),
+  categories: deepClone(initialCategories),
+  logs: [] as LogEntry[]
+});
 
-  const storedCategoriesData = (localStorage.getItem('nocnom_categories') ?? localStorage.getItem('unifood_categories'));
-  if (storedCategoriesData) {
-    categoriesData = (JSON.parse(storedCategoriesData) as Category[]).map(c => ({
-      ...c,
-      name: c.name.replace(/\s*\(Mì\/Phở\/Bún\)/gi, '')
-    }));
+let activeCacheUid: string | null = null;
+
+const cacheKey = (
+  key: 'timetable' | 'dishes' | 'categories' | 'logs',
+  uid: string | null = activeCacheUid
+) => uid
+  ? `nocnom_user_${uid}_${key}`
+  : `nocnom_${key}`;
+
+const readCachedState = (uid: string | null) => {
+  try {
+    const timetableRaw =
+      localStorage.getItem(cacheKey('timetable', uid)) ??
+      (!uid ? localStorage.getItem('unifood_timetable') : null);
+    const dishesRaw =
+      localStorage.getItem(cacheKey('dishes', uid)) ??
+      (!uid ? localStorage.getItem('unifood_dishes') : null);
+    const categoriesRaw =
+      localStorage.getItem(cacheKey('categories', uid)) ??
+      (!uid ? localStorage.getItem('unifood_categories') : null);
+    const logsRaw =
+      localStorage.getItem(cacheKey('logs', uid)) ??
+      (!uid ? localStorage.getItem('unifood_logs') : null);
+
+    if (
+      !timetableRaw &&
+      !dishesRaw &&
+      !categoriesRaw &&
+      !logsRaw
+    ) {
+      return null;
+    }
+
+    const fallback = createDefaultUserState();
+
+    return {
+      timetable: timetableRaw
+        ? JSON.parse(timetableRaw) as Timetable
+        : fallback.timetable,
+      dishes: dishesRaw
+        ? JSON.parse(dishesRaw) as Dish[]
+        : fallback.dishes,
+      categories: categoriesRaw
+        ? normalizeCachedCategories(
+            JSON.parse(categoriesRaw) as Category[]
+          )
+        : fallback.categories,
+      logs: logsRaw
+        ? JSON.parse(logsRaw) as LogEntry[]
+        : fallback.logs
+    };
+  } catch (error) {
+    console.error('[local-cache] Unable to read app state', {
+      uid,
+      message:
+        error instanceof Error
+          ? error.message
+          : String(error)
+    });
+    return null;
   }
+};
 
-  const storedLogsData = (localStorage.getItem('nocnom_logs') ?? localStorage.getItem('unifood_logs'));
-  if (storedLogsData) logsData = JSON.parse(storedLogsData);
-} catch (e) {
-  console.error("Error loading from localStorage", e);
-}
+const initialCachedState =
+  readCachedState(null) ?? createDefaultUserState();
+
+let dbData = initialCachedState.timetable;
+let dishesData: Dish[] = initialCachedState.dishes;
+let categoriesData: Category[] = initialCachedState.categories;
+let logsData: LogEntry[] = initialCachedState.logs;
 
 const createLocalId = (prefix: string) => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -323,24 +389,53 @@ const createLocalId = (prefix: string) => {
 
 const writeLocalCache = () => {
   try {
-    localStorage.setItem('nocnom_timetable', JSON.stringify(dbData));
-    localStorage.setItem('nocnom_dishes', JSON.stringify(dishesData));
-    localStorage.setItem('nocnom_categories', JSON.stringify(categoriesData));
-    localStorage.setItem('nocnom_logs', JSON.stringify(logsData));
+    localStorage.setItem(
+      cacheKey('timetable'),
+      JSON.stringify(dbData)
+    );
+    localStorage.setItem(
+      cacheKey('dishes'),
+      JSON.stringify(dishesData)
+    );
+    localStorage.setItem(
+      cacheKey('categories'),
+      JSON.stringify(categoriesData)
+    );
+    localStorage.setItem(
+      cacheKey('logs'),
+      JSON.stringify(logsData)
+    );
   } catch (error) {
-    console.error('[local-cache] Unable to persist app state', error);
+    console.error('[local-cache] Unable to persist app state', {
+      uid: activeCacheUid,
+      message:
+        error instanceof Error
+          ? error.message
+          : String(error)
+    });
   }
 };
 
-const saveToLocalStorage = () => {
+const currentUserState = () => ({
+  timetable: dbData,
+  dishes: dishesData,
+  categories: categoriesData,
+  logs: logsData
+});
+
+const saveToLocalStorage = (...domains: UserStateDomain[]) => {
   writeLocalCache();
-  scheduleCloudSync();
+  scheduleCloudSync(
+    domains.length > 0 ? domains : USER_STATE_DOMAINS
+  );
 };
 
 let currentSyncUid: string | null = null;
-let firestoreUnsubscribe: Unsubscribe | null = null;
+let firestoreUnsubscribe: (() => void) | null = null;
 let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let isRemoteUpdating = false;
+let syncGeneration = 0;
+const dirtyDomains = new Set<UserStateDomain>();
 
 const notifyAllListeners = () => {
   Object.values(listeners).flatMap(set => Array.from(set)).forEach(l => l(dbData));
@@ -349,18 +444,11 @@ const notifyAllListeners = () => {
   logListeners.forEach(l => l(logsData));
 };
 
-const userStatePayload = () => ({
-  timetable: dbData,
-  dishes: dishesData,
-  categories: categoriesData,
-  logs: logsData,
-  updatedAt: serverTimestamp()
-});
-
 const logFirestoreError = (
   operation: string,
   error: unknown,
-  uid: string | null
+  uid: string | null,
+  domains?: Iterable<UserStateDomain>
 ) => {
   const code =
     typeof error === 'object' && error !== null && 'code' in error
@@ -371,12 +459,15 @@ const logFirestoreError = (
     operation,
     code,
     message: error instanceof Error ? error.message : String(error),
-    path: uid ? `users/${uid}/data/appState` : null,
+    path: uid ? `users/${uid}/state/*` : null,
+    domains: domains ? [...domains] : undefined,
     uid
   });
 };
 
-export const persistUserStateNow = async () => {
+export const persistUserStateNow = async (
+  domains?: Iterable<UserStateDomain>
+) => {
   if (!currentSyncUid) {
     throw new Error('Chưa có phiên người dùng để đồng bộ Firestore.');
   }
@@ -387,17 +478,39 @@ export const persistUserStateNow = async () => {
     syncDebounceTimer = null;
   }
 
+  const selectedDomains = domains
+    ? [...new Set(domains)]
+    : dirtyDomains.size > 0
+      ? [...dirtyDomains]
+      : [...USER_STATE_DOMAINS];
+
   try {
-    const userStateDoc = doc(db, 'users', uid, 'data', 'appState');
-    await setDoc(userStateDoc, userStatePayload(), { merge: true });
+    await persistUserStateDomains({
+      uid,
+      state: currentUserState(),
+      domains: selectedDomains
+    });
+    selectedDomains.forEach(domain => dirtyDomains.delete(domain));
   } catch (error) {
-    logFirestoreError('persist-app-state', error, uid);
+    selectedDomains.forEach(domain => dirtyDomains.add(domain));
+    logFirestoreError(
+      'persist-user-state-v2',
+      error,
+      uid,
+      selectedDomains
+    );
     throw error;
   }
 };
 
-const scheduleCloudSync = () => {
+const scheduleCloudSync = (
+  domains: Iterable<UserStateDomain> = USER_STATE_DOMAINS
+) => {
   if (!currentSyncUid || isRemoteUpdating) return;
+
+  for (const domain of domains) {
+    dirtyDomains.add(domain);
+  }
 
   if (syncDebounceTimer) {
     clearTimeout(syncDebounceTimer);
@@ -424,70 +537,120 @@ export const syncUserWithFirestore = (uid: string | null) => {
     syncDebounceTimer = null;
   }
 
+  dirtyDomains.clear();
   currentSyncUid = uid;
+  activeCacheUid = uid;
+  const generation = ++syncGeneration;
 
   if (!uid) {
+    const anonymousState =
+      readCachedState(null) ?? createDefaultUserState();
+
+    isRemoteUpdating = true;
+    try {
+      dbData = anonymousState.timetable;
+      dishesData = anonymousState.dishes;
+      categoriesData = anonymousState.categories;
+      logsData = anonymousState.logs;
+      notifyAllListeners();
+    } finally {
+      isRemoteUpdating = false;
+    }
     return;
   }
 
-  const userStateDoc = doc(db, 'users', uid, 'data', 'appState');
+  const fallback =
+    readCachedState(uid) ?? createDefaultUserState();
 
-  // Lắng nghe realtime từ Firestore
-  firestoreUnsubscribe = onSnapshot(
-    userStateDoc,
-    async (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        if (data) {
+  // Never expose the previous account's state while this user is loading.
+  isRemoteUpdating = true;
+  try {
+    dbData = fallback.timetable;
+    dishesData = fallback.dishes;
+    categoriesData = fallback.categories;
+    logsData = fallback.logs;
+    notifyAllListeners();
+  } finally {
+    isRemoteUpdating = false;
+  }
+
+  void (async () => {
+    try {
+      const loaded = await loadOrMigrateUserState({
+        uid,
+        fallback
+      });
+
+      if (
+        generation !== syncGeneration ||
+        currentSyncUid !== uid
+      ) {
+        return;
+      }
+
+      isRemoteUpdating = true;
+      try {
+        dbData = loaded.state.timetable;
+        dishesData = loaded.state.dishes;
+        categoriesData = loaded.state.categories;
+        logsData = loaded.state.logs;
+        writeLocalCache();
+        notifyAllListeners();
+      } finally {
+        isRemoteUpdating = false;
+      }
+
+      firestoreUnsubscribe = subscribeUserStateDomains({
+        uid,
+        onDomain: (domain, value) => {
+          if (
+            generation !== syncGeneration ||
+            currentSyncUid !== uid
+          ) {
+            return;
+          }
+
           isRemoteUpdating = true;
           try {
-            if (data.timetable && typeof data.timetable === 'object') {
-              dbData = data.timetable as Timetable;
-            }
-            if (Array.isArray(data.dishes)) {
-              dishesData = data.dishes as Dish[];
-            }
-            if (Array.isArray(data.categories)) {
-              categoriesData = data.categories as Category[];
-            }
-            if (Array.isArray(data.logs)) {
-              logsData = data.logs as LogEntry[];
+            if (domain === 'timetable') {
+              dbData = value as Timetable;
+            } else if (domain === 'dishes') {
+              dishesData = value as Dish[];
+            } else if (domain === 'categories') {
+              categoriesData = value as Category[];
+            } else if (domain === 'logs') {
+              logsData = value as LogEntry[];
             }
 
-            try {
-              localStorage.setItem('nocnom_timetable', JSON.stringify(dbData));
-              localStorage.setItem('nocnom_dishes', JSON.stringify(dishesData));
-              localStorage.setItem('nocnom_categories', JSON.stringify(categoriesData));
-              localStorage.setItem('nocnom_logs', JSON.stringify(logsData));
-            } catch (e) {
-              console.error('Lỗi cache localStorage:', e);
-            }
-
+            writeLocalCache();
             notifyAllListeners();
           } finally {
             isRemoteUpdating = false;
           }
+        },
+        onError: (domain, error) => {
+          logFirestoreError(
+            'subscribe-user-state-v2',
+            error,
+            uid,
+            [domain]
+          );
         }
-      } else {
-        // Tài liệu chưa tồn tại trên Firestore (người dùng mới đăng nhập lần đầu)
-        // Đồng bộ dữ liệu hiện có lên Firestore
-        try {
-          await setDoc(userStateDoc, {
-            timetable: dbData,
-            dishes: dishesData,
-            categories: categoriesData,
-            logs: logsData,
-            updatedAt: serverTimestamp()
-          });
-        } catch (err) {
-          console.error('Lỗi tạo tài liệu dữ liệu ban đầu trên Firestore:', err);
-        }
-      }
-    },
-    (error) => {
-      console.error('Lỗi lắng nghe realtime Firestore:', error);
+      });
+
+      console.info('[firestore] User state ready', {
+        uid,
+        schemaVersion: 2,
+        source: loaded.source
+      });
+    } catch (error) {
+      logFirestoreError(
+        'load-or-migrate-user-state-v2',
+        error,
+        uid
+      );
     }
-  );
+  })();
 };
 
 type Listener = (data: any) => void;
@@ -530,7 +693,7 @@ const hydrateDishCaloriesFromKnowledge = async (dishId: string, foodName: string
         : dish
     );
 
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(listener => listener(dishesData));
   } finally {
     nutritionHydrationPending.delete(dishId);
@@ -790,7 +953,7 @@ const upsertMealLogData = ({
       ]
     : [newLog, ...logsData];
 
-  saveToLocalStorage();
+  saveToLocalStorage('logs');
   logListeners.forEach(listener => listener(logsData));
   return newLog;
 };
@@ -800,7 +963,7 @@ export const mockDb = {
   getAll: () => dbData,
   updateDoc: (day: string, data: DayMenu) => {
     dbData[day] = data;
-    saveToLocalStorage();
+    saveToLocalStorage('timetable');
     if (listeners[day]) listeners[day].forEach(l => l(data));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
@@ -820,7 +983,7 @@ export const mockDb = {
   addCategory: (name: string) => {
     const newCategory = { id: createLocalId('c'), name };
     categoriesData = [...categoriesData, newCategory];
-    saveToLocalStorage();
+    saveToLocalStorage('categories');
     categoryListeners.forEach(l => l(categoriesData));
   },
   getDishes: () => dishesData,
@@ -847,7 +1010,7 @@ export const mockDb = {
     }
 
     logsData = logsData.filter(log => log.id !== logId);
-    saveToLocalStorage();
+    saveToLocalStorage('logs');
     logListeners.forEach(l => l(logsData));
   },
   addLog: (
@@ -870,7 +1033,7 @@ export const mockDb = {
         timestamp: now
       };
       logsData = [newLog, ...logsData];
-      saveToLocalStorage();
+      saveToLocalStorage('logs');
       logListeners.forEach(l => l(logsData));
       return;
     }
@@ -891,20 +1054,20 @@ export const mockDb = {
     } else {
       dbData[day].selectedCombo = comboKey;
     }
-    saveToLocalStorage();
+    saveToLocalStorage('timetable');
     if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
   toggleMealSkipped: (day: string, comboKey: 'A' | 'B' | 'C', skipped: boolean) => {
     dbData[day].options[comboKey].skipped = skipped;
-    saveToLocalStorage();
+    saveToLocalStorage('timetable');
     if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
   swapDish: (day: string, comboKey: 'A' | 'B' | 'C', newDishId: string) => {
     dbData[day].options[comboKey].dishId = newDishId;
     dbData[day].options[comboKey].skipped = false;
-    saveToLocalStorage();
+    saveToLocalStorage('timetable');
     if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
@@ -942,7 +1105,7 @@ export const mockDb = {
     dishListeners.forEach(l => l(dishesData));
 
     try {
-      await persistUserStateNow();
+      await persistUserStateNow(['dishes']);
     } catch (error) {
       dishesData = previous;
       writeLocalCache();
@@ -977,7 +1140,7 @@ export const mockDb = {
           }
         : d
     );
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   updateVendorLink: (dishId: string, vendorId: string, link: string) => {
@@ -990,12 +1153,12 @@ export const mockDb = {
       }
       return dish;
     });
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   toggleFavoriteDish: (id: string) => {
     dishesData = dishesData.map(d => d.id === id ? { ...d, isFavorite: !d.isFavorite } : d);
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   addVendorExtraInfo: (dishId: string, vendorId: string, info: VendorExtraInfo) => {
@@ -1013,7 +1176,7 @@ export const mockDb = {
       }
       return dish;
     });
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   updateDishName: (id: string, newName: string) => {
@@ -1040,7 +1203,7 @@ export const mockDb = {
           }
         : d
     );
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
 
     if (shouldRefreshKnowledge) {
@@ -1057,7 +1220,7 @@ export const mockDb = {
       }
       return dish;
     });
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   updateVendorExtraInfo: (dishId: string, vendorId: string, infoId: string, newValue: string) => {
@@ -1078,7 +1241,7 @@ export const mockDb = {
       }
       return dish;
     });
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   deleteVendorExtraInfo: (dishId: string, vendorId: string, infoId: string) => {
@@ -1099,7 +1262,7 @@ export const mockDb = {
       }
       return dish;
     });
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   addDish: async (
@@ -1153,7 +1316,7 @@ export const mockDb = {
       dishListeners.forEach(listener => listener(dishesData));
 
       try {
-        await persistUserStateNow();
+        await persistUserStateNow(['dishes', 'categories']);
       } catch (error) {
         dishesData = dishesData.map((dish, index) =>
           index === existingIndex ? current : dish
@@ -1214,7 +1377,7 @@ export const mockDb = {
     dishListeners.forEach(listener => listener(dishesData));
 
     try {
-      await persistUserStateNow();
+      await persistUserStateNow(['dishes', 'categories']);
     } catch (error) {
       dishesData = dishesData.filter(dish => dish.id !== newDish.id);
       categoriesData = previousCategories;
@@ -1247,14 +1410,14 @@ export const mockDb = {
       }
       return dish;
     });
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   restoreData: (data: { timetable: Timetable; dishes: Dish[]; categories: Category[] }) => {
     dbData = data.timetable;
     dishesData = data.dishes;
     categoriesData = data.categories;
-    saveToLocalStorage();
+    saveToLocalStorage('timetable', 'dishes', 'categories');
     
     Object.values(listeners).flatMap(set => Array.from(set)).forEach(l => l(dbData));
     dishListeners.forEach(l => l(dishesData));

@@ -66,6 +66,7 @@ export default function AddDishModal({
   const [vendorAddress, setVendorAddress] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [analysisError, setAnalysisError] = useState('');
   const [saveError, setSaveError] = useState('');
 
@@ -211,6 +212,7 @@ export default function AddDishModal({
     }
 
     setIsSaving(true);
+    setUploadProgress(0);
     setSaveError('');
 
     let uploadedPath: string | null = null;
@@ -258,7 +260,8 @@ export default function AddDishModal({
         const uploaded = await uploadUserFoodImage({
           file: selectedImageFile,
           uid: user.uid,
-          foodId: targetDishId
+          foodId: targetDishId,
+          onProgress: setUploadProgress
         });
         uploadedPath = uploaded.imagePath;
         image = {
@@ -324,6 +327,7 @@ export default function AddDishModal({
       );
     } finally {
       setIsSaving(false);
+      setUploadProgress(0);
     }
   };
 
@@ -568,7 +572,7 @@ export default function AddDishModal({
                 Tải ảnh từ thiết bị
               </label>
               <div className="mt-1 text-[10px] font-semibold text-slate-600">
-                JPEG, PNG hoặc WebP · tối đa 5 MB · ảnh sẽ được lưu trong Firebase Storage
+                JPEG, PNG hoặc WebP · tối đa 5 MB · tự tối ưu tối đa 1600 px/WebP khi có lợi
               </div>
               <input
                 type="file"
@@ -611,6 +615,21 @@ export default function AddDishModal({
                     <div className="mt-1">
                       Preview cục bộ chỉ dùng trước khi lưu; blob URL không được ghi vào Firestore.
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {isSaving && selectedImageFile && (
+                <div className="mt-3 rounded-2xl bg-white p-3">
+                  <div className="flex items-center justify-between text-[10px] font-black text-slate-700">
+                    <span>Tải ảnh lên Firebase Storage</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-blue-600 transition-[width] duration-200"
+                      style={{ width: uploadProgress + '%' }}
+                    />
                   </div>
                 </div>
               )}
@@ -761,7 +780,11 @@ export default function AddDishModal({
             className="min-h-12 rounded-2xl bg-blue-600 text-white text-xs font-black flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            {isSaving ? 'Đang lưu...' : 'Lưu món'}
+            {isSaving
+              ? selectedImageFile
+                ? `Đang tải ảnh ${uploadProgress}%`
+                : 'Đang lưu...'
+              : 'Lưu món'}
           </button>
         </div>
       </div>
