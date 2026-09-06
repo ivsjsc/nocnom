@@ -35,6 +35,11 @@ type WikimediaResponse = {
   };
 };
 
+export type FoodImageSearchProvider = {
+  id: FoodImageCandidate['source'];
+  search: (query: string, limit: number) => Promise<FoodImageCandidate[]>;
+};
+
 const WIKIMEDIA_API = 'https://commons.wikimedia.org/w/api.php';
 
 const cleanMetadataText = (value?: string) =>
@@ -107,6 +112,13 @@ const searchWikimedia = async (
     .filter((item): item is FoodImageCandidate => Boolean(item));
 };
 
+const providers: FoodImageSearchProvider[] = [
+  {
+    id: 'wikimedia-commons',
+    search: searchWikimedia
+  }
+];
+
 export const searchFoodImages = async (
   foodName: string,
   limit = 6
@@ -122,16 +134,20 @@ export const searchFoodImages = async (
     query + ' Vietnamese food'
   ];
 
-  for (const candidateQuery of queries) {
-    try {
-      const results = await searchWikimedia(candidateQuery, safeLimit);
-      results.forEach(item => {
-        if (!unique.has(item.url)) unique.set(item.url, item);
-      });
-      if (unique.size >= safeLimit) break;
-    } catch (error) {
-      console.warn('[images] Search provider unavailable', error);
+  for (const provider of providers) {
+    for (const candidateQuery of queries) {
+      try {
+        const results = await provider.search(candidateQuery, safeLimit);
+        results.forEach(item => {
+          if (!unique.has(item.url)) unique.set(item.url, item);
+        });
+        if (unique.size >= safeLimit) break;
+      } catch (error) {
+        console.warn('[images] Provider ' + provider.id + ' unavailable', error);
+      }
     }
+
+    if (unique.size >= safeLimit) break;
   }
 
   return Array.from(unique.values()).slice(0, safeLimit);
