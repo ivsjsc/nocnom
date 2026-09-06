@@ -831,18 +831,36 @@ export const mockDb = {
     saveToLocalStorage();
     dishListeners.forEach(l => l(dishesData));
   },
-  addDish: (name: string, categoryId: string) => {
+  addDish: async (name: string, categoryId: string) => {
+    const normalizedName = name.trim();
+    const nutrition = await lookupNutrition(normalizedName);
+
     const newDish: Dish = {
       id: createLocalId('d'),
-      name,
+      name: normalizedName,
       categoryId,
       isFavorite: false,
+      ...(nutrition
+        ? {
+            calories: nutrition.calories,
+            calorieSource: 'knowledge',
+            calorieBasis: nutrition.basis,
+            nutritionRecordId: nutrition.record.id,
+            nutritionConfidence: nutrition.record.confidence,
+            nutritionSource: nutrition.record.source
+          }
+        : {}),
       vendors: []
     };
+
     dishesData = [...dishesData, newDish];
     saveToLocalStorage();
     dishListeners.forEach(l => l(dishesData));
-    void hydrateDishCaloriesFromKnowledge(newDish.id, newDish.name);
+
+    return {
+      dish: newDish,
+      nutritionMatched: Boolean(nutrition)
+    };
   },
   addVendor: (dishId: string, name: string, price: number, phone: string, address: string) => {
     dishesData = dishesData.map(dish => {
