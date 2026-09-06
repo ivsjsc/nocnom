@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "nOcnOm Nutrition Food Record",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string", "minLength": 1 },
+    "aliases": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "category": { "type": "string" },
+    "serving_g": { "type": "number", "exclusiveMinimum": 0 },
+    "kcal_per_100g": { "type": "number", "minimum": 0 },
+    "kcal_per_serving": { "type": "number", "minimum": 0 },
+    "source": { "type": "string" },
+    "source_url": { "type": "string" },
+    "confidence": {
+      "type": "string",
+      "enum": ["verified", "estimated", "unknown"]
+    },
+    "locale": { "type": "string" }
+  },
+  "anyOf": [
+    { "required": ["kcal_per_100g"] },
+    { "required": ["kcal_per_serving"] }
+  ],
+  "additionalProperties": true
+}
