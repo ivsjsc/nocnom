@@ -83,7 +83,7 @@ const searchWikimedia = async (
   const pages = Object.values(payload.query?.pages ?? {});
 
   return pages
-    .map(page => {
+    .map((page): FoodImageCandidate | null => {
       const info = page.imageinfo?.[0];
       if (!info) return null;
 
@@ -109,7 +109,7 @@ const searchWikimedia = async (
         height: info.thumbheight
       };
     })
-    .filter((item): item is FoodImageCandidate => Boolean(item));
+    .filter((item): item is FoodImageCandidate => item !== null);
 };
 
 const providers: FoodImageSearchProvider[] = [
