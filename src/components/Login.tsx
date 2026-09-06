@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { LogOut, Settings2, UserRound } from 'lucide-react';
 import { signOut, type User } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { isAuthPopupDismissed, signInWithGoogle } from '../lib/auth';
 import ProfileModal from './ProfileModal';
 
 const getInitials = (value?: string | null) => {
@@ -16,9 +15,10 @@ const getInitials = (value?: string | null) => {
 type LoginProps = {
   user: User | null;
   darkMode: boolean;
+  onRequestAuth: () => void;
 };
 
-export default function Login({ user, darkMode }: LoginProps) {
+export default function Login({ user, darkMode, onRequestAuth }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -55,7 +55,7 @@ export default function Login({ user, darkMode }: LoginProps) {
     }
   }, [user]);
 
-  const handleAvatarClick = async () => {
+  const handleAvatarClick = () => {
     if (loading) return;
 
     if (user) {
@@ -63,17 +63,7 @@ export default function Login({ user, darkMode }: LoginProps) {
       return;
     }
 
-    setLoading(true);
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      if (isAuthPopupDismissed(error)) return;
-
-      const message = error instanceof Error ? error.message : 'Không thể đăng nhập.';
-      window.alert(message);
-    } finally {
-      setLoading(false);
-    }
+    onRequestAuth();
   };
 
   const handleLogout = async () => {
@@ -104,11 +94,11 @@ export default function Login({ user, darkMode }: LoginProps) {
     <div ref={rootRef} className="relative">
       <button
         type="button"
-        onClick={() => void handleAvatarClick()}
+        onClick={handleAvatarClick}
         disabled={loading}
-        title={user ? 'Mở tài khoản nOcnOm' : 'Đăng nhập bằng Google'}
-        aria-label={user ? 'Mở tài khoản nOcnOm' : 'Đăng nhập bằng Google'}
-        aria-haspopup={user ? 'menu' : undefined}
+        title={user ? 'Mở tài khoản nOcnOm' : 'Đăng nhập hoặc tạo tài khoản'}
+        aria-label={user ? 'Mở tài khoản nOcnOm' : 'Đăng nhập hoặc tạo tài khoản'}
+        aria-haspopup={user ? 'menu' : 'dialog'}
         aria-expanded={user ? menuOpen : undefined}
         className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-500/20 border border-blue-400 flex items-center justify-center overflow-hidden transition-transform active:scale-95 disabled:opacity-60"
       >
@@ -167,7 +157,7 @@ export default function Login({ user, darkMode }: LoginProps) {
                 {user.displayName || 'Người dùng nOcnOm'}
               </div>
               <div className="mt-0.5 truncate text-xs font-medium text-slate-500" title={user.email || undefined}>
-                {user.email || 'Đăng nhập bằng Google'}
+                {user.email || 'Tài khoản nOcnOm'}
               </div>
             </div>
           </div>
