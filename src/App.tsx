@@ -117,7 +117,7 @@ export default function App() {
               <img
                 src="/brand/logo.svg"
                 alt=""
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain p-0.5"
               />
             </span>
 
