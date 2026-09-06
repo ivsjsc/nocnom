@@ -193,7 +193,7 @@ export default function HomePage() {
           </div>
           <div className="min-w-0">
             <h2 className="text-base font-black text-slate-950 dark:text-slate-100">
-              Lịch ăn
+              Lịch ăn tuần này
             </h2>
             <p className="mt-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
               Các ngày còn lại trong tuần. Chạm ngày để xem; chỉ mở bộ chọn khi cần đổi món.
