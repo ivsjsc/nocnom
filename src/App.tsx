@@ -35,6 +35,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
+    document.documentElement.dataset.theme = darkMode ? 'dark' : 'light';
     localStorage.setItem('nocnom_theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
 
@@ -114,7 +115,7 @@ export default function App() {
         </div>
       )}
 
-      <header className={'app-header sticky top-0 z-40 border-b backdrop-blur-xl ' + (darkMode ? 'bg-slate-950/92 border-slate-800' : 'bg-white/94 border-slate-100')}>
+      <header className={'app-header sticky top-0 z-40 border-b backdrop-blur-xl ' + (darkMode ? 'bg-slate-950/92 border-slate-800' : 'bg-white/96 border-slate-200')}>
         <div className="app-container h-[78px] flex items-center justify-between">
           <button
             type="button"
@@ -122,7 +123,7 @@ export default function App() {
             aria-label="Về Trang chủ nOcnOm"
             className="min-w-0 flex items-center gap-2.5 text-left rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
-            <span className={'w-11 h-11 shrink-0 overflow-hidden rounded-2xl border shadow-sm ' + (darkMode ? 'border-slate-700 bg-slate-900' : 'border-blue-100 bg-blue-50')}>
+            <span className={'w-11 h-11 shrink-0 overflow-hidden rounded-2xl border shadow-sm ' + (darkMode ? 'border-slate-700 bg-slate-900' : 'border-blue-200 bg-blue-50')}>
               <img
                 src="/brand/logo.svg"
                 alt=""
@@ -144,7 +145,7 @@ export default function App() {
             <button
               type="button"
               onClick={handleManualRefresh}
-              className={'touch-target rounded-2xl border flex items-center justify-center transition-all active:scale-95 ' + (darkMode ? 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white' : 'bg-blue-50 border-blue-100 text-blue-600 hover:bg-blue-100')}
+              className={'touch-target rounded-2xl border flex items-center justify-center transition-all active:scale-95 ' + (darkMode ? 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100')}
               aria-label="Làm mới trang"
               title="Làm mới dữ liệu & tải lại ứng dụng"
             >
@@ -153,7 +154,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setDarkMode(value => !value)}
-              className={'touch-target rounded-2xl border flex items-center justify-center transition-all active:scale-95 ' + (darkMode ? 'bg-slate-900 border-slate-700 text-yellow-300' : 'bg-blue-50 border-blue-100 text-blue-600')}
+              className={'touch-target rounded-2xl border flex items-center justify-center transition-all active:scale-95 ' + (darkMode ? 'bg-slate-900 border-slate-700 text-yellow-300' : 'bg-blue-50 border-blue-200 text-blue-700')}
               aria-label={darkMode ? 'Bật giao diện sáng' : 'Bật giao diện tối'}
             >
               {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -194,8 +195,8 @@ export default function App() {
               className={
                 'app-nav-item ' +
                 (active
-                  ? (darkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-50 text-blue-600')
-                  : (darkMode ? 'text-slate-400' : 'text-slate-500'))
+                  ? (darkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700')
+                  : (darkMode ? 'text-slate-400' : 'text-slate-600'))
               }
             >
               <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 2} />
