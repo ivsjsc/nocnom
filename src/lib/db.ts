@@ -186,7 +186,7 @@ function timestampForMealDate(dateKey: string, mealKey: MealKey) {
 export const initialCategories: Category[] = [
   { id: 'c1', name: 'Món mặn' },
   { id: 'c2', name: 'Món canh' },
-  { id: 'c3', name: 'Món nước (Mì/Phở/Bún)' },
+  { id: 'c3', name: 'Món nước' },
   { id: 'c4', name: 'Ăn vặt & Đồ uống' },
   { id: 'c5', name: 'Món chay' },
   { id: 'c6', name: 'Tráng miệng' },
@@ -301,7 +301,12 @@ try {
   if (storedDishesData) dishesData = JSON.parse(storedDishesData);
 
   const storedCategoriesData = (localStorage.getItem('nocnom_categories') ?? localStorage.getItem('unifood_categories'));
-  if (storedCategoriesData) categoriesData = JSON.parse(storedCategoriesData);
+  if (storedCategoriesData) {
+    categoriesData = (JSON.parse(storedCategoriesData) as Category[]).map(c => ({
+      ...c,
+      name: c.name.replace(/\s*\(Mì\/Phở\/Bún\)/gi, '')
+    }));
+  }
 
   const storedLogsData = (localStorage.getItem('nocnom_logs') ?? localStorage.getItem('unifood_logs'));
   if (storedLogsData) logsData = JSON.parse(storedLogsData);

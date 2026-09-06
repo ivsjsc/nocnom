@@ -263,12 +263,31 @@ export default function ProfileModal({
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wide text-slate-500">Ngày sinh</span>
+                  <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wide text-slate-500">Ngày sinh (DD/MM/YYYY)</span>
                   <input
-                    type="date"
-                    value={form.dateOfBirth}
-                    onChange={event => updateField('dateOfBirth', event.target.value)}
-                    className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-950"
+                    type="text"
+                    placeholder="dd/mm/yyyy"
+                    value={(() => {
+                      if (!form.dateOfBirth) return '';
+                      if (form.dateOfBirth.includes('-')) {
+                        const [yyyy, mm, dd] = form.dateOfBirth.split('-');
+                        if (yyyy && mm && dd) return `${dd}/${mm}/${yyyy}`;
+                      }
+                      return form.dateOfBirth;
+                    })()}
+                    onChange={event => {
+                      const val = event.target.value;
+                      if (val.includes('/')) {
+                        const parts = val.split('/');
+                        if (parts.length === 3 && parts[2].length === 4) {
+                          const [dd, mm, yyyy] = parts;
+                          updateField('dateOfBirth', `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`);
+                          return;
+                        }
+                      }
+                      updateField('dateOfBirth', val);
+                    }}
+                    className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
                   />
                 </label>
 

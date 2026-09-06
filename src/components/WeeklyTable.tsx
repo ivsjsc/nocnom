@@ -267,7 +267,7 @@ export default function WeeklyTable({
                           <motion.article
                             layout
                             key={comboKey}
-                            className="flex min-h-[72px] items-center gap-2 rounded-[16px] border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 p-2.5"
+                            className="flex min-h-[72px] items-center gap-2 rounded-[16px] border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-2.5"
                           >
                             <button
                               type="button"

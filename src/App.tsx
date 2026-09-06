@@ -141,7 +141,7 @@ export default function App() {
                 nOcnOm
               </span>
               <span className="mt-2 block truncate text-[9px] font-extrabold uppercase tracking-[0.14em] text-slate-500">
-                KTX KHU B SMART FOOD
+                KTX Sinh Viên Đại Học Quốc Gia
               </span>
             </span>
           </button>

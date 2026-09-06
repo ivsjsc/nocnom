@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Ban, CalendarDays, Flame, UtensilsCrossed } from 'lucide-react';
+import { Ban, CalendarDays, Clock, Flame, UtensilsCrossed } from 'lucide-react';
 import {
   estimateDishCalories,
   mockDb,
@@ -29,12 +29,18 @@ export default function HomePage() {
   const [timetable, setTimetable] = useState<Timetable | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [time, setTime] = useState<Date>(new Date());
   const [selected, setSelected] = useState<{
     dish: Dish;
     day: string;
     comboKey: 'A' | 'B' | 'C';
   } | null>(null);
   const todayKey = dayKeys[new Date().getDay()];
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const unsubTable = mockDb.subscribe('all', setTimetable);
@@ -85,15 +91,25 @@ export default function HomePage() {
   return (
     <div className="space-y-6 pb-28">
       <section className="grid grid-cols-2 gap-3">
-        <div className="bg-white rounded-[22px] border border-slate-200 shadow-sm p-4">
-          <div className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-slate-600 dark:text-slate-400">Đã ăn hôm nay</div>
-          <div className="mt-1 text-2xl font-black text-blue-600">
-            {Math.min(todayLogs.length, plannedMealKeys.length)}/{plannedMealKeys.length} bữa
+        <div className="bg-white rounded-[22px] border border-slate-200 shadow-sm p-4 flex flex-col justify-between">
+          <div className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-slate-600 dark:text-slate-400">Lời chúc</div>
+          <div className="mt-1 text-base font-black text-blue-600 leading-tight">
+            {(() => {
+              const hour = time.getHours();
+              if (hour >= 4 && hour < 11) return 'Chào buổi sáng';
+              if (hour >= 11 && hour < 18) return 'Chào buổi trưa';
+              return 'Chào buổi tối';
+            })()}
           </div>
         </div>
-        <div className="bg-white rounded-[22px] border border-slate-200 shadow-sm p-4">
-          <div className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-slate-600 dark:text-slate-400">Lượt phục vụ</div>
-          <div className="mt-1 text-2xl font-black text-orange-600">{logs.length}</div>
+        <div className="bg-white rounded-[22px] border border-slate-200 shadow-sm p-4 flex flex-col justify-between">
+          <div className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-slate-600 dark:text-slate-400">Bây giờ là</div>
+          <div className="mt-1 text-xl font-black text-orange-600 flex items-center gap-1.5">
+            <Clock className="w-4 h-4 shrink-0 text-orange-500" />
+            <span>
+              {time.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
         </div>
 
         <div className="col-span-2 rounded-[24px] bg-gradient-to-r from-orange-700 to-amber-700 p-4 text-white shadow-lg shadow-orange-900/10">
