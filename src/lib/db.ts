@@ -636,8 +636,15 @@ const applyDishImage = (
 ): Dish => {
   if (!image?.url?.trim()) return dish;
 
+  const {
+    imageSourceUrl: _imageSourceUrl,
+    imageLicense: _imageLicense,
+    imageAttribution: _imageAttribution,
+    ...rest
+  } = dish;
+
   return {
-    ...dish,
+    ...rest,
     imageUrl: image.url.trim(),
     imageSource: image.source,
     ...(image.sourcePageUrl?.trim()
@@ -826,7 +833,22 @@ export const mockDb = {
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
   updateDishImage: (id: string, imageUrl: string) => {
-    dishesData = dishesData.map(d => d.id === id ? { ...d, imageUrl } : d);
+    dishesData = dishesData.map(dish => {
+      if (dish.id !== id) return dish;
+
+      const {
+        imageSourceUrl: _imageSourceUrl,
+        imageLicense: _imageLicense,
+        imageAttribution: _imageAttribution,
+        ...rest
+      } = dish;
+
+      return {
+        ...rest,
+        imageUrl,
+        imageSource: 'manual'
+      };
+    });
     saveToLocalStorage();
     dishListeners.forEach(l => l(dishesData));
   },
