@@ -35,6 +35,7 @@ export type LogEntry = {
   vendorName: string;
   price: number;
   calories?: number;
+  mealKey?: 'A' | 'B' | 'C';
   timestamp: number;
 };
 
@@ -228,16 +229,45 @@ export const mockDb = {
     callback(logsData);
     return () => logListeners.delete(callback);
   },
-  addLog: (dishName: string, vendorName: string, price: number, calories?: number) => {
+  addLog: (
+    dishName: string,
+    vendorName: string,
+    price: number,
+    calories?: number,
+    mealKey?: 'A' | 'B' | 'C'
+  ) => {
+    const now = Date.now();
     const newLog: LogEntry = {
       id: createLocalId('l'),
       dishName,
       vendorName,
       price,
       calories,
-      timestamp: Date.now()
+      mealKey,
+      timestamp: now
     };
-    logsData = [newLog, ...logsData];
+
+    if (mealKey) {
+      const today = new Date(now).toDateString();
+      const existingIndex = logsData.findIndex(log =>
+        log.mealKey === mealKey &&
+        new Date(log.timestamp).toDateString() === today
+      );
+
+      if (existingIndex >= 0) {
+        const existing = logsData[existingIndex];
+        newLog.id = existing.id;
+        logsData = [
+          newLog,
+          ...logsData.filter((_, index) => index !== existingIndex)
+        ];
+      } else {
+        logsData = [newLog, ...logsData];
+      }
+    } else {
+      logsData = [newLog, ...logsData];
+    }
+
     saveToLocalStorage();
     logListeners.forEach(l => l(logsData));
   },
