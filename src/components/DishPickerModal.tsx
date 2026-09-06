@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, X } from 'lucide-react';
+import { motion } from 'motion/react';
 import { estimateDishCalories, type Category, type Dish } from '../lib/db';
 import DishImage from './DishImage';
 
@@ -31,6 +32,22 @@ export default function DishPickerModal({
 }: Props) {
   const [query, setQuery] = useState('');
 
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [onClose]);
+
   const categoryLookup = useMemo(
     () => new Map(categories.map(category => [category.id, category.name])),
     [categories]
@@ -54,13 +71,26 @@ export default function DishPickerModal({
   }, [categoryLookup, dishes, query]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm flex items-end sm:items-center justify-center p-3"
+    <motion.div
+      className="fixed inset-0 z-[130] bg-slate-950/55 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-3"
       role="dialog"
       aria-modal="true"
       aria-label={title}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.16 }}
+      onMouseDown={event => {
+        if (event.currentTarget === event.target) onClose();
+      }}
     >
-      <div className="w-full max-w-lg max-h-[86vh] bg-white rounded-[26px] overflow-hidden shadow-2xl flex flex-col">
+      <motion.div
+        initial={{ y: 48, opacity: 0, scale: 0.98 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 48, opacity: 0, scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+        className="w-full max-w-lg max-h-[86vh] bg-white dark:bg-slate-900 rounded-[26px] overflow-hidden shadow-2xl flex flex-col"
+      >
         <div className="p-4 border-b border-slate-100">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -155,7 +185,7 @@ export default function DishPickerModal({
             })
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
