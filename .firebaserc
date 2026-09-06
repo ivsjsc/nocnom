@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "cocoa-35632"
+  },
+  "targets": {
+    "cocoa-35632": {
+      "hosting": {
+        "nocnom": [
+          "nocnom"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

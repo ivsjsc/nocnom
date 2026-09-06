@@ -1,0 +1,19 @@
+{
+  "name": "nOcnOm - KTX Khu B Smart Food",
+  "short_name": "nOcnOm",
+  "description": "Ứng dụng quản lý lịch ăn, kho món và lịch sử ăn uống tại KTX Khu B.",
+  "lang": "vi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/icons/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

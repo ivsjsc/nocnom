@@ -1,0 +1,379 @@
+export type VendorExtraInfo = {
+  id: string;
+  label: string;
+  value: string;
+};
+
+export type Vendor = {
+  id: string;
+  name: string;
+  phone: string;
+  address: string;
+  price: number;
+  link?: string;
+  extraInfo: VendorExtraInfo[];
+};
+
+export type Dish = {
+  id: string;
+  name: string;
+  categoryId: string;
+  isFavorite: boolean;
+  imageUrl?: string;
+  vendors: Vendor[];
+};
+
+export type Category = {
+  id: string;
+  name: string;
+};
+
+export type LogEntry = {
+  id: string;
+  dishName: string;
+  vendorName: string;
+  price: number;
+  timestamp: number;
+};
+
+export const initialCategories: Category[] = [
+  { id: 'c1', name: 'Món mặn' },
+  { id: 'c2', name: 'Món canh' },
+  { id: 'c3', name: 'Món nước (Mì/Phở/Bún)' },
+  { id: 'c4', name: 'Ăn vặt & Đồ uống' },
+  { id: 'c5', name: 'Món chay' },
+  { id: 'c6', name: 'Tráng miệng' },
+  { id: 'c7', name: 'Combo / Phần ăn' },
+];
+
+const initialDishes: Dish[] = [
+  {
+    id: 'd1', name: 'Cơm gà xối mỡ', categoryId: 'c1', isFavorite: true, imageUrl: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80',
+    vendors: [
+      { id: 'v1', name: 'Cơm gà Cô Ba', phone: '0901.234.567', address: '123 Đường D1', price: 35000, link: 'https://maps.google.com', extraInfo: [{id: 'e1', label: 'Giờ mở cửa', value: '10:00 - 20:00'}] },
+      { id: 'v2', name: 'Quán Hồng Phát', phone: '0987.654.321', address: '456 Điện Biên Phủ', price: 40000, extraInfo: [] }
+    ]
+  },
+  {
+    id: 'd2', name: 'Phở bò / Phở gà', categoryId: 'c3', isFavorite: false, imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb438?auto=format&fit=crop&w=800&q=80',
+    vendors: [{ id: 'v3', name: 'Phở Quỳnh', phone: '0911.222.333', address: 'Ngã tư Hàng Xanh', price: 45000, extraInfo: [] }]
+  },
+  {
+    id: 'd3', name: 'Wrap gà + Trái cây', categoryId: 'c4', isFavorite: true, imageUrl: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=800&q=80',
+    vendors: [{ id: 'v4', name: 'Healthy Box', phone: '0909.888.777', address: 'Khu A', price: 40000, extraInfo: [] }]
+  },
+  {
+    id: 'd4', name: 'Cơm sườn + Salad', categoryId: 'c1', isFavorite: false, imageUrl: 'https://images.unsplash.com/photo-1555126634-323283e090fa?auto=format&fit=crop&w=800&q=80',
+    vendors: [{ id: 'v5', name: 'Cơm tấm Ba Ghiền', phone: '0922.333.444', address: '84 Đặng Văn Ngữ', price: 45000, extraInfo: [] }]
+  },
+  {
+    id: 'd5', name: 'Bún riêu / Chả', categoryId: 'c3', isFavorite: false,
+    vendors: [{ id: 'v6', name: 'Bún riêu Cô Mai', phone: '0912.345.678', address: 'Chợ Thị Nghè', price: 30000, extraInfo: [] }]
+  },
+  {
+    id: 'd6', name: 'Cơm chay', categoryId: 'c1', isFavorite: false,
+    vendors: [{ id: 'v7', name: 'Chay Tùy Duyên', phone: '0988.777.666', address: 'Khu B', price: 25000, extraInfo: [] }]
+  },
+  { id: 'd7', name: 'Cơm thịt kho', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v8', name: 'Cơm phần Sinh Viên', phone: '0900.111.222', address: 'Hẻm 79', price: 30000, extraInfo: [] }] },
+  { id: 'd8', name: 'Mì xào hải sản', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v9', name: 'Quán Ốc Đêm', phone: '0933.222.111', address: 'Đường D2', price: 35000, extraInfo: [] }] },
+  { id: 'd9', name: 'Salad gạo lứt', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v10', name: 'Eat Clean', phone: '0944.555.666', address: 'Khu C', price: 40000, extraInfo: [] }] },
+  { id: 'd10', name: 'Cơm cá kho', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v11', name: 'Cơm Quê', phone: '0955.666.777', address: 'Đường D3', price: 35000, extraInfo: [] }] },
+  { id: 'd11', name: 'Bún mắm / cá', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v12', name: 'Đặc sản Miền Tây', phone: '0966.777.888', address: 'Khu D', price: 40000, extraInfo: [] }] },
+  { id: 'd12', name: 'Sandwich + Sữa chua', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v13', name: 'Tiệm Bánh', phone: '0977.888.999', address: 'Khu E', price: 30000, extraInfo: [] }] },
+  { id: 'd13', name: 'Cơm bò xào', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v14', name: 'Quán Bò', phone: '0988.999.000', address: 'Khu F', price: 45000, extraInfo: [] }] },
+  { id: 'd14', name: 'Mì Quảng / Hủ tiếu', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v15', name: 'Mì Quảng Bà Mua', phone: '0999.000.111', address: 'Khu G', price: 35000, extraInfo: [] }] },
+  { id: 'd15', name: 'Cơm ngũ cốc', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v16', name: 'Healthy Box', phone: '0909.888.777', address: 'Khu A', price: 45000, extraInfo: [] }] },
+  { id: 'd16', name: 'Cơm tấm', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v17', name: 'Cơm tấm Đêm', phone: '0912.345.678', address: 'Vòng xoay', price: 35000, extraInfo: [] }] },
+  { id: 'd17', name: 'Bún / Miến xào', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v18', name: 'Quán Xào', phone: '0922.111.333', address: 'Khu H', price: 30000, extraInfo: [] }] },
+  { id: 'd18', name: 'Snack box', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v19', name: 'Canteen', phone: '0933.444.555', address: 'Trường', price: 25000, extraInfo: [] }] },
+  { id: 'd19', name: 'Cơm thịt nướng', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v20', name: 'Xiên Nướng', phone: '0944.555.666', address: 'Khu I', price: 35000, extraInfo: [] }] },
+  { id: 'd20', name: 'Lẩu mini / Mì ống', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v21', name: 'Lẩu 1 Người', phone: '0955.666.777', address: 'Khu J', price: 50000, extraInfo: [] }] },
+  { id: 'd21', name: 'Bánh mì + Sữa', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v22', name: 'Bánh Mì Tuấn', phone: '0966.777.888', address: 'Khu K', price: 20000, extraInfo: [] }] },
+];
+
+export type MenuItem = {
+  dishId: string;
+  stock: number;
+};
+
+export type DayMenu = {
+  dayName: string;
+  selectedCombo?: 'A' | 'B' | 'C';
+  options: {
+    A: MenuItem;
+    B: MenuItem;
+    C: MenuItem;
+  };
+};
+
+export type Timetable = Record<string, DayMenu>;
+
+const defaultTimetable: Timetable = {
+  mon: { dayName: "Thứ 2", options: { A: { dishId: 'd1', stock: 50 }, B: { dishId: 'd2', stock: 30 }, C: { dishId: 'd3', stock: 20 } } },
+  tue: { dayName: "Thứ 3", options: { A: { dishId: 'd4', stock: 50 }, B: { dishId: 'd5', stock: 30 }, C: { dishId: 'd6', stock: 20 } } },
+  wed: { dayName: "Thứ 4", options: { A: { dishId: 'd7', stock: 50 }, B: { dishId: 'd8', stock: 30 }, C: { dishId: 'd9', stock: 20 } } },
+  thu: { dayName: "Thứ 5", options: { A: { dishId: 'd10', stock: 50 }, B: { dishId: 'd11', stock: 30 }, C: { dishId: 'd12', stock: 20 } } },
+  fri: { dayName: "Thứ 6", options: { A: { dishId: 'd13', stock: 50 }, B: { dishId: 'd14', stock: 30 }, C: { dishId: 'd15', stock: 20 } } },
+  sat: { dayName: "Thứ 7", options: { A: { dishId: 'd16', stock: 50 }, B: { dishId: 'd17', stock: 30 }, C: { dishId: 'd18', stock: 20 } } },
+  sun: { dayName: "Chủ Nhật", options: { A: { dishId: 'd19', stock: 50 }, B: { dishId: 'd20', stock: 30 }, C: { dishId: 'd21', stock: 20 } } }
+};
+
+let dbData = { ...defaultTimetable };
+let dishesData: Dish[] = [...initialDishes];
+let categoriesData: Category[] = [...initialCategories];
+let logsData: LogEntry[] = [];
+
+// Load from localStorage if available
+try {
+  const storedDbData = (localStorage.getItem('nocnom_timetable') ?? localStorage.getItem('unifood_timetable'));
+  if (storedDbData) dbData = JSON.parse(storedDbData);
+
+  const storedDishesData = (localStorage.getItem('nocnom_dishes') ?? localStorage.getItem('unifood_dishes'));
+  if (storedDishesData) dishesData = JSON.parse(storedDishesData);
+
+  const storedCategoriesData = (localStorage.getItem('nocnom_categories') ?? localStorage.getItem('unifood_categories'));
+  if (storedCategoriesData) categoriesData = JSON.parse(storedCategoriesData);
+
+  const storedLogsData = (localStorage.getItem('nocnom_logs') ?? localStorage.getItem('unifood_logs'));
+  if (storedLogsData) logsData = JSON.parse(storedLogsData);
+} catch (e) {
+  console.error("Error loading from localStorage", e);
+}
+
+const createLocalId = (prefix: string) => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${prefix}${crypto.randomUUID()}`;
+  }
+  return `${prefix}${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const saveToLocalStorage = () => {
+  try {
+    localStorage.setItem('nocnom_timetable', JSON.stringify(dbData));
+    localStorage.setItem('nocnom_dishes', JSON.stringify(dishesData));
+    localStorage.setItem('nocnom_categories', JSON.stringify(categoriesData));
+    localStorage.setItem('nocnom_logs', JSON.stringify(logsData));
+  } catch (e) {
+    console.error("Error saving to localStorage", e);
+  }
+};
+
+type Listener = (data: any) => void;
+const listeners: Record<string, Set<Listener>> = {};
+const dishListeners: Set<Listener> = new Set();
+const categoryListeners: Set<Listener> = new Set();
+const logListeners: Set<Listener> = new Set();
+
+export const mockDb = {
+  getDoc: (day: string) => dbData[day],
+  getAll: () => dbData,
+  updateDoc: (day: string, data: DayMenu) => {
+    dbData[day] = data;
+    saveToLocalStorage();
+    if (listeners[day]) listeners[day].forEach(l => l(data));
+    if (listeners['all']) listeners['all'].forEach(l => l(dbData));
+  },
+  subscribe: (day: string, callback: Listener) => {
+    if (!listeners[day]) listeners[day] = new Set();
+    listeners[day].add(callback);
+    callback(day === 'all' ? dbData : dbData[day]);
+    return () => listeners[day].delete(callback);
+  },
+  getCategories: () => categoriesData,
+  getCategoriesSync: () => categoriesData,
+  subscribeCategories: (callback: Listener) => {
+    categoryListeners.add(callback);
+    callback(categoriesData);
+    return () => categoryListeners.delete(callback);
+  },
+  addCategory: (name: string) => {
+    const newCategory = { id: createLocalId('c'), name };
+    categoriesData = [...categoriesData, newCategory];
+    saveToLocalStorage();
+    categoryListeners.forEach(l => l(categoriesData));
+  },
+  getDishes: () => dishesData,
+  getDishesSync: () => dishesData,
+  subscribeDishes: (callback: Listener) => {
+    dishListeners.add(callback);
+    callback(dishesData);
+    return () => dishListeners.delete(callback);
+  },
+  subscribeLogs: (callback: Listener) => {
+    logListeners.add(callback);
+    callback(logsData);
+    return () => logListeners.delete(callback);
+  },
+  addLog: (dishName: string, vendorName: string, price: number) => {
+    const newLog: LogEntry = {
+      id: createLocalId('l'),
+      dishName,
+      vendorName,
+      price,
+      timestamp: Date.now()
+    };
+    logsData = [newLog, ...logsData];
+    saveToLocalStorage();
+    logListeners.forEach(l => l(logsData));
+  },
+  selectCombo: (day: string, comboKey: 'A' | 'B' | 'C' | null) => {
+    if (comboKey === null) {
+      delete dbData[day].selectedCombo;
+    } else {
+      dbData[day].selectedCombo = comboKey;
+    }
+    saveToLocalStorage();
+    if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
+    if (listeners['all']) listeners['all'].forEach(l => l(dbData));
+  },
+  swapDish: (day: string, comboKey: 'A' | 'B' | 'C', newDishId: string) => {
+    dbData[day].options[comboKey].dishId = newDishId;
+    saveToLocalStorage();
+    if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
+    if (listeners['all']) listeners['all'].forEach(l => l(dbData));
+  },
+  updateDishImage: (id: string, imageUrl: string) => {
+    dishesData = dishesData.map(d => d.id === id ? { ...d, imageUrl } : d);
+    saveToLocalStorage();
+    dishListeners.forEach(l => l(dishesData));
+  },
+  updateVendorLink: (dishId: string, vendorId: string, link: string) => {
+    dishesData = dishesData.map(dish => {
+      if (dish.id === dishId) {
+        return {
+          ...dish,
+          vendors: dish.vendors.map(v => v.id === vendorId ? { ...v, link } : v)
+        };
+      }
+      return dish;
+    });
+    saveToLocalStorage();
+    dishListeners.forEach(l => l(dishesData));
+  },
+  toggleFavoriteDish: (id: string) => {
+    dishesData = dishesData.map(d => d.id === id ? { ...d, isFavorite: !d.isFavorite } : d);
+    saveToLocalStorage();
+    dishListeners.forEach(l => l(dishesData));
+  },
+  addVendorExtraInfo: (dishId: string, vendorId: string, info: VendorExtraInfo) => {
+    dishesData = dishesData.map(dish => {
+      if (dish.id === dishId) {
+        return {
+          ...dish,
+          vendors: dish.vendors.map(vendor => {
+            if (vendor.id === vendorId) {
+              return { ...vendor, extraInfo: [...(vendor.extraInfo || []), info] };
+            }
+            return vendor;
+          })
+        };
+      }
+      return dish;
+    });
+    saveToLocalStorage();
+    dishListeners.forEach(l => l(dishesData));
+  },
+  updateDishName: (id: string, newName: string) => {
+    dishesData = dishesData.map(d => d.id === id ? { ...d, name: newName } : d);
+    saveToLocalStorage();
+    dishListeners.forEach(l => l(dishesData));
+  },
+  updateVendor: (dishId: string, vendorId: string, updates: Partial<Vendor>) => {
+    dishesData = dishesData.map(dish => {
+      if (dish.id === dishId) {
+        return {
+          ...dish,
+          vendors: dish.vendors.map(v => v.id === vendorId ? { ...v, ...updates } : v)
+        };
+      }
+      return dish;
+    });
+    saveToLocalStorage();
+    dishListeners.forEach(l => l(dishesData));
+  },
+  updateVendorExtraInfo: (dishId: string, vendorId: string, infoId: string, newValue: string) => {
+    dishesData = dishesData.map(dish => {
+      if (dish.id === dishId) {
+        return {
+          ...dish,
+          vendors: dish.vendors.map(v => {
+            if (v.id === vendorId) {
+              return {
+                ...v,
+                extraInfo: v.extraInfo.map(info => info.id === infoId ? { ...info, value: newValue } : info)
+              };
+            }
+            return v;
+          })
+        };
+      }
+      return dish;
+    });
+    saveToLocalStorage();
+    dishListeners.forEach(l => l(dishesData));
+  },
+  deleteVendorExtraInfo: (dishId: string, vendorId: string, infoId: string) => {
+    dishesData = dishesData.map(dish => {
+      if (dish.id === dishId) {
+        return {
+          ...dish,
+          vendors: dish.vendors.map(v => {
+            if (v.id === vendorId) {
+              return {
+                ...v,
+                extraInfo: v.extraInfo.filter(info => info.id !== infoId)
+              };
+            }
+            return v;
+          })
+        };
+      }
+      return dish;
+    });
+    saveToLocalStorage();
+    dishListeners.forEach(l => l(dishesData));
+  },
+  addDish: (name: string, categoryId: string) => {
+    const newDish: Dish = {
+      id: createLocalId('d'),
+      name,
+      categoryId,
+      isFavorite: false,
+      vendors: []
+    };
+    dishesData = [...dishesData, newDish];
+    saveToLocalStorage();
+    dishListeners.forEach(l => l(dishesData));
+  },
+  addVendor: (dishId: string, name: string, price: number, phone: string, address: string) => {
+    dishesData = dishesData.map(dish => {
+      if (dish.id === dishId) {
+        return {
+          ...dish,
+          vendors: [...dish.vendors, {
+            id: createLocalId('v'),
+            name,
+            price,
+            phone,
+            address,
+            extraInfo: []
+          }]
+        };
+      }
+      return dish;
+    });
+    saveToLocalStorage();
+    dishListeners.forEach(l => l(dishesData));
+  },
+  restoreData: (data: { timetable: Timetable; dishes: Dish[]; categories: Category[] }) => {
+    dbData = data.timetable;
+    dishesData = data.dishes;
+    categoriesData = data.categories;
+    saveToLocalStorage();
+    
+    // Notify all listeners
+    Object.values(listeners).flatMap(set => Array.from(set)).forEach(l => l(dbData));
+    dishListeners.forEach(l => l(dishesData));
+    categoryListeners.forEach(l => l(categoriesData));
+  }
+};

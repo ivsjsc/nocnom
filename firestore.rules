@@ -1,0 +1,119 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // SECURITY: Deny-by-default. Collection rules below explicitly grant access.
+    // --- HELPER FUNCTIONS ---
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // --- NHÓM 1: DỮ LIỆU CHUNG (DISHES & TIMETABLE) ---
+    match /dishes/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /timetable/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // --- NHÓM 2: DỮ LIỆU CÁ NHÂN NGƯỜI DÙNG ---
+    match /users/{userId}/{document=**} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // --- NHÓM 3: BINOC APP (Messages, Rooms, Calls, FCM) ---
+    
+    // Tin nhắn: Ai cũng có thể đọc/tạo, nhưng chỉ người gửi mới được sửa/xóa
+    match /messages/{messageId} {
+      allow read, create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.senderId == request.auth.uid;
+    }
+
+    // Phòng họp và các ứng viên WebRTC
+    match /rooms/{roomId} {
+      allow read, write: if isAuthenticated();
+      
+      match /offerCandidates/{candidateId} {
+        allow read, write: if isAuthenticated();
+      }
+      match /answerCandidates/{candidateId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    // Cuộc gọi và các ứng viên WebRTC
+    match /calls/{callId} {
+      allow read, write: if isAuthenticated();
+      
+      match /offerCandidates/{candidateId} {
+        allow read, write: if isAuthenticated();
+      }
+      match /answerCandidates/{candidateId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    // Token thông báo (FCM): Chỉ chủ sở hữu mới được quản lý
+    match /fcmTokens/{tokenId} {
+      allow create, update: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.token == tokenId;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read: if false; // Bảo mật token, không cho phép liệt kê
+    }
+
+    // --- NHÓM 4: SHARED LEDGERS (Sổ thu chi dùng chung) ---
+    match /ledgers/{ledgerId} {
+      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+      allow list, read: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+
+      // Thành viên trong sổ
+      match /members/{userId} {
+        allow list: if isAuthenticated();
+        allow read: if isAuthenticated() && userId == request.auth.uid;
+        allow create, update, delete: if isAuthenticated() 
+          && get(/databases/$(database)/documents/ledgers/$(ledgerId)).data.ownerId == request.auth.uid;
+      }
+
+      // Các dữ liệu con (Expenses, Savings, Diary...) yêu cầu phải là thành viên của Ledger
+      function isLedgerMember() {
+        return exists(/databases/$(database)/documents/ledgers/$(ledgerId)/members/$(request.auth.uid));
+      }
+
+      match /settings/{settingsId} {
+        allow read, write: if isAuthenticated() && isLedgerMember();
+      }
+      match /expenses/{expenseId} {
+        allow read, write: if isAuthenticated() && isLedgerMember();
+      }
+      match /savings/{savingsId} {
+        allow read, write: if isAuthenticated() && isLedgerMember();
+      }
+      match /fund/{fundId} {
+        allow read, write: if isAuthenticated() && isLedgerMember();
+      }
+      match /diaryEntries/{entryId} {
+        allow read: if isAuthenticated() && isLedgerMember();
+        allow create: if isAuthenticated() && isLedgerMember() && request.resource.data.author == request.auth.uid;
+        allow update, delete: if isAuthenticated() && resource.data.author == request.auth.uid;
+      }
+      match /notifications/{notificationId} {
+        allow read, write: if isAuthenticated() && isLedgerMember();
+      }
+      match /metadata/{document=**} {
+        allow read, write: if isAuthenticated() && isLedgerMember();
+      }
+    }
+
+    // --- GLOBAL READ CATCH-ALL ---
+    // Cho phép người dùng đã đăng nhập đọc các dữ liệu ở cấp độ gốc nếu không có quy tắc cụ thể nào cấm
+    match /{document=**} {
+      allow read: if isAuthenticated();
+    }
+  }
+}

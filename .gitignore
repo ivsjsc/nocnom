@@ -1,0 +1,14 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Local Firebase/IDE artifacts
+.firebase/
+.vs/
+*.db
+*.wsuo
