@@ -55,7 +55,7 @@ export default function ProfileModal({ user, onClose }: Props) {
         if (!active) return;
 
         if (snapshot.exists()) {
-          const data = snapshot.data();
+          const data = snapshot.data() as Partial<ProfileForm>;
           setForm({
             fullName: toStringValue(data.fullName) || user.displayName || '',
             dateOfBirth: toStringValue(data.dateOfBirth),
