@@ -44,7 +44,7 @@ type SelectedDish = MealTarget & {
   dish: Dish;
 };
 
-export default function WeeklyTable() {
+export default function WeeklyTable({ embedded = false }: { embedded?: boolean }) {
   const [timetable, setTimetable] = useState<Timetable | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -112,7 +112,8 @@ export default function WeeklyTable() {
   };
 
   return (
-    <div className="space-y-4 pb-28">
+    <div className={embedded ? "space-y-3" : "space-y-4 pb-28"}>
+      {!embedded && (
       <section className="rounded-[24px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
         <div className="flex items-start gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300">
@@ -128,6 +129,7 @@ export default function WeeklyTable() {
           </div>
         </div>
       </section>
+      )}
 
       <div className="space-y-2.5">
         {dayOrder.map(day => {
