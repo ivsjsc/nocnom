@@ -191,12 +191,14 @@ const publishRelease = async ({
     }
 
     await api(
-      releaseUrl + '?updateMask=ruleset_name',
+      releaseUrl,
       {
         method: 'PATCH',
         body: JSON.stringify({
-          name: releaseName,
-          rulesetName
+          release: {
+            name: releaseName,
+            rulesetName
+          }
         })
       }
     );
