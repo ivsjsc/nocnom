@@ -1,9 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CheckCircle2, ExternalLink, MapPin, Phone, RefreshCw, X } from 'lucide-react';
-import { estimateDishCalories, mockDb, type Dish, type Vendor } from '../lib/db';
+import {
+  estimateDishCalories,
+  mockDb,
+  type Dish,
+  type MealAddon,
+  type Vendor
+} from '../lib/db';
 import { getSafeExternalUrl } from '../lib/url';
 import DishImage from './DishImage';
 import DishPickerModal from './DishPickerModal';
+import MealAddonPicker, { type MealAddonSelection } from './MealAddonPicker';
+import {
+  loadNutritionAddons,
+  type NutritionAddonOption
+} from '../lib/nutritionKnowledge';
 
 type Props = {
   dish: Dish;
@@ -22,6 +33,15 @@ export default function DishDetailModal({
 }: Props) {
   const [isSwapping, setIsSwapping] = useState(false);
   const [allDishes] = useState<Dish[]>(mockDb.getDishes());
+  const [addonSelection, setAddonSelection] = useState<MealAddonSelection>({
+    fruitId: '',
+    drinkId: ''
+  });
+  const [nutritionAddons, setNutritionAddons] = useState<NutritionAddonOption[]>([]);
+
+  useEffect(() => {
+    void loadNutritionAddons().then(setNutritionAddons);
+  }, []);
 
   const handleSwap = (newDishId: string) => {
     mockDb.swapDish(day, comboKey, newDishId);
@@ -29,9 +49,34 @@ export default function DishDetailModal({
   };
 
   const handleSelectVendor = (vendor: Vendor) => {
-    mockDb.addLog(dish.name, vendor.name, vendor.price, estimateDishCalories(dish), comboKey);
+    const selectedIds = [addonSelection.fruitId, addonSelection.drinkId].filter(Boolean);
+    const addons: MealAddon[] = selectedIds
+      .map(id => nutritionAddons.find(item => item.id === id))
+      .filter((item): item is NutritionAddonOption => Boolean(item))
+      .map(item => ({
+        id: item.id,
+        kind: item.kind,
+        name: item.name,
+        calories: item.calories,
+        nutritionRecordId: item.id,
+        servingG: item.servingG,
+        kcalMin: item.kcalMin,
+        kcalMax: item.kcalMax
+      }));
+
+    mockDb.addLog(
+      dish.name,
+      vendor.name,
+      vendor.price,
+      estimateDishCalories(dish),
+      comboKey,
+      addons
+    );
     mockDb.selectCombo(day, comboKey);
-    window.alert('Đã chọn ' + dish.name + ' tại ' + vendor.name + '.');
+    const addonText = addons.length > 0
+      ? ' + ' + addons.map(addon => addon.name).join(' + ')
+      : '';
+    window.alert('Đã chọn ' + dish.name + addonText + ' tại ' + vendor.name + '.');
     onClose();
   };
 
@@ -77,6 +122,19 @@ export default function DishDetailModal({
               <RefreshCw className="w-4 h-4" />
               Đổi món khác
             </button>
+          )}
+
+          {isSelectable && (
+            <div className="rounded-[22px] border border-emerald-100 bg-emerald-50/70 p-3">
+              <div className="mb-2 text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">
+                Ăn kèm · không bắt buộc
+              </div>
+              <MealAddonPicker
+                value={addonSelection}
+                onChange={setAddonSelection}
+                compact
+              />
+            </div>
           )}
 
           <div className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Các quán phục vụ</div>

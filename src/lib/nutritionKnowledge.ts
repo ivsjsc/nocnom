@@ -5,9 +5,12 @@ export type NutritionRecord = {
   name: string;
   aliases: string[];
   category: string;
+  recordType?: string;
   servingG?: number;
   kcalPer100g?: number;
   kcalPerServing?: number;
+  kcalMin?: number;
+  kcalMax?: number;
   source: string;
   sourceUrl: string;
   confidence: NutritionConfidence;
@@ -109,4 +112,55 @@ export const lookupNutrition = async (
 
 export const clearNutritionCache = () => {
   shardCache.clear();
+};
+
+
+export type NutritionAddonKind = 'fruit' | 'drink';
+
+export type NutritionAddonOption = {
+  id: string;
+  kind: NutritionAddonKind;
+  name: string;
+  category: string;
+  calories: number;
+  servingG?: number;
+  kcalMin?: number;
+  kcalMax?: number;
+  source: string;
+  sourceUrl: string;
+  confidence: NutritionConfidence;
+};
+
+let addonCatalogPromise: Promise<NutritionAddonOption[]> | null = null;
+
+export const loadNutritionAddons = (): Promise<NutritionAddonOption[]> => {
+  if (addonCatalogPromise) return addonCatalogPromise;
+
+  addonCatalogPromise = fetch('/data/nutrition/addons.json', {
+    cache: 'force-cache'
+  })
+    .then(async response => {
+      if (!response.ok) {
+        throw new Error('Nutrition addon catalog request failed: HTTP ' + response.status);
+      }
+
+      const rows = (await response.json()) as NutritionAddonOption[];
+      return rows.filter(item =>
+        (item.kind === 'fruit' || item.kind === 'drink') &&
+        typeof item.id === 'string' &&
+        typeof item.name === 'string' &&
+        Number.isFinite(item.calories) &&
+        item.calories >= 0
+      );
+    })
+    .catch(error => {
+      console.warn('[nutrition] Unable to load addon catalog', error);
+      return [];
+    });
+
+  return addonCatalogPromise;
+};
+
+export const clearNutritionAddonCache = () => {
+  addonCatalogPromise = null;
 };

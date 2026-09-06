@@ -37,6 +37,18 @@ export type Category = {
 };
 
 export type MealKey = 'A' | 'B' | 'C';
+export type MealAddonKind = 'fruit' | 'drink';
+
+export type MealAddon = {
+  id: string;
+  kind: MealAddonKind;
+  name: string;
+  calories: number;
+  nutritionRecordId?: string;
+  servingG?: number;
+  kcalMin?: number;
+  kcalMax?: number;
+};
 
 export type LogEntry = {
   id: string;
@@ -44,6 +56,7 @@ export type LogEntry = {
   vendorName: string;
   price: number;
   calories?: number;
+  addons?: MealAddon[];
   mealKey?: MealKey;
   timestamp: number;
 };
@@ -323,6 +336,54 @@ const hydrateDishCaloriesFromKnowledge = async (dishId: string, foodName: string
   }
 };
 
+export const sumMealAddonCalories = (
+  log: Pick<LogEntry, 'addons'>
+): number =>
+  (log.addons ?? []).reduce((total, addon) => {
+    const calories = Number(addon.calories);
+    return total + (
+      Number.isFinite(calories) && calories >= 0
+        ? Math.round(calories)
+        : 0
+    );
+  }, 0);
+
+const normalizeMealAddons = (addons?: MealAddon[]): MealAddon[] => {
+  if (!Array.isArray(addons)) return [];
+
+  const seenKinds = new Set<MealAddonKind>();
+
+  return addons
+    .filter(addon => addon && (addon.kind === 'fruit' || addon.kind === 'drink'))
+    .filter(addon => {
+      if (seenKinds.has(addon.kind)) return false;
+      seenKinds.add(addon.kind);
+      return true;
+    })
+    .map(addon => ({
+      id: String(addon.id).trim(),
+      kind: addon.kind,
+      name: String(addon.name).trim(),
+      calories: Math.max(0, Math.round(Number(addon.calories) || 0)),
+      nutritionRecordId: addon.nutritionRecordId
+        ? String(addon.nutritionRecordId).trim()
+        : undefined,
+      servingG:
+        typeof addon.servingG === 'number' && Number.isFinite(addon.servingG)
+          ? Math.max(0, addon.servingG)
+          : undefined,
+      kcalMin:
+        typeof addon.kcalMin === 'number' && Number.isFinite(addon.kcalMin)
+          ? Math.max(0, Math.round(addon.kcalMin))
+          : undefined,
+      kcalMax:
+        typeof addon.kcalMax === 'number' && Number.isFinite(addon.kcalMax)
+          ? Math.max(0, Math.round(addon.kcalMax))
+          : undefined
+    }))
+    .filter(addon => addon.id && addon.name);
+};
+
 const hydrateMissingDishCalories = async () => {
   const candidates = dishesData.filter(dish =>
     dish.calorieSource === 'knowledge' ||
@@ -343,7 +404,8 @@ const upsertMealLogData = ({
   dishName,
   vendorName,
   price,
-  calories
+  calories,
+  addons
 }: {
   dateKey: string;
   mealKey: MealKey;
@@ -351,6 +413,7 @@ const upsertMealLogData = ({
   vendorName: string;
   price: number;
   calories?: number;
+  addons?: MealAddon[];
 }) => {
   if (!isMealDateEditable(dateKey)) {
     throw new Error('Chỉ được thêm hoặc chỉnh sửa lịch sử của hôm nay và tối đa 3 ngày trước.');
@@ -377,6 +440,7 @@ const upsertMealLogData = ({
       typeof calories === 'number' && Number.isFinite(calories)
         ? Math.max(0, Math.round(calories))
         : undefined,
+    addons: normalizeMealAddons(addons),
     mealKey,
     timestamp: timestampForMealDate(dateKey, mealKey)
   };
@@ -453,7 +517,8 @@ export const mockDb = {
     vendorName: string,
     price: number,
     calories?: number,
-    mealKey?: MealKey
+    mealKey?: MealKey,
+    addons?: MealAddon[]
   ) => {
     if (!mealKey) {
       const now = Date.now();
@@ -463,6 +528,7 @@ export const mockDb = {
         vendorName,
         price,
         calories,
+        addons: normalizeMealAddons(addons),
         timestamp: now
       };
       logsData = [newLog, ...logsData];
@@ -477,7 +543,8 @@ export const mockDb = {
       dishName,
       vendorName,
       price,
-      calories
+      calories,
+      addons
     });
   },
   selectCombo: (day: string, comboKey: 'A' | 'B' | 'C' | null) => {
