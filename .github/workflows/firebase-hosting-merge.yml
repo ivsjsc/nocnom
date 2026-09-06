@@ -43,6 +43,11 @@ jobs:
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
 
+      - name: Verify Firebase project binding
+        run: |
+          npx firebase use
+          npx firebase projects:list | grep cocoa-35632
+
       - name: Deploy Firestore rules, indexes and Storage rules
         run: npx firebase deploy --only firestore:rules,firestore:indexes,storage --project cocoa-35632 --non-interactive
 
