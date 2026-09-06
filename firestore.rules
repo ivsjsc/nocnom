@@ -40,7 +40,8 @@ service cloud.firestore {
       allow delete: if isOwner(userId);
     }
 
-    // nOcnOm app state is private and stored as a single user-owned document.
+    // Legacy v1 appState remains readable/writable temporarily for
+    // backwards compatibility. Schema v2 migrates without deleting v1.
     match /users/{userId}/data/{dataId} {
       allow read: if isOwner(userId);
       allow create, update: if isOwner(userId)
@@ -51,6 +52,51 @@ service cloud.firestore {
           'logs',
           'updatedAt'
         ]);
+      allow delete: if isOwner(userId);
+    }
+
+    // nOcnOm schema v2 splits large appState domains into independent docs.
+    match /users/{userId}/state/{stateId} {
+      allow read: if isOwner(userId);
+
+      allow create, update: if isOwner(userId)
+        && request.resource.data.schemaVersion == 2
+        && (
+          (
+            stateId == 'timetable'
+            && request.resource.data.keys().hasOnly([
+              'value',
+              'schemaVersion',
+              'updatedAt'
+            ])
+            && request.resource.data.value is map
+          )
+          ||
+          (
+            (
+              stateId == 'dishes'
+              || stateId == 'categories'
+              || stateId == 'logs'
+            )
+            && request.resource.data.keys().hasOnly([
+              'items',
+              'schemaVersion',
+              'updatedAt'
+            ])
+            && request.resource.data.items is list
+          )
+          ||
+          (
+            stateId == 'meta'
+            && request.resource.data.keys().hasOnly([
+              'schemaVersion',
+              'migrationSource',
+              'updatedAt'
+            ])
+            && request.resource.data.migrationSource is string
+          )
+        );
+
       allow delete: if isOwner(userId);
     }
 
