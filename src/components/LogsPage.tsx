@@ -189,8 +189,14 @@ export default function LogsPage() {
       next[mealKey] = {
         dishId: dish.id,
         vendorId: vendor?.id || '',
-        fruitId: log.addons?.find(addon => addon.kind === 'fruit')?.nutritionRecordId || '',
-        drinkId: log.addons?.find(addon => addon.kind === 'drink')?.nutritionRecordId || ''
+        fruitId:
+          log.addons?.find(addon => addon.kind === 'fruit')?.nutritionRecordId ||
+          log.addons?.find(addon => addon.kind === 'fruit')?.id ||
+          '',
+        drinkId:
+          log.addons?.find(addon => addon.kind === 'drink')?.nutritionRecordId ||
+          log.addons?.find(addon => addon.kind === 'drink')?.id ||
+          ''
       };
     });
 
@@ -450,7 +456,7 @@ export default function LogsPage() {
                         Ghi bù / chỉnh bữa ăn
                       </div>
                       <div className="mt-0.5 text-[10px] font-semibold text-slate-500">
-                        Mỗi ngày tối đa một bản ghi cho Sáng, Trưa và Tối.
+                        Mỗi bữa có một món chính và có thể thêm trái cây hoặc nước uống.
                       </div>
                     </div>
                     <Plus className="h-5 w-5 text-blue-500" />
