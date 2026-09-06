@@ -83,25 +83,25 @@ export default function HomePage() {
     <div className="space-y-6 pb-28">
       <section className="grid grid-cols-2 gap-3">
         <div className="bg-white rounded-[22px] border border-slate-200 shadow-sm p-4">
-          <div className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-slate-500">Đã ăn hôm nay</div>
+          <div className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-slate-600 dark:text-slate-400">Đã ăn hôm nay</div>
           <div className="mt-1 text-2xl font-black text-blue-600">
             {Math.min(todayLogs.length, plannedMealKeys.length)}/{plannedMealKeys.length} bữa
           </div>
         </div>
         <div className="bg-white rounded-[22px] border border-slate-200 shadow-sm p-4">
-          <div className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-slate-500">Lượt phục vụ</div>
+          <div className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-slate-600 dark:text-slate-400">Lượt phục vụ</div>
           <div className="mt-1 text-2xl font-black text-orange-600">{logs.length}</div>
         </div>
 
-        <div className="col-span-2 rounded-[24px] bg-gradient-to-r from-orange-500 to-amber-400 p-4 text-white shadow-lg shadow-orange-900/10">
+        <div className="col-span-2 rounded-[24px] bg-gradient-to-r from-orange-700 to-amber-700 p-4 text-white shadow-lg shadow-orange-900/10">
           <div className="flex items-center gap-3">
             <div className="h-11 w-11 shrink-0 rounded-2xl bg-white/15 flex items-center justify-center">
               <Flame className="w-5 h-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white/80">Calo hôm nay · ước tính</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white/95">Calo hôm nay · ước tính</div>
               <div className="mt-0.5 text-2xl font-black leading-none">≈ {plannedCalories.toLocaleString('vi-VN')} kcal</div>
-              <div className="mt-1 text-[10px] font-bold text-white/80">
+              <div className="mt-1 text-[10px] font-bold text-white/95">
                 Kế hoạch {plannedMealKeys.length} bữa · đã ghi nhận ≈ {consumedCalories.toLocaleString('vi-VN')} kcal
               </div>
             </div>
@@ -169,8 +169,8 @@ export default function HomePage() {
       </section>
 
       <section>
-        <div className="flex items-center gap-3 px-3 mb-5 text-slate-400">
-          <List className="w-5 h-5 text-blue-300" />
+        <div className="flex items-center gap-3 px-3 mb-5 text-slate-600 dark:text-slate-400">
+          <List className="w-5 h-5 text-blue-700 dark:text-blue-300" />
           <h3 className="text-[11px] font-black uppercase tracking-[0.24em]">Lịch ăn tuần này</h3>
         </div>
 
@@ -182,8 +182,8 @@ export default function HomePage() {
             return (
               <div key={day} className="bg-white rounded-[30px] border border-slate-200 shadow-sm p-5">
                 <div className="flex items-center justify-between gap-3 mb-3">
-                  <div className="text-[10px] font-black uppercase text-slate-400">{dayDisplay[day]}</div>
-                  <div className="text-[10px] font-black text-blue-500">{dayMealCount} bữa</div>
+                  <div className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">{dayDisplay[day]}</div>
+                  <div className="text-[10px] font-black text-blue-700 dark:text-blue-300">{dayMealCount} bữa</div>
                 </div>
                 <div className="space-y-2">
                   {comboKeys.map((comboKey, index) => {
@@ -195,11 +195,11 @@ export default function HomePage() {
                           key={comboKey}
                           className="w-full rounded-2xl bg-slate-50 border border-dashed border-slate-200 px-3 py-3 flex items-center gap-3"
                         >
-                          <span className="text-[10px] font-black text-slate-400 w-5">#{index + 1}</span>
-                          <span className="flex-1 truncate text-sm font-semibold text-slate-400">
+                          <span className="text-[10px] font-black text-slate-600 dark:text-slate-400 w-5">#{index + 1}</span>
+                          <span className="flex-1 truncate text-sm font-semibold text-slate-600 dark:text-slate-400">
                             {mealLabels[index]} · Không ăn
                           </span>
-                          <Ban className="w-4 h-4 shrink-0 text-slate-400" />
+                          <Ban className="w-4 h-4 shrink-0 text-slate-600 dark:text-slate-400" />
                         </div>
                       );
                     }
@@ -214,10 +214,10 @@ export default function HomePage() {
                         onClick={() => setSelected({ dish, day, comboKey })}
                         className="w-full rounded-2xl bg-slate-50 border border-slate-200/70 px-3 py-3 flex items-center gap-3 text-left hover:border-blue-200 transition-colors"
                       >
-                        <span className="text-[10px] font-black text-slate-400 w-5">#{index + 1}</span>
+                        <span className="text-[10px] font-black text-slate-600 dark:text-slate-400 w-5">#{index + 1}</span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold text-slate-600">{dish.name}</span>
-                          <span className="block text-[9px] font-bold text-slate-400">≈ {estimateDishCalories(dish)} kcal</span>
+                          <span className="block truncate text-sm font-bold text-slate-800 dark:text-slate-200">{dish.name}</span>
+                          <span className="block text-[9px] font-bold text-slate-600 dark:text-slate-400">≈ {estimateDishCalories(dish)} kcal</span>
                         </span>
                         <DishImage src={dish.imageUrl} alt={dish.name} className="w-8 h-8 rounded-full shrink-0" />
                       </button>
