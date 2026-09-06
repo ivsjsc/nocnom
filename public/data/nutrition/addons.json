@@ -1,14 +1,689 @@
 [
   {
+    "id": "vn-dish-220",
+    "kind": "drink",
+    "name": "Bạc xỉu",
+    "category": "Thức uống",
+    "calories": 330,
+    "servingG": 300,
+    "kcalMin": 260,
+    "kcalMax": 400,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-218",
+    "kind": "drink",
+    "name": "Cà phê đen không đường",
+    "category": "Thức uống",
+    "calories": 0,
+    "servingG": 250,
+    "kcalMin": 0,
+    "kcalMax": 0,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-491",
+    "kind": "drink",
+    "name": "Cà phê kem cheese",
+    "category": "Thức uống",
+    "calories": 380,
+    "servingG": 350,
+    "kcalMin": 266,
+    "kcalMax": 494,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": true
+  },
+  {
+    "id": "vn-dish-221",
+    "kind": "drink",
+    "name": "Cà phê muối",
+    "category": "Thức uống",
+    "calories": 320,
+    "servingG": 300,
+    "kcalMin": 250,
+    "kcalMax": 390,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-489",
+    "kind": "drink",
+    "name": "Cà phê sữa dừa",
+    "category": "Thức uống",
+    "calories": 300,
+    "servingG": 350,
+    "kcalMin": 210,
+    "kcalMax": 390,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-219",
+    "kind": "drink",
+    "name": "Cà phê sữa đá",
+    "category": "Thức uống",
+    "calories": 270,
+    "servingG": 300,
+    "kcalMin": 220,
+    "kcalMax": 320,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-488",
+    "kind": "drink",
+    "name": "Cà phê sữa nóng",
+    "category": "Thức uống",
+    "calories": 130,
+    "servingG": 180,
+    "kcalMin": 91,
+    "kcalMax": 169,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-490",
+    "kind": "drink",
+    "name": "Cà phê trứng",
+    "category": "Thức uống",
+    "calories": 260,
+    "servingG": 250,
+    "kcalMin": 182,
+    "kcalMax": 338,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-229",
+    "kind": "drink",
+    "name": "Chocolate đá",
+    "category": "Thức uống",
+    "calories": 340,
+    "servingG": 400,
+    "kcalMin": 270,
+    "kcalMax": 410,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-228",
+    "kind": "drink",
+    "name": "Matcha đá xay",
+    "category": "Thức uống",
+    "calories": 470,
+    "servingG": 450,
+    "kcalMin": 350,
+    "kcalMax": 590,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-227",
+    "kind": "drink",
+    "name": "Matcha latte",
+    "category": "Thức uống",
+    "calories": 280,
+    "servingG": 400,
+    "kcalMin": 220,
+    "kcalMax": 340,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-502",
+    "kind": "drink",
+    "name": "Matcha latte dừa",
+    "category": "Thức uống",
+    "calories": 320,
+    "servingG": 350,
+    "kcalMin": 224,
+    "kcalMax": 416,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-501",
+    "kind": "drink",
+    "name": "Matcha latte nóng",
+    "category": "Thức uống",
+    "calories": 240,
+    "servingG": 300,
+    "kcalMin": 168,
+    "kcalMax": 312,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-230",
+    "kind": "drink",
+    "name": "Nước cam",
+    "category": "Thức uống",
+    "calories": 140,
+    "servingG": 300,
+    "kcalMin": 120,
+    "kcalMax": 160,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-239",
+    "kind": "drink",
+    "name": "Nước dừa tươi",
+    "category": "Thức uống",
+    "calories": 80,
+    "servingG": 400,
+    "kcalMin": 70,
+    "kcalMax": 90,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-233",
+    "kind": "drink",
+    "name": "Nước ép cà rốt",
+    "category": "Thức uống",
+    "calories": 120,
+    "servingG": 300,
+    "kcalMin": 100,
+    "kcalMax": 140,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-509",
+    "kind": "drink",
+    "name": "Nước ép cần tây",
+    "category": "Thức uống",
+    "calories": 110,
+    "servingG": 400,
+    "kcalMin": 77,
+    "kcalMax": 143,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-231",
+    "kind": "drink",
+    "name": "Nước ép dưa hấu",
+    "category": "Thức uống",
+    "calories": 90,
+    "servingG": 300,
+    "kcalMin": 80,
+    "kcalMax": 100,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-232",
+    "kind": "drink",
+    "name": "Nước ép ổi",
+    "category": "Thức uống",
+    "calories": 140,
+    "servingG": 300,
+    "kcalMin": 110,
+    "kcalMax": 170,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-508",
+    "kind": "drink",
+    "name": "Nước ép táo",
+    "category": "Thức uống",
+    "calories": 220,
+    "servingG": 400,
+    "kcalMin": 154,
+    "kcalMax": 286,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-507",
+    "kind": "drink",
+    "name": "Nước ép thơm",
+    "category": "Thức uống",
+    "calories": 190,
+    "servingG": 400,
+    "kcalMin": 133,
+    "kcalMax": 247,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-238",
+    "kind": "drink",
+    "name": "Nước mía",
+    "category": "Thức uống",
+    "calories": 300,
+    "servingG": 400,
+    "kcalMin": 230,
+    "kcalMax": 370,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-240",
+    "kind": "drink",
+    "name": "Nước ngọt có gas lon 330ml",
+    "category": "Thức uống",
+    "calories": 140,
+    "servingG": 330,
+    "kcalMin": 130,
+    "kcalMax": 150,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-241",
+    "kind": "drink",
+    "name": "Nước tăng lực lon 250ml",
+    "category": "Thức uống",
+    "calories": 110,
+    "servingG": 250,
+    "kcalMin": 100,
+    "kcalMax": 120,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-234",
+    "kind": "drink",
+    "name": "Sinh tố bơ",
+    "category": "Thức uống",
+    "calories": 420,
+    "servingG": 400,
+    "kcalMin": 330,
+    "kcalMax": 510,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": true
+  },
+  {
+    "id": "vn-dish-237",
+    "kind": "drink",
+    "name": "Sinh tố chuối",
+    "category": "Thức uống",
+    "calories": 380,
+    "servingG": 400,
+    "kcalMin": 300,
+    "kcalMax": 460,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-236",
+    "kind": "drink",
+    "name": "Sinh tố dâu",
+    "category": "Thức uống",
+    "calories": 320,
+    "servingG": 400,
+    "kcalMin": 250,
+    "kcalMax": 390,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-506",
+    "kind": "drink",
+    "name": "Sinh tố dừa",
+    "category": "Thức uống",
+    "calories": 350,
+    "servingG": 450,
+    "kcalMin": 245,
+    "kcalMax": 455,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-504",
+    "kind": "drink",
+    "name": "Sinh tố mãng cầu",
+    "category": "Thức uống",
+    "calories": 360,
+    "servingG": 450,
+    "kcalMin": 252,
+    "kcalMax": 468,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-505",
+    "kind": "drink",
+    "name": "Sinh tố sapoche",
+    "category": "Thức uống",
+    "calories": 400,
+    "servingG": 450,
+    "kcalMin": 280,
+    "kcalMax": 520,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-235",
+    "kind": "drink",
+    "name": "Sinh tố xoài",
+    "category": "Thức uống",
+    "calories": 360,
+    "servingG": 400,
+    "kcalMin": 280,
+    "kcalMax": 440,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-503",
+    "kind": "drink",
+    "name": "Socola nóng",
+    "category": "Thức uống",
+    "calories": 260,
+    "servingG": 300,
+    "kcalMin": 182,
+    "kcalMax": 338,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-511",
+    "kind": "drink",
+    "name": "Sữa tươi có đường 250ml",
+    "category": "Thức uống",
+    "calories": 180,
+    "servingG": 250,
+    "kcalMin": 126,
+    "kcalMax": 234,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-510",
+    "kind": "drink",
+    "name": "Sữa tươi không đường 250ml",
+    "category": "Thức uống",
+    "calories": 150,
+    "servingG": 250,
+    "kcalMin": 105,
+    "kcalMax": 195,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-500",
+    "kind": "drink",
+    "name": "Sữa tươi trân châu đường đen",
+    "category": "Thức uống",
+    "calories": 430,
+    "servingG": 500,
+    "kcalMin": 301,
+    "kcalMax": 559,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-224",
+    "kind": "drink",
+    "name": "Trà chanh",
+    "category": "Thức uống",
+    "calories": 250,
+    "servingG": 500,
+    "kcalMin": 190,
+    "kcalMax": 310,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-497",
+    "kind": "drink",
+    "name": "Trà chanh dây",
+    "category": "Thức uống",
+    "calories": 180,
+    "servingG": 400,
+    "kcalMin": 126,
+    "kcalMax": 234,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-499",
+    "kind": "drink",
+    "name": "Trà dâu",
+    "category": "Thức uống",
+    "calories": 280,
+    "servingG": 500,
+    "kcalMin": 196,
+    "kcalMax": 364,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-222",
+    "kind": "drink",
+    "name": "Trà đào cam sả",
+    "category": "Thức uống",
+    "calories": 220,
+    "servingG": 500,
+    "kcalMin": 160,
+    "kcalMax": 280,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-226",
+    "kind": "drink",
+    "name": "Trà sữa ít đường",
+    "category": "Thức uống",
+    "calories": 400,
+    "servingG": 500,
+    "kcalMin": 300,
+    "kcalMax": 500,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-494",
+    "kind": "drink",
+    "name": "Trà sữa khoai môn",
+    "category": "Thức uống",
+    "calories": 460,
+    "servingG": 500,
+    "kcalMin": 322,
+    "kcalMax": 598,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-492",
+    "kind": "drink",
+    "name": "Trà sữa matcha",
+    "category": "Thức uống",
+    "calories": 420,
+    "servingG": 500,
+    "kcalMin": 294,
+    "kcalMax": 546,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-495",
+    "kind": "drink",
+    "name": "Trà sữa ô long",
+    "category": "Thức uống",
+    "calories": 430,
+    "servingG": 500,
+    "kcalMin": 301,
+    "kcalMax": 559,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-493",
+    "kind": "drink",
+    "name": "Trà sữa socola",
+    "category": "Thức uống",
+    "calories": 450,
+    "servingG": 500,
+    "kcalMin": 315,
+    "kcalMax": 585,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-225",
+    "kind": "drink",
+    "name": "Trà sữa trân châu",
+    "category": "Thức uống",
+    "calories": 550,
+    "servingG": 500,
+    "kcalMin": 410,
+    "kcalMax": 690,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-223",
+    "kind": "drink",
+    "name": "Trà tắc",
+    "category": "Thức uống",
+    "calories": 280,
+    "servingG": 500,
+    "kcalMin": 210,
+    "kcalMax": 350,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-496",
+    "kind": "drink",
+    "name": "Trà tắc mật ong",
+    "category": "Thức uống",
+    "calories": 160,
+    "servingG": 400,
+    "kcalMin": 112,
+    "kcalMax": 208,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
+    "id": "vn-dish-498",
+    "kind": "drink",
+    "name": "Trà vải",
+    "category": "Thức uống",
+    "calories": 260,
+    "servingG": 500,
+    "kcalMin": 182,
+    "kcalMax": 338,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "Thấp-Trung bình",
+    "isReferenceOnly": false
+  },
+  {
     "id": "vn-dish-212",
     "kind": "fruit",
     "name": "Bưởi 300g",
     "category": "Trái cây",
     "calories": 130,
     "servingG": 300,
+    "kcalMin": 120,
+    "kcalMax": 140,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-544",
@@ -17,9 +692,12 @@
     "category": "Trái cây",
     "calories": 195,
     "servingG": 500,
+    "kcalMin": 176,
+    "kcalMax": 215,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-203",
@@ -28,9 +706,12 @@
     "category": "Trái cây",
     "calories": 80,
     "servingG": 180,
+    "kcalMin": 70,
+    "kcalMax": 90,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-545",
@@ -39,9 +720,12 @@
     "category": "Trái cây",
     "calories": 94,
     "servingG": 200,
+    "kcalMin": 85,
+    "kcalMax": 103,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-216",
@@ -50,9 +734,12 @@
     "category": "Trái cây",
     "calories": 150,
     "servingG": 200,
+    "kcalMin": 130,
+    "kcalMax": 170,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-201",
@@ -61,9 +748,12 @@
     "category": "Trái cây",
     "calories": 110,
     "servingG": 120,
+    "kcalMin": 100,
+    "kcalMax": 120,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-532",
@@ -72,9 +762,12 @@
     "category": "Trái cây",
     "calories": 90,
     "servingG": 100,
+    "kcalMin": 81,
+    "kcalMax": 99,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-209",
@@ -83,9 +776,12 @@
     "category": "Trái cây",
     "calories": 60,
     "servingG": 200,
+    "kcalMin": 50,
+    "kcalMax": 70,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-537",
@@ -94,9 +790,12 @@
     "category": "Trái cây",
     "calories": 70,
     "servingG": 200,
+    "kcalMin": 63,
+    "kcalMax": 77,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-207",
@@ -105,9 +804,12 @@
     "category": "Trái cây",
     "calories": 90,
     "servingG": 300,
+    "kcalMin": 80,
+    "kcalMax": 100,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-543",
@@ -116,9 +818,12 @@
     "category": "Trái cây",
     "calories": 150,
     "servingG": 500,
+    "kcalMin": 135,
+    "kcalMax": 165,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-536",
@@ -127,9 +832,12 @@
     "category": "Trái cây",
     "calories": 68,
     "servingG": 200,
+    "kcalMin": 61,
+    "kcalMax": 75,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-217",
@@ -138,9 +846,12 @@
     "category": "Trái cây",
     "calories": 350,
     "servingG": 100,
+    "kcalMin": 300,
+    "kcalMax": 400,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "unknown"
+    "confidence": "Trung bình",
+    "isReferenceOnly": true
   },
   {
     "id": "vn-dish-211",
@@ -149,9 +860,12 @@
     "category": "Trái cây",
     "calories": 100,
     "servingG": 180,
+    "kcalMin": 90,
+    "kcalMax": 110,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-533",
@@ -160,9 +874,12 @@
     "category": "Trái cây",
     "calories": 66,
     "servingG": 100,
+    "kcalMin": 59,
+    "kcalMax": 73,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-213",
@@ -171,9 +888,12 @@
     "category": "Trái cây",
     "calories": 130,
     "servingG": 200,
+    "kcalMin": 110,
+    "kcalMax": 150,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-541",
@@ -182,9 +902,12 @@
     "category": "Trái cây",
     "calories": 146,
     "servingG": 200,
+    "kcalMin": 131,
+    "kcalMax": 161,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-215",
@@ -193,9 +916,12 @@
     "category": "Trái cây",
     "calories": 190,
     "servingG": 200,
+    "kcalMin": 170,
+    "kcalMax": 210,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-538",
@@ -204,9 +930,12 @@
     "category": "Trái cây",
     "calories": 124,
     "servingG": 200,
+    "kcalMin": 112,
+    "kcalMax": 136,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-210",
@@ -215,9 +944,12 @@
     "category": "Trái cây",
     "calories": 140,
     "servingG": 200,
+    "kcalMin": 120,
+    "kcalMax": 160,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-206",
@@ -226,9 +958,12 @@
     "category": "Trái cây",
     "calories": 140,
     "servingG": 200,
+    "kcalMin": 120,
+    "kcalMax": 160,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-204",
@@ -237,9 +972,12 @@
     "category": "Trái cây",
     "calories": 80,
     "servingG": 160,
+    "kcalMin": 70,
+    "kcalMax": 90,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-540",
@@ -248,9 +986,12 @@
     "category": "Trái cây",
     "calories": 52,
     "servingG": 200,
+    "kcalMin": 47,
+    "kcalMax": 57,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-214",
@@ -259,9 +1000,12 @@
     "category": "Trái cây",
     "calories": 150,
     "servingG": 100,
+    "kcalMin": 130,
+    "kcalMax": 170,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-202",
@@ -270,9 +1014,12 @@
     "category": "Trái cây",
     "calories": 90,
     "servingG": 180,
+    "kcalMin": 80,
+    "kcalMax": 100,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-546",
@@ -281,9 +1028,12 @@
     "category": "Trái cây",
     "calories": 104,
     "servingG": 200,
+    "kcalMin": 94,
+    "kcalMax": 114,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-208",
@@ -292,9 +1042,12 @@
     "category": "Trái cây",
     "calories": 120,
     "servingG": 250,
+    "kcalMin": 110,
+    "kcalMax": 130,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-542",
@@ -303,9 +1056,12 @@
     "category": "Trái cây",
     "calories": 135,
     "servingG": 250,
+    "kcalMin": 122,
+    "kcalMax": 148,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-539",
@@ -314,9 +1070,12 @@
     "category": "Trái cây",
     "calories": 132,
     "servingG": 200,
+    "kcalMin": 119,
+    "kcalMax": 145,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-205",
@@ -325,9 +1084,12 @@
     "category": "Trái cây",
     "calories": 120,
     "servingG": 200,
+    "kcalMin": 110,
+    "kcalMax": 130,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-534",
@@ -336,9 +1098,12 @@
     "category": "Trái cây",
     "calories": 120,
     "servingG": 200,
+    "kcalMin": 108,
+    "kcalMax": 132,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   },
   {
     "id": "vn-dish-535",
@@ -347,8 +1112,11 @@
     "category": "Trái cây",
     "calories": 120,
     "servingG": 200,
+    "kcalMin": 108,
+    "kcalMax": 132,
     "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
     "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
-    "confidence": "verified"
+    "confidence": "Trung bình",
+    "isReferenceOnly": false
   }
 ]

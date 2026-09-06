@@ -1,13 +1,12 @@
 {
-  "version": 1,
-  "generatedAt": "2026-09-06T17:11:23.197Z",
-  "sourceFiles": [
-    "nocnom_nutrition_knowledge_v2.json"
-  ],
+  "version": 2,
+  "generatedAt": "2026-09-06T18:02:52.454Z",
+  "sourceFile": "nocnom_nutrition_knowledge.json",
   "sourceRecordCount": 590,
-  "lookupKeyCount": 745,
-  "shardCount": 241,
-  "addonCount": 32,
-  "invalidRecordCount": 0,
-  "invalidRecords": []
+  "portionRecordCount": 1770,
+  "ingredientRecordCount": 61,
+  "addonCount": 80,
+  "domainCount": 4,
+  "categoryCount": 16,
+  "status": "PASS"
 }

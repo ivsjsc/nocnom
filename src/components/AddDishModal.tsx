@@ -20,6 +20,10 @@ import {
   type NutritionLookupResult
 } from '../lib/nutritionKnowledge';
 import {
+  nutritionService,
+  type NutritionSearchResult
+} from '../services/nutrition';
+import {
   searchFoodImages,
   type FoodImageCandidate
 } from '../lib/imageSearch';
@@ -55,6 +59,9 @@ export default function AddDishModal({
   const [analysisError, setAnalysisError] = useState('');
   const [saveError, setSaveError] = useState('');
 
+  const [suggestions, setSuggestions] = useState<NutritionSearchResult[]>([]);
+  const [selectedPortionSize, setSelectedPortionSize] = useState<'S' | 'M' | 'L'>('M');
+
   const selectedImage = useMemo(
     () => images.find(item => item.id === selectedImageId),
     [images, selectedImageId]
@@ -69,6 +76,7 @@ export default function AddDishModal({
     const query = foodName.trim();
     if (query.length < 2) {
       setNutrition(null);
+      setSuggestions([]);
       setImages([]);
       setSelectedImageId('');
       setAnalysisError('');
@@ -79,11 +87,13 @@ export default function AddDishModal({
     setAnalysisError('');
 
     try {
-      const [nutritionResult, imageResults] = await Promise.all([
+      const [nutritionResult, searchResults, imageResults] = await Promise.all([
         lookupNutrition(query),
+        nutritionService.searchFoods(query, { limit: 5 }),
         searchFoodImages(query, 6)
       ]);
       setNutrition(nutritionResult);
+      setSuggestions(searchResults);
       setImages(imageResults);
       setSelectedImageId(current =>
         imageResults.some(item => item.id === current) ? current : ''
@@ -108,13 +118,15 @@ export default function AddDishModal({
     let active = true;
     const timer = window.setTimeout(() => {
       void (async () => {
-        const [nutritionResult, imageResults] = await Promise.all([
+        const [nutritionResult, searchResults, imageResults] = await Promise.all([
           lookupNutrition(query),
+          nutritionService.searchFoods(query, { limit: 5 }),
           searchFoodImages(query, 6)
         ]);
 
         if (!active) return;
         setNutrition(nutritionResult);
+        setSuggestions(searchResults);
         setImages(imageResults);
         setSelectedImageId('');
         setAnalysisError('');
@@ -272,24 +284,107 @@ export default function AddDishModal({
               </button>
             </div>
 
+            {suggestions.length > 0 && name.trim().length >= 2 && (
+              <div className="mt-3 space-y-1.5">
+                <div className="text-[10px] font-black uppercase text-slate-500">
+                  Gợi ý từ Nutrition Knowledge Base:
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {suggestions.map(sug => {
+                    const isSelected = sug.food.id === nutrition?.record.id;
+                    return (
+                      <button
+                        key={sug.food.id}
+                        type="button"
+                        onClick={() => {
+                          setName(sug.food.name);
+                          void analyze(sug.food.name);
+                        }}
+                        className={
+                          'px-2.5 py-1 rounded-xl text-xs font-semibold border transition-all ' +
+                          (isSelected
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300')
+                        }
+                      >
+                        {sug.food.name}
+                        <span className="ml-1.5 text-[10px] opacity-75">
+                          ≈ {sug.food.energy.kcal_typical} kcal
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {nutrition ? (
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-3">
-                  <div className="text-[10px] font-black uppercase text-emerald-700">Calo tự động</div>
-                  <div className="mt-1 text-lg font-black text-emerald-900">
-                    ≈ {nutrition.calories} kcal
+              <div className="mt-3 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-3">
+                    <div className="text-[10px] font-black uppercase text-emerald-700">Calo tự động</div>
+                    <div className="mt-1 text-lg font-black text-emerald-900">
+                      ≈ {(() => {
+                        const portion = nutrition.portions?.find(p => p.portion_size === selectedPortionSize);
+                        return portion?.kcal_typical ?? nutrition.calories;
+                      })()} kcal
+                    </div>
+                    <div className="text-[10px] font-bold text-emerald-700">
+                      {nutrition.kcalMin && nutrition.kcalMax
+                        ? `Khoảng ${nutrition.kcalMin}–${nutrition.kcalMax} kcal`
+                        : '/ khẩu phần chuẩn'}
+                    </div>
                   </div>
-                  <div className="text-[10px] font-bold text-emerald-700">/ khẩu phần chuẩn</div>
+                  <div className="rounded-2xl bg-blue-50 border border-blue-100 p-3">
+                    <div className="text-[10px] font-black uppercase text-blue-700">Danh mục dữ liệu</div>
+                    <div className="mt-1 text-sm font-black text-blue-950">
+                      {nutrition.record.category || 'Món ăn'}
+                    </div>
+                    <div className="mt-1 text-[10px] font-bold text-blue-700">
+                      Độ tin cậy: {nutrition.record.confidence}
+                      {nutrition.record.isReferenceOnly && (
+                        <span className="ml-1 text-amber-700 font-extrabold">(Tham khảo)</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-2xl bg-blue-50 border border-blue-100 p-3">
-                  <div className="text-[10px] font-black uppercase text-blue-700">Danh mục dữ liệu</div>
-                  <div className="mt-1 text-sm font-black text-blue-950">
-                    {nutrition.record.category || 'Món ăn'}
+
+                {nutrition.portions && nutrition.portions.length > 0 && (
+                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3">
+                    <div className="text-[10px] font-black uppercase tracking-wide text-slate-500 mb-1.5">
+                      Khẩu phần món ăn (S / M / L):
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['S', 'M', 'L'] as const).map(size => {
+                        const portion = nutrition.portions?.find(p => p.portion_size === size);
+                        const isSelected = selectedPortionSize === size;
+                        return (
+                          <button
+                            key={size}
+                            type="button"
+                            onClick={() => setSelectedPortionSize(size)}
+                            className={
+                              'p-2 rounded-xl text-center border transition-all ' +
+                              (isSelected
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300')
+                            }
+                          >
+                            <div className="text-xs font-black">
+                              Size {size} {size === 'M' ? '(Chuẩn)' : ''}
+                            </div>
+                            <div className="text-[11px] font-bold mt-0.5">
+                              {portion ? `≈ ${portion.kcal_typical} kcal` : '—'}
+                            </div>
+                            <div className="text-[9px] opacity-75 mt-0.5">
+                              {portion ? `${portion.portion_g}g` : ''}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="mt-1 text-[10px] font-bold text-blue-700">
-                    {nutrition.record.confidence}
-                  </div>
-                </div>
+                )}
               </div>
             ) : name.trim().length >= 2 && !isAnalyzing ? (
               <div className="mt-3">

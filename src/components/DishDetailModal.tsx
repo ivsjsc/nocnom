@@ -15,6 +15,11 @@ import {
   loadNutritionAddons,
   type NutritionAddonOption
 } from '../lib/nutritionKnowledge';
+import {
+  nutritionService,
+  type NutritionPortion,
+  type NutritionFood
+} from '../services/nutrition';
 
 type Props = {
   dish: Dish;
@@ -38,10 +43,28 @@ export default function DishDetailModal({
     drinkId: ''
   });
   const [nutritionAddons, setNutritionAddons] = useState<NutritionAddonOption[]>([]);
+  const [portions, setPortions] = useState<NutritionPortion[]>([]);
+  const [canonicalFood, setCanonicalFood] = useState<NutritionFood | null>(null);
 
   useEffect(() => {
     void loadNutritionAddons().then(setNutritionAddons);
-  }, []);
+
+    if (dish.nutritionRecordId) {
+      void nutritionService.getFoodById(dish.nutritionRecordId).then(food => {
+        if (food) {
+          setCanonicalFood(food);
+          void nutritionService.getPortions(food.id).then(setPortions);
+        }
+      });
+    } else {
+      void nutritionService.searchFoods(dish.name, { limit: 1 }).then(results => {
+        if (results.length > 0) {
+          setCanonicalFood(results[0].food);
+          void nutritionService.getPortions(results[0].food.id).then(setPortions);
+        }
+      });
+    }
+  }, [dish]);
 
   const handleSwap = (newDishId: string) => {
     mockDb.swapDish(day, comboKey, newDishId);
@@ -150,6 +173,59 @@ export default function DishDetailModal({
                 onChange={setAddonSelection}
                 compact
               />
+            </div>
+          )}
+
+          {canonicalFood && (
+            <div className="rounded-[22px] border border-blue-100 bg-white p-4 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">
+                  Nutrition Knowledge Base
+                </div>
+                <div className="text-[10px] font-bold text-slate-500">
+                  {canonicalFood.confidence.label_vi}
+                </div>
+              </div>
+
+              {canonicalFood.energy.kcal_min && canonicalFood.energy.kcal_max && (
+                <div className="text-xs text-slate-600 font-semibold">
+                  Mức calo tham chiếu:{' '}
+                  <span className="font-black text-slate-950">
+                    {canonicalFood.energy.kcal_min}–{canonicalFood.energy.kcal_max} kcal
+                  </span>
+                  {canonicalFood.energy.kcal_per_100g && (
+                    <span className="text-slate-500 ml-1.5">
+                      (≈ {canonicalFood.energy.kcal_per_100g} kcal / 100g)
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {portions.length > 0 && (
+                <div className="pt-2 border-t border-slate-100">
+                  <div className="text-[10px] font-black uppercase tracking-wide text-slate-500 mb-2">
+                    Khẩu phần định lượng (S / M / L):
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {portions.map(p => (
+                      <div
+                        key={p.id}
+                        className="rounded-xl border border-slate-200 bg-slate-50/80 p-2 text-center"
+                      >
+                        <div className="text-[11px] font-black text-slate-900">
+                          {p.portion_size} ({p.label_vi})
+                        </div>
+                        <div className="text-xs font-black text-blue-600 mt-0.5">
+                          ≈ {p.kcal_typical} kcal
+                        </div>
+                        <div className="text-[9px] text-slate-500 mt-0.5">
+                          {p.portion_g}g
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

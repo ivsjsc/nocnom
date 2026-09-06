@@ -10,6 +10,7 @@ import LogsPage from './components/LogsPage';
 import MenuPage from './components/MenuPage';
 import Login from './components/Login';
 import AuthModal from './components/AuthModal';
+import { nutritionService } from './services/nutrition';
 
 type Tab = 'home' | 'weekly' | 'logs' | 'menu';
 
@@ -37,6 +38,12 @@ export default function App() {
     document.documentElement.classList.toggle('dark', darkMode);
     localStorage.setItem('nocnom_theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
+
+  useEffect(() => {
+    void nutritionService.init().catch(err => {
+      console.warn('[NutritionService] Background pre-load error:', err);
+    });
+  }, []);
 
   useEffect(() => {
     return onAuthStateChanged(auth, user => {
