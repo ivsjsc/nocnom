@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { CalendarDays, Clock3, Home, Menu as MenuIcon, Moon, Sun } from 'lucide-react';
+import { CalendarDays, Clock3, Home, Menu as MenuIcon, Moon, RefreshCw, RotateCw, Sun, Sparkles } from 'lucide-react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import { isAuthPopupDismissed, signInWithGoogle } from './lib/auth';
+import { useVersionCheck } from './hooks/useVersionCheck';
 import HomePage from './components/HomePage';
 import WeeklyTable from './components/WeeklyTable';
 import LogsPage from './components/LogsPage';
@@ -16,10 +17,19 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [menuAuthLoading, setMenuAuthLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { hasNewVersion, reloadApp } = useVersionCheck(45000);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('nocnom_theme') || localStorage.getItem('unifood_theme');
     return saved ? saved === 'dark' : false;
   });
+
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
+  };
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -77,6 +87,24 @@ export default function App() {
 
   return (
     <div className={'app-shell min-h-screen transition-colors ' + (darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-950')}>
+      {/* Banner khi có phiên bản mới */}
+      {hasNewVersion && (
+        <div className="sticky top-0 z-50 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2.5 shadow-lg flex items-center justify-between text-xs sm:text-sm font-medium animate-pulse">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 shrink-0 text-yellow-300" />
+            <span>Đã có phiên bản nOcnOm mới nhất!</span>
+          </div>
+          <button
+            type="button"
+            onClick={reloadApp}
+            className="bg-white text-blue-700 px-3 py-1 rounded-full font-bold shadow hover:bg-blue-50 transition-all flex items-center gap-1 shrink-0"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Cập nhật ngay
+          </button>
+        </div>
+      )}
+
       <header className={'app-header sticky top-0 z-40 border-b backdrop-blur-xl ' + (darkMode ? 'bg-slate-950/92 border-slate-800' : 'bg-white/94 border-slate-100')}>
         <div className="app-container h-[78px] flex items-center justify-between">
           <button
@@ -85,7 +113,6 @@ export default function App() {
             aria-label="Về Trang chủ nOcnOm"
             className="min-w-0 flex items-center gap-2.5 text-left rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
-            {/* Stable logo slot: replace public/brand/logo.svg with the final brand asset when available. */}
             <span className={'w-11 h-11 shrink-0 overflow-hidden rounded-2xl border shadow-sm ' + (darkMode ? 'border-slate-700 bg-slate-900' : 'border-blue-100 bg-blue-50')}>
               <img
                 src="/brand/logo.svg"
@@ -104,7 +131,16 @@ export default function App() {
             </span>
           </button>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleManualRefresh}
+              className={'touch-target rounded-2xl border flex items-center justify-center transition-all active:scale-95 ' + (darkMode ? 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white' : 'bg-blue-50 border-blue-100 text-blue-600 hover:bg-blue-100')}
+              aria-label="Làm mới trang"
+              title="Làm mới dữ liệu & tải lại ứng dụng"
+            >
+              <RotateCw className={'w-5 h-5 ' + (isRefreshing ? 'animate-spin text-blue-500' : '')} />
+            </button>
             <button
               type="button"
               onClick={() => setDarkMode(value => !value)}
@@ -160,3 +196,4 @@ export default function App() {
     </div>
   );
 }
+
