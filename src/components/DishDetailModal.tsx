@@ -112,6 +112,22 @@ export default function DishDetailModal({
           </div>
         </div>
 
+        {dish.imageSourceUrl && (
+          <div className="shrink-0 border-b border-slate-100 bg-white px-4 py-2 text-[10px] text-slate-500">
+            Ảnh:{' '}
+            <a
+              href={getSafeExternalUrl(dish.imageSourceUrl) || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-blue-600"
+            >
+              {dish.imageSource === 'wikimedia-commons' ? 'Wikimedia Commons' : 'Nguồn ảnh'}
+            </a>
+            {dish.imageLicense ? ' · ' + dish.imageLicense : ''}
+            {dish.imageAttribution ? ' · ' + dish.imageAttribution : ''}
+          </div>
+        )}
+
         <div className="p-4 overflow-y-auto bg-slate-50 space-y-4">
           {isSelectable && (
             <button
