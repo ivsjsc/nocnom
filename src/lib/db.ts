@@ -29,15 +29,20 @@ export type NewVendorInput = {
 
 export type DishImageReference = {
   url: string;
-  source: 'wikimedia-commons' | 'manual';
+  source: 'wikimedia-commons' | 'manual' | 'firebase-storage';
   sourcePageUrl?: string;
   license?: string;
   attribution?: string;
+  storagePath?: string;
+  contentType?: string;
+  size?: number;
+  updatedAt?: number;
 };
 
 export type AddDishOptions = {
   image?: DishImageReference;
   vendors?: NewVendorInput[];
+  dishId?: string;
 };
 
 export type Dish = {
@@ -50,6 +55,10 @@ export type Dish = {
   imageSourceUrl?: string;
   imageLicense?: string;
   imageAttribution?: string;
+  imagePath?: string;
+  imageContentType?: string;
+  imageSize?: number;
+  imageUpdatedAt?: number;
   calories?: number;
   calorieSource?: 'manual' | 'knowledge';
   calorieBasis?: 'serving' | '100g';
@@ -306,15 +315,19 @@ const createLocalId = (prefix: string) => {
   return prefix + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
 };
 
-const saveToLocalStorage = () => {
+const writeLocalCache = () => {
   try {
     localStorage.setItem('nocnom_timetable', JSON.stringify(dbData));
     localStorage.setItem('nocnom_dishes', JSON.stringify(dishesData));
     localStorage.setItem('nocnom_categories', JSON.stringify(categoriesData));
     localStorage.setItem('nocnom_logs', JSON.stringify(logsData));
-  } catch (e) {
-    console.error("Error saving to localStorage", e);
+  } catch (error) {
+    console.error('[local-cache] Unable to persist app state', error);
   }
+};
+
+const saveToLocalStorage = () => {
+  writeLocalCache();
   scheduleCloudSync();
 };
 
@@ -330,6 +343,53 @@ const notifyAllListeners = () => {
   logListeners.forEach(l => l(logsData));
 };
 
+const userStatePayload = () => ({
+  timetable: dbData,
+  dishes: dishesData,
+  categories: categoriesData,
+  logs: logsData,
+  updatedAt: serverTimestamp()
+});
+
+const logFirestoreError = (
+  operation: string,
+  error: unknown,
+  uid: string | null
+) => {
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error
+      ? String((error as { code?: unknown }).code || 'unknown')
+      : 'unknown';
+
+  console.error('[firestore]', {
+    operation,
+    code,
+    message: error instanceof Error ? error.message : String(error),
+    path: uid ? `users/${uid}/data/appState` : null,
+    uid
+  });
+};
+
+export const persistUserStateNow = async () => {
+  if (!currentSyncUid) {
+    throw new Error('Chưa có phiên người dùng để đồng bộ Firestore.');
+  }
+
+  const uid = currentSyncUid;
+  if (syncDebounceTimer) {
+    clearTimeout(syncDebounceTimer);
+    syncDebounceTimer = null;
+  }
+
+  try {
+    const userStateDoc = doc(db, 'users', uid, 'data', 'appState');
+    await setDoc(userStateDoc, userStatePayload(), { merge: true });
+  } catch (error) {
+    logFirestoreError('persist-app-state', error, uid);
+    throw error;
+  }
+};
+
 const scheduleCloudSync = () => {
   if (!currentSyncUid || isRemoteUpdating) return;
 
@@ -339,18 +399,10 @@ const scheduleCloudSync = () => {
 
   syncDebounceTimer = setTimeout(async () => {
     if (!currentSyncUid || isRemoteUpdating) return;
-    const uid = currentSyncUid;
     try {
-      const userStateDoc = doc(db, 'users', uid, 'data', 'appState');
-      await setDoc(userStateDoc, {
-        timetable: dbData,
-        dishes: dishesData,
-        categories: categoriesData,
-        logs: logsData,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-    } catch (err) {
-      console.error('Không thể đồng bộ dữ liệu lên Firestore:', err);
+      await persistUserStateNow();
+    } catch {
+      // persistUserStateNow already logged technical details.
     }
   }, 800);
 };
@@ -646,6 +698,10 @@ const applyDishImage = (
     imageSourceUrl: _imageSourceUrl,
     imageLicense: _imageLicense,
     imageAttribution: _imageAttribution,
+    imagePath: _imagePath,
+    imageContentType: _imageContentType,
+    imageSize: _imageSize,
+    imageUpdatedAt: _imageUpdatedAt,
     ...rest
   } = dish;
 
@@ -653,6 +709,14 @@ const applyDishImage = (
     ...rest,
     imageUrl: normalizedImageUrl,
     imageSource: image.source,
+    ...(image.source === 'firebase-storage' && image.storagePath
+      ? {
+          imagePath: image.storagePath,
+          imageContentType: image.contentType,
+          imageSize: image.size,
+          imageUpdatedAt: image.updatedAt ?? Date.now()
+        }
+      : {}),
     ...(image.sourcePageUrl?.trim()
       ? { imageSourceUrl: image.sourcePageUrl.trim() }
       : {}),
@@ -838,7 +902,7 @@ export const mockDb = {
     if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
-  updateDishImage: (id: string, imageUrl: string) => {
+  updateDishImage: async (id: string, imageUrl: string) => {
     const trimmed = imageUrl.trim();
     const normalized = trimmed ? normalizeExternalImageUrl(trimmed) : null;
 
@@ -846,6 +910,7 @@ export const mockDb = {
       throw new Error('URL hình ảnh không hợp lệ. Chỉ hỗ trợ URL http/https.');
     }
 
+    const previous = dishesData;
     dishesData = dishesData.map(dish => {
       if (dish.id !== id) return dish;
 
@@ -853,6 +918,10 @@ export const mockDb = {
         imageSourceUrl: _imageSourceUrl,
         imageLicense: _imageLicense,
         imageAttribution: _imageAttribution,
+        imagePath: _imagePath,
+        imageContentType: _imageContentType,
+        imageSize: _imageSize,
+        imageUpdatedAt: _imageUpdatedAt,
         ...rest
       } = dish;
 
@@ -862,8 +931,17 @@ export const mockDb = {
         imageSource: 'manual'
       };
     });
-    saveToLocalStorage();
+    writeLocalCache();
     dishListeners.forEach(l => l(dishesData));
+
+    try {
+      await persistUserStateNow();
+    } catch (error) {
+      dishesData = previous;
+      writeLocalCache();
+      dishListeners.forEach(l => l(dishesData));
+      throw error;
+    }
   },
   updateDishCalories: (id: string, calories: number) => {
     dishesData = dishesData.map(d =>
@@ -1050,8 +1128,19 @@ export const mockDb = {
       dishesData = dishesData.map((dish, index) =>
         index === existingIndex ? updated : dish
       );
-      saveToLocalStorage();
+      writeLocalCache();
       dishListeners.forEach(listener => listener(dishesData));
+
+      try {
+        await persistUserStateNow();
+      } catch (error) {
+        dishesData = dishesData.map((dish, index) =>
+          index === existingIndex ? current : dish
+        );
+        writeLocalCache();
+        dishListeners.forEach(listener => listener(dishesData));
+        throw error;
+      }
 
       return {
         dish: updated,
@@ -1061,7 +1150,7 @@ export const mockDb = {
     }
 
     let newDish: Dish = {
-      id: createLocalId('d'),
+      id: options.dishId || createLocalId('d'),
       name: cleanName,
       categoryId: resolvedCategoryId,
       isFavorite: false,
@@ -1081,8 +1170,17 @@ export const mockDb = {
     newDish = applyDishImage(newDish, options.image);
 
     dishesData = [...dishesData, newDish];
-    saveToLocalStorage();
+    writeLocalCache();
     dishListeners.forEach(listener => listener(dishesData));
+
+    try {
+      await persistUserStateNow();
+    } catch (error) {
+      dishesData = dishesData.filter(dish => dish.id !== newDish.id);
+      writeLocalCache();
+      dishListeners.forEach(listener => listener(dishesData));
+      throw error;
+    }
 
     return {
       dish: newDish,
