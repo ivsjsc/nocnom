@@ -26,6 +26,7 @@ jobs:
 
       - run: npm ci
       - run: npm run lint
+      - run: npm run firebase:audit
       - run: node --check scripts/deploy-firebase-rules.mjs
       - run: npm test
 
