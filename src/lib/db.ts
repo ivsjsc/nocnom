@@ -1,4 +1,4 @@
-import { lookupNutrition } from './nutritionKnowledge';
+import { lookupNutrition, normalizeFoodName } from './nutritionKnowledge';
 import { doc, getDoc, onSnapshot, setDoc, serverTimestamp, type Unsubscribe } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -18,12 +18,37 @@ export type Vendor = {
   extraInfo: VendorExtraInfo[];
 };
 
+export type NewVendorInput = {
+  name: string;
+  phone?: string;
+  address?: string;
+  price: number;
+  link?: string;
+};
+
+export type DishImageReference = {
+  url: string;
+  source: 'wikimedia-commons' | 'manual';
+  sourcePageUrl?: string;
+  license?: string;
+  attribution?: string;
+};
+
+export type AddDishOptions = {
+  image?: DishImageReference;
+  vendors?: NewVendorInput[];
+};
+
 export type Dish = {
   id: string;
   name: string;
   categoryId: string;
   isFavorite: boolean;
   imageUrl?: string;
+  imageSource?: DishImageReference['source'];
+  imageSourceUrl?: string;
+  imageLicense?: string;
+  imageAttribution?: string;
   calories?: number;
   calorieSource?: 'manual' | 'knowledge';
   calorieBasis?: 'serving' | '100g';
@@ -514,6 +539,119 @@ const hydrateMissingDishCalories = async () => {
   );
 };
 
+const canonicalNutritionCategoryName = (value: string) => {
+  const raw = value.trim();
+  const normalized = normalizeFoodName(raw);
+
+  if (!normalized) return '';
+  if (normalized === 'com' || normalized.includes('mon com')) return 'Cơm';
+  if (normalized.includes('do uong') || normalized.includes('thuc uong')) return 'Thức uống';
+  if (normalized.includes('trai cay')) return 'Trái cây';
+  if (normalized.includes('banh mi')) return 'Bánh mì & bánh mặn';
+  if (normalized.includes('bun') || normalized.includes('mien')) return 'Bún & miến';
+  if (normalized.includes('pho') || normalized.includes('mi nuoc')) return 'Phở & mì nước';
+  if (normalized.includes('an sang')) return 'Ăn sáng';
+  if (normalized.includes('hai san')) return 'Hải sản';
+  if (normalized.includes('xao') || normalized.includes('rau')) return 'Món xào & rau';
+  if (normalized.includes('canh') || normalized.includes('lau') || normalized.includes('sup')) return 'Canh, súp & lẩu';
+  if (normalized.includes('chay')) return 'Món chay';
+  if (normalized.includes('an vat') || normalized.includes('chien')) return 'Ăn vặt & món chiên';
+  if (normalized.includes('thuc an nhanh') || normalized.includes('quoc te')) return 'Thức ăn nhanh & món quốc tế';
+  if (normalized.includes('trang mieng') || normalized.includes('mon ngot') || normalized.includes('che')) return 'Tráng miệng & món ngọt';
+  if (normalized.includes('nguyen lieu') || normalized.includes('mon don')) return 'Nguyên liệu & món đơn';
+  if (normalized.includes('mon man')) return 'Món mặn';
+
+  return raw;
+};
+
+const ensureNutritionCategory = (categoryName: string, fallbackCategoryId: string) => {
+  const canonicalName = canonicalNutritionCategoryName(categoryName);
+  if (!canonicalName) return fallbackCategoryId;
+
+  const normalized = normalizeFoodName(canonicalName);
+  const existing = categoriesData.find(category =>
+    normalizeFoodName(category.name) === normalized
+  );
+  if (existing) return existing.id;
+
+  const newCategory: Category = {
+    id: createLocalId('c'),
+    name: canonicalName
+  };
+  categoriesData = [...categoriesData, newCategory];
+  categoryListeners.forEach(listener => listener(categoriesData));
+  return newCategory.id;
+};
+
+const mergeVendorInputs = (
+  current: Vendor[],
+  inputs: NewVendorInput[] = []
+): Vendor[] => {
+  const vendors = [...current];
+
+  inputs.forEach(input => {
+    const name = String(input.name ?? '').trim();
+    const address = String(input.address ?? '').trim();
+    const phone = String(input.phone ?? '').trim();
+    const link = String(input.link ?? '').trim();
+    const price = Number(input.price);
+
+    if (!name || !Number.isFinite(price) || price < 0) return;
+
+    const key = normalizeFoodName(name) + '|' + normalizeFoodName(address);
+    const existingIndex = vendors.findIndex(vendor =>
+      normalizeFoodName(vendor.name) + '|' + normalizeFoodName(vendor.address) === key
+    );
+
+    if (existingIndex >= 0) {
+      const existing = vendors[existingIndex];
+      vendors[existingIndex] = {
+        ...existing,
+        name,
+        price: Math.round(price),
+        phone: phone || existing.phone,
+        address: address || existing.address,
+        ...(link ? { link } : {})
+      };
+      return;
+    }
+
+    vendors.push({
+      id: createLocalId('v'),
+      name,
+      price: Math.round(price),
+      phone,
+      address,
+      ...(link ? { link } : {}),
+      extraInfo: []
+    });
+  });
+
+  return vendors;
+};
+
+const applyDishImage = (
+  dish: Dish,
+  image?: DishImageReference
+): Dish => {
+  if (!image?.url?.trim()) return dish;
+
+  return {
+    ...dish,
+    imageUrl: image.url.trim(),
+    imageSource: image.source,
+    ...(image.sourcePageUrl?.trim()
+      ? { imageSourceUrl: image.sourcePageUrl.trim() }
+      : {}),
+    ...(image.license?.trim()
+      ? { imageLicense: image.license.trim() }
+      : {}),
+    ...(image.attribution?.trim()
+      ? { imageAttribution: image.attribution.trim() }
+      : {})
+  };
+};
+
 
 const upsertMealLogData = ({
   dateKey,
@@ -831,14 +969,66 @@ export const mockDb = {
     saveToLocalStorage();
     dishListeners.forEach(l => l(dishesData));
   },
-  addDish: async (name: string, categoryId: string) => {
-    const normalizedName = name.trim();
-    const nutrition = await lookupNutrition(normalizedName);
+  addDish: async (
+    name: string,
+    categoryId: string,
+    options: AddDishOptions = {}
+  ) => {
+    const cleanName = name.trim();
+    if (!cleanName) {
+      throw new Error('Tên món không được để trống.');
+    }
 
-    const newDish: Dish = {
+    const nutrition = await lookupNutrition(cleanName);
+    const resolvedCategoryId = nutrition?.record.category
+      ? ensureNutritionCategory(nutrition.record.category, categoryId)
+      : categoryId;
+
+    const normalizedName = normalizeFoodName(cleanName);
+    const existingIndex = dishesData.findIndex(dish =>
+      normalizeFoodName(dish.name) === normalizedName
+    );
+
+    if (existingIndex >= 0) {
+      const current = dishesData[existingIndex];
+      const shouldUseKnowledge =
+        Boolean(nutrition) &&
+        current.calorieSource !== 'manual';
+
+      let updated: Dish = {
+        ...current,
+        categoryId: nutrition ? resolvedCategoryId : current.categoryId,
+        vendors: mergeVendorInputs(current.vendors, options.vendors),
+        ...(shouldUseKnowledge && nutrition
+          ? {
+              calories: nutrition.calories,
+              calorieSource: 'knowledge',
+              calorieBasis: nutrition.basis,
+              nutritionRecordId: nutrition.record.id,
+              nutritionConfidence: nutrition.record.confidence,
+              nutritionSource: nutrition.record.source
+            }
+          : {})
+      };
+
+      updated = applyDishImage(updated, options.image);
+      dishesData = dishesData.map((dish, index) =>
+        index === existingIndex ? updated : dish
+      );
+      saveToLocalStorage();
+      dishListeners.forEach(listener => listener(dishesData));
+
+      return {
+        dish: updated,
+        nutritionMatched: Boolean(nutrition),
+        created: false
+      };
+    }
+
+    let newDish: Dish = {
       id: createLocalId('d'),
-      name: normalizedName,
-      categoryId,
+      name: cleanName,
+      categoryId: resolvedCategoryId,
       isFavorite: false,
       ...(nutrition
         ? {
@@ -850,16 +1040,19 @@ export const mockDb = {
             nutritionSource: nutrition.record.source
           }
         : {}),
-      vendors: []
+      vendors: mergeVendorInputs([], options.vendors)
     };
+
+    newDish = applyDishImage(newDish, options.image);
 
     dishesData = [...dishesData, newDish];
     saveToLocalStorage();
-    dishListeners.forEach(l => l(dishesData));
+    dishListeners.forEach(listener => listener(dishesData));
 
     return {
       dish: newDish,
-      nutritionMatched: Boolean(nutrition)
+      nutritionMatched: Boolean(nutrition),
+      created: true
     };
   },
   addVendor: (dishId: string, name: string, price: number, phone: string, address: string) => {
