@@ -1,6 +1,7 @@
 import { lookupNutrition, normalizeFoodName } from './nutritionKnowledge';
 import { doc, getDoc, onSnapshot, setDoc, serverTimestamp, type Unsubscribe } from 'firebase/firestore';
 import { db } from './firebase';
+import { normalizeExternalImageUrl } from './url';
 
 export type VendorExtraInfo = {
   id: string;
@@ -636,9 +637,14 @@ const applyDishImage = (
 ): Dish => {
   if (!image?.url?.trim()) return dish;
 
+  const normalizedImageUrl = normalizeExternalImageUrl(image.url);
+  if (!normalizedImageUrl) {
+    throw new Error('URL hình ảnh không hợp lệ. Chỉ hỗ trợ URL http/https.');
+  }
+
   return {
     ...dish,
-    imageUrl: image.url.trim(),
+    imageUrl: normalizedImageUrl,
     imageSource: image.source,
     ...(image.sourcePageUrl?.trim()
       ? { imageSourceUrl: image.sourcePageUrl.trim() }
@@ -826,7 +832,18 @@ export const mockDb = {
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
   updateDishImage: (id: string, imageUrl: string) => {
-    dishesData = dishesData.map(d => d.id === id ? { ...d, imageUrl } : d);
+    const trimmed = imageUrl.trim();
+    const normalized = trimmed ? normalizeExternalImageUrl(trimmed) : null;
+
+    if (trimmed && !normalized) {
+      throw new Error('URL hình ảnh không hợp lệ. Chỉ hỗ trợ URL http/https.');
+    }
+
+    dishesData = dishesData.map(d =>
+      d.id === id
+        ? { ...d, imageUrl: normalized || undefined, imageSource: 'manual' }
+        : d
+    );
     saveToLocalStorage();
     dishListeners.forEach(l => l(dishesData));
   },
