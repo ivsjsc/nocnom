@@ -54,7 +54,15 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
 
     const newImage = window.prompt('URL hình ảnh:', dish.imageUrl || '');
     if (newImage !== null && newImage !== (dish.imageUrl || '')) {
-      mockDb.updateDishImage(dish.id, newImage.trim());
+      try {
+        mockDb.updateDishImage(dish.id, newImage.trim());
+      } catch (error) {
+        window.alert(
+          error instanceof Error
+            ? error.message
+            : 'URL hình ảnh không hợp lệ.'
+        );
+      }
     }
 
     const rawCalories = window.prompt(
