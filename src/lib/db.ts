@@ -435,7 +435,7 @@ const scheduleCloudSync = (
   syncDebounceTimer = setTimeout(async () => {
     if (!currentSyncUid || isRemoteUpdating) return;
     try {
-      await persistUserStateNow();
+      await persistUserStateNow(['dishes']);
     } catch {
       // persistUserStateNow already logged technical details.
     }
@@ -582,7 +582,7 @@ const hydrateDishCaloriesFromKnowledge = async (dishId: string, foodName: string
         : dish
     );
 
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(listener => listener(dishesData));
   } finally {
     nutritionHydrationPending.delete(dishId);
@@ -842,7 +842,7 @@ const upsertMealLogData = ({
       ]
     : [newLog, ...logsData];
 
-  saveToLocalStorage();
+  saveToLocalStorage('logs');
   logListeners.forEach(listener => listener(logsData));
   return newLog;
 };
@@ -852,7 +852,7 @@ export const mockDb = {
   getAll: () => dbData,
   updateDoc: (day: string, data: DayMenu) => {
     dbData[day] = data;
-    saveToLocalStorage();
+    saveToLocalStorage('timetable');
     if (listeners[day]) listeners[day].forEach(l => l(data));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
@@ -872,7 +872,7 @@ export const mockDb = {
   addCategory: (name: string) => {
     const newCategory = { id: createLocalId('c'), name };
     categoriesData = [...categoriesData, newCategory];
-    saveToLocalStorage();
+    saveToLocalStorage('categories');
     categoryListeners.forEach(l => l(categoriesData));
   },
   getDishes: () => dishesData,
@@ -899,7 +899,7 @@ export const mockDb = {
     }
 
     logsData = logsData.filter(log => log.id !== logId);
-    saveToLocalStorage();
+    saveToLocalStorage('logs');
     logListeners.forEach(l => l(logsData));
   },
   addLog: (
@@ -922,7 +922,7 @@ export const mockDb = {
         timestamp: now
       };
       logsData = [newLog, ...logsData];
-      saveToLocalStorage();
+      saveToLocalStorage('logs');
       logListeners.forEach(l => l(logsData));
       return;
     }
@@ -943,20 +943,20 @@ export const mockDb = {
     } else {
       dbData[day].selectedCombo = comboKey;
     }
-    saveToLocalStorage();
+    saveToLocalStorage('timetable');
     if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
   toggleMealSkipped: (day: string, comboKey: 'A' | 'B' | 'C', skipped: boolean) => {
     dbData[day].options[comboKey].skipped = skipped;
-    saveToLocalStorage();
+    saveToLocalStorage('timetable');
     if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
   swapDish: (day: string, comboKey: 'A' | 'B' | 'C', newDishId: string) => {
     dbData[day].options[comboKey].dishId = newDishId;
     dbData[day].options[comboKey].skipped = false;
-    saveToLocalStorage();
+    saveToLocalStorage('timetable');
     if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
@@ -994,7 +994,7 @@ export const mockDb = {
     dishListeners.forEach(l => l(dishesData));
 
     try {
-      await persistUserStateNow();
+      await persistUserStateNow(['dishes']);
     } catch (error) {
       dishesData = previous;
       writeLocalCache();
@@ -1029,7 +1029,7 @@ export const mockDb = {
           }
         : d
     );
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   updateVendorLink: (dishId: string, vendorId: string, link: string) => {
@@ -1042,12 +1042,12 @@ export const mockDb = {
       }
       return dish;
     });
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   toggleFavoriteDish: (id: string) => {
     dishesData = dishesData.map(d => d.id === id ? { ...d, isFavorite: !d.isFavorite } : d);
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   addVendorExtraInfo: (dishId: string, vendorId: string, info: VendorExtraInfo) => {
@@ -1065,7 +1065,7 @@ export const mockDb = {
       }
       return dish;
     });
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   updateDishName: (id: string, newName: string) => {
@@ -1092,7 +1092,7 @@ export const mockDb = {
           }
         : d
     );
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
 
     if (shouldRefreshKnowledge) {
@@ -1109,7 +1109,7 @@ export const mockDb = {
       }
       return dish;
     });
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   updateVendorExtraInfo: (dishId: string, vendorId: string, infoId: string, newValue: string) => {
@@ -1130,7 +1130,7 @@ export const mockDb = {
       }
       return dish;
     });
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   deleteVendorExtraInfo: (dishId: string, vendorId: string, infoId: string) => {
@@ -1151,7 +1151,7 @@ export const mockDb = {
       }
       return dish;
     });
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   addDish: async (
@@ -1205,7 +1205,7 @@ export const mockDb = {
       dishListeners.forEach(listener => listener(dishesData));
 
       try {
-        await persistUserStateNow();
+        await persistUserStateNow(['dishes']);
       } catch (error) {
         dishesData = dishesData.map((dish, index) =>
           index === existingIndex ? current : dish
@@ -1266,7 +1266,7 @@ export const mockDb = {
     dishListeners.forEach(listener => listener(dishesData));
 
     try {
-      await persistUserStateNow();
+      await persistUserStateNow(['dishes']);
     } catch (error) {
       dishesData = dishesData.filter(dish => dish.id !== newDish.id);
       categoriesData = previousCategories;
@@ -1299,14 +1299,14 @@ export const mockDb = {
       }
       return dish;
     });
-    saveToLocalStorage();
+    saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   restoreData: (data: { timetable: Timetable; dishes: Dish[]; categories: Category[] }) => {
     dbData = data.timetable;
     dishesData = data.dishes;
     categoriesData = data.categories;
-    saveToLocalStorage();
+    saveToLocalStorage('timetable', 'dishes', 'categories');
     
     Object.values(listeners).flatMap(set => Array.from(set)).forEach(l => l(dbData));
     dishListeners.forEach(l => l(dishesData));
