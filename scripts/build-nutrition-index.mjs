@@ -151,11 +151,15 @@ const canonicalize = (raw, index, sourceFile) => {
     ? confidenceRaw
     : 'unknown';
 
+  const kcalMin = toNumber(raw.kcal_min ?? raw.calories_min);
+  const kcalMax = toNumber(raw.kcal_max ?? raw.calories_max);
+
   const record = {
     id: String(raw.id ?? raw.food_id ?? sourceFile + ':' + (index + 1)),
     name,
     aliases: normalizeAliases(raw.aliases ?? raw.alias ?? raw.alternative_names),
     category: String(raw.category ?? raw.food_category ?? '').trim(),
+    recordType: String(raw.record_type ?? raw.recordType ?? 'dish').trim() || 'dish',
     servingG: servingG && servingG > 0 ? servingG : undefined,
     kcalPer100g: kcalPer100g !== undefined && kcalPer100g >= 0
       ? Math.round(kcalPer100g * 100) / 100
@@ -163,6 +167,8 @@ const canonicalize = (raw, index, sourceFile) => {
     kcalPerServing: kcalPerServing !== undefined && kcalPerServing >= 0
       ? Math.round(kcalPerServing)
       : undefined,
+    kcalMin: kcalMin !== undefined && kcalMin >= 0 ? Math.round(kcalMin) : undefined,
+    kcalMax: kcalMax !== undefined && kcalMax >= 0 ? Math.round(kcalMax) : undefined,
     source: String(raw.source ?? '').trim(),
     sourceUrl: String(raw.source_url ?? raw.url ?? '').trim(),
     confidence,
@@ -244,6 +250,47 @@ const main = async () => {
     );
   }
 
+  const addonKindByCategory = new Map([
+    ['trai cay', 'fruit'],
+    ['do uong', 'drink']
+  ]);
+
+  const addons = records
+    .filter(record => record.recordType !== 'ingredient')
+    .map(record => ({
+      record,
+      kind: addonKindByCategory.get(normalizeFoodName(record.category))
+    }))
+    .filter(item =>
+      item.kind &&
+      typeof item.record.kcalPerServing === 'number' &&
+      Number.isFinite(item.record.kcalPerServing)
+    )
+    .map(({ record, kind }) => ({
+      id: record.id,
+      kind,
+      name: record.name,
+      category: record.category,
+      calories: Math.round(record.kcalPerServing),
+      servingG: record.servingG,
+      kcalMin: record.kcalMin,
+      kcalMax: record.kcalMax,
+      source: record.source,
+      sourceUrl: record.sourceUrl,
+      confidence: record.confidence
+    }))
+    .sort((a, b) => {
+      if (a.kind !== b.kind) return a.kind.localeCompare(b.kind);
+      return a.name.localeCompare(b.name, 'vi');
+    });
+
+  await fs.mkdir(outputDir, { recursive: true });
+  await fs.writeFile(
+    path.join(outputDir, 'addons.json'),
+    JSON.stringify(addons, null, 2) + '\n',
+    'utf8'
+  );
+
   const manifest = {
     version: 1,
     generatedAt: new Date().toISOString(),
@@ -251,6 +298,7 @@ const main = async () => {
     sourceRecordCount: records.length,
     lookupKeyCount: lookup.size,
     shardCount: shards.size,
+    addonCount: addons.length,
     invalidRecordCount: errors.length,
     invalidRecords: errors.slice(0, 100)
   };
