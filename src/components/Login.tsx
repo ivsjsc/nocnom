@@ -3,6 +3,7 @@ import { LogOut, Settings2, UserRound } from 'lucide-react';
 import { signOut, type User } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import ProfileModal from './ProfileModal';
+import { loadUserProfile } from '../services/userProfile';
 
 const getInitials = (value?: string | null) => {
   if (!value) return 'NG';
@@ -22,6 +23,8 @@ export default function Login({ user, darkMode, onRequestAuth }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState(user?.photoURL || '');
+  const [profileFullName, setProfileFullName] = useState(user?.displayName || '');
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,10 +52,41 @@ export default function Login({ user, darkMode, onRequestAuth }: LoginProps) {
   }, [menuOpen]);
 
   useEffect(() => {
+    let active = true;
+
     if (!user) {
       setMenuOpen(false);
       setProfileOpen(false);
+      setProfilePhotoUrl('');
+      setProfileFullName('');
+      return () => {
+        active = false;
+      };
     }
+
+    setProfilePhotoUrl(user.photoURL || '');
+    setProfileFullName(user.displayName || '');
+
+    void loadUserProfile(user.uid)
+      .then(profile => {
+        if (!active) return;
+        if (typeof profile.photoUrl === 'string') {
+          setProfilePhotoUrl(profile.photoUrl);
+        }
+        if (typeof profile.fullName === 'string' && profile.fullName.trim()) {
+          setProfileFullName(profile.fullName.trim());
+        }
+      })
+      .catch(error => {
+        console.warn('[profile] Unable to hydrate header profile', {
+          uid: user.uid,
+          message: error instanceof Error ? error.message : String(error)
+        });
+      });
+
+    return () => {
+      active = false;
+    };
   }, [user]);
 
   const handleAvatarClick = () => {
@@ -83,8 +117,9 @@ export default function Login({ user, darkMode, onRequestAuth }: LoginProps) {
   };
 
   const initials = user
-    ? getInitials(user.displayName || user.email?.split('@')[0])
+    ? getInitials(profileFullName || user.displayName || user.email?.split('@')[0])
     : 'NG';
+  const avatarUrl = profilePhotoUrl || user?.photoURL || '';
 
   const menuSurface = darkMode
     ? 'bg-slate-900 border-slate-700 text-slate-100'
@@ -104,9 +139,9 @@ export default function Login({ user, darkMode, onRequestAuth }: LoginProps) {
       >
         {loading ? (
           <span aria-hidden="true">…</span>
-        ) : user?.photoURL ? (
+        ) : avatarUrl ? (
           <img
-            src={user.photoURL}
+            src={avatarUrl}
             alt=""
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover"
@@ -140,9 +175,9 @@ export default function Login({ user, darkMode, onRequestAuth }: LoginProps) {
             }
           >
             <div className="w-12 h-12 shrink-0 overflow-hidden rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black">
-              {user.photoURL ? (
+              {avatarUrl ? (
                 <img
-                  src={user.photoURL}
+                  src={avatarUrl}
                   alt=""
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"
@@ -154,7 +189,7 @@ export default function Login({ user, darkMode, onRequestAuth }: LoginProps) {
 
             <div className="min-w-0">
               <div className="truncate text-sm font-black">
-                {user.displayName || 'Người dùng nOcnOm'}
+                {profileFullName || user.displayName || 'Người dùng nOcnOm'}
               </div>
               <div className="mt-0.5 truncate text-xs font-medium text-slate-500" title={user.email || undefined}>
                 {user.email || 'Tài khoản nOcnOm'}
@@ -200,6 +235,10 @@ export default function Login({ user, darkMode, onRequestAuth }: LoginProps) {
         <ProfileModal
           user={user}
           onClose={() => setProfileOpen(false)}
+          onProfileSaved={(photoUrl, fullName) => {
+            setProfilePhotoUrl(photoUrl);
+            setProfileFullName(fullName);
+          }}
         />
       )}
     </div>
