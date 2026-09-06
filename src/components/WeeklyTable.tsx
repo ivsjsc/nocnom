@@ -44,7 +44,13 @@ type SelectedDish = MealTarget & {
   dish: Dish;
 };
 
-export default function WeeklyTable({ embedded = false }: { embedded?: boolean }) {
+export default function WeeklyTable({
+  embedded = false,
+  excludeToday = false
+}: {
+  embedded?: boolean;
+  excludeToday?: boolean;
+}) {
   const [timetable, setTimetable] = useState<Timetable | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -57,7 +63,7 @@ export default function WeeklyTable({ embedded = false }: { embedded?: boolean }
   ];
 
   const [expandedDays, setExpandedDays] = useState<Set<string>>(
-    () => new Set([todayKey])
+    () => new Set(excludeToday ? [] : [todayKey])
   );
 
   useEffect(() => {
@@ -132,7 +138,9 @@ export default function WeeklyTable({ embedded = false }: { embedded?: boolean }
       )}
 
       <div className="space-y-2.5">
-        {dayOrder.map(day => {
+        {dayOrder
+          .filter(day => !(excludeToday && day === todayKey))
+          .map(day => {
           const menu = timetable[day];
           const isToday = day === todayKey;
           const isExpanded = expandedDays.has(day);
