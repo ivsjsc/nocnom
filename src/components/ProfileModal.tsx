@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, ShieldCheck, UserRound, X } from 'lucide-react';
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { Image as ImageIcon, Save, ShieldCheck, UserRound, X } from 'lucide-react';
 import type { User } from 'firebase/auth';
-import { db } from '../lib/firebase';
+import { normalizeExternalImageUrl } from '../lib/url';
+import {
+  loadUserProfile,
+  saveUserProfile
+} from '../services/userProfile';
 
 type Props = {
   user: User;
   onClose: () => void;
+  onProfileSaved?: (photoUrl: string, fullName: string) => void;
 };
 
 type ProfileForm = {
@@ -17,6 +21,7 @@ type ProfileForm = {
   faculty: string;
   studentId: string;
   phone: string;
+  photoUrl: string;
 };
 
 const emptyProfile: ProfileForm = {
@@ -25,23 +30,29 @@ const emptyProfile: ProfileForm = {
   school: '',
   faculty: '',
   studentId: '',
-  phone: ''
+  phone: '',
+  photoUrl: ''
 };
 
 const toStringValue = (value: unknown) => (typeof value === 'string' ? value : '');
 
-export default function ProfileModal({ user, onClose }: Props) {
+export default function ProfileModal({
+  user,
+  onClose,
+  onProfileSaved
+}: Props) {
   const [form, setForm] = useState<ProfileForm>({
     ...emptyProfile,
-    fullName: user.displayName || ''
+    fullName: user.displayName || '',
+    photoUrl: user.photoURL || ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const profileRef = useMemo(
-    () => doc(db, 'users', user.uid, 'profile', 'main'),
-    [user.uid]
+  const normalizedPhotoUrl = useMemo(
+    () => normalizeExternalImageUrl(form.photoUrl),
+    [form.photoUrl]
   );
 
   useEffect(() => {
@@ -52,20 +63,21 @@ export default function ProfileModal({ user, onClose }: Props) {
       setStatus(null);
 
       try {
-        const snapshot = await getDoc(profileRef);
+        const data = await loadUserProfile(user.uid);
         if (!active) return;
 
-        if (snapshot.exists()) {
-          const data = snapshot.data() as Partial<ProfileForm>;
-          setForm({
-            fullName: toStringValue(data.fullName) || user.displayName || '',
-            dateOfBirth: toStringValue(data.dateOfBirth),
-            school: toStringValue(data.school),
-            faculty: toStringValue(data.faculty),
-            studentId: toStringValue(data.studentId),
-            phone: toStringValue(data.phone)
-          });
-        }
+        setForm({
+          fullName: toStringValue(data.fullName) || user.displayName || '',
+          dateOfBirth: toStringValue(data.dateOfBirth),
+          school: toStringValue(data.school),
+          faculty: toStringValue(data.faculty),
+          studentId: toStringValue(data.studentId),
+          phone: toStringValue(data.phone),
+          photoUrl:
+            toStringValue(data.photoUrl) ||
+            user.photoURL ||
+            ''
+        });
       } catch (error) {
         if (!active) return;
         console.error('Không thể tải hồ sơ nOcnOm', error);
@@ -83,7 +95,7 @@ export default function ProfileModal({ user, onClose }: Props) {
     return () => {
       active = false;
     };
-  }, [profileRef, user.displayName]);
+  }, [user.displayName, user.photoURL, user.uid]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -114,26 +126,34 @@ export default function ProfileModal({ user, onClose }: Props) {
       return;
     }
 
+    const cleanPhotoUrl = form.photoUrl.trim();
+    if (cleanPhotoUrl && !normalizedPhotoUrl) {
+      setStatus({
+        type: 'error',
+        message: 'URL ảnh đại diện không hợp lệ. Hãy dùng URL http/https.'
+      });
+      return;
+    }
+
     setSaving(true);
     setStatus(null);
 
     try {
-      await setDoc(
-        profileRef,
-        {
-          fullName: form.fullName.trim(),
-          dateOfBirth: form.dateOfBirth,
-          school: form.school.trim(),
-          faculty: form.faculty.trim(),
-          studentId: form.studentId.trim(),
-          phone: form.phone.trim(),
-          email: user.email || '',
-          authProvider: user.providerData.map(provider => provider.providerId).join(',') || 'password',
-          updatedAt: serverTimestamp()
-        },
-        { merge: true }
-      );
+      const photoUrl = normalizedPhotoUrl || '';
+      const fullName = form.fullName.trim();
 
+      await saveUserProfile(user.uid, {
+        fullName,
+        dateOfBirth: form.dateOfBirth,
+        school: form.school.trim(),
+        faculty: form.faculty.trim(),
+        studentId: form.studentId.trim(),
+        phone: form.phone.trim(),
+        photoUrl
+      });
+
+      onProfileSaved?.(photoUrl, fullName);
+      setForm(current => ({ ...current, photoUrl }));
       setStatus({ type: 'success', message: 'Đã lưu hồ sơ nOcnOm.' });
     } catch (error) {
       console.error('Không thể lưu hồ sơ nOcnOm', error);
@@ -178,12 +198,15 @@ export default function ProfileModal({ user, onClose }: Props) {
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
           <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-4">
             <div className="h-12 w-12 overflow-hidden rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black">
-              {user.photoURL ? (
+              {normalizedPhotoUrl || user.photoURL ? (
                 <img
-                  src={user.photoURL}
+                  src={normalizedPhotoUrl || user.photoURL || ''}
                   alt=""
                   referrerPolicy="no-referrer"
                   className="h-full w-full object-cover"
+                  onError={event => {
+                    event.currentTarget.style.display = 'none';
+                  }}
                 />
               ) : (
                 <UserRound className="w-5 h-5" />
@@ -206,6 +229,28 @@ export default function ProfileModal({ user, onClose }: Props) {
             </div>
           ) : (
             <div className="mt-5 space-y-4">
+              <label className="block">
+                <span className="mb-1.5 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-slate-500">
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  Ảnh đại diện URL
+                </span>
+                <input
+                  value={form.photoUrl}
+                  onChange={event => updateField('photoUrl', event.target.value)}
+                  placeholder="https://..."
+                  className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
+                  inputMode="url"
+                />
+                <div className="mt-1.5 text-[10px] font-semibold text-slate-500">
+                  Dán URL ảnh trực tiếp. Ảnh này là hồ sơ riêng của nOcnOm và sẽ được dùng ở avatar trên header.
+                </div>
+                {form.photoUrl.trim() && !normalizedPhotoUrl ? (
+                  <div className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-[10px] font-bold text-red-700">
+                    URL ảnh không hợp lệ.
+                  </div>
+                ) : null}
+              </label>
+
               <label className="block">
                 <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wide text-slate-500">Họ và tên</span>
                 <input
