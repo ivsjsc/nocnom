@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Clock3, Home, Menu as MenuIcon, Moon, RefreshCw, RotateCw, Sun, Sparkles } from 'lucide-react';
+import { Activity, Home, Menu as MenuIcon, Moon, RefreshCw, RotateCw, Sun, Sparkles } from 'lucide-react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import { syncUserWithFirestore } from './lib/db';
@@ -97,7 +97,7 @@ export default function App() {
 
   const navItems: Array<{ id: Tab; label: string; icon: typeof Home }> = [
     { id: 'home', label: 'Trang chủ', icon: Home },
-    { id: 'logs', label: 'Lịch sử', icon: Clock3 },
+    { id: 'logs', label: 'Sức khỏe', icon: Activity },
     { id: 'menu', label: 'Kho món', icon: MenuIcon }
   ];
 
@@ -175,9 +175,15 @@ export default function App() {
 
       <main className="app-container app-main">
         {activeTab === 'home' && <HomePage />}
-        {activeTab === 'logs' && <LogsPage />}
+        {activeTab === 'logs' && (
+          <LogsPage
+            currentUser={currentUser}
+            onOpenProfile={() => window.dispatchEvent(new CustomEvent('nocnom:open-profile'))}
+          />
+        )}
         {activeTab === 'menu' && currentUser && <MenuPage canManage />}
       </main>
+
 
       <nav
         aria-label="Điều hướng chính"

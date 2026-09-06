@@ -1,12 +1,29 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Image as ImageIcon, Save, ShieldCheck, UserRound, X } from 'lucide-react';
+import {
+  Activity,
+  HeartPulse,
+  Image as ImageIcon,
+  Save,
+  Scale,
+  ShieldCheck,
+  UserRound,
+  X
+} from 'lucide-react';
 import type { User } from 'firebase/auth';
 import { normalizeExternalImageUrl } from '../lib/url';
 import {
   loadUserProfile,
   saveUserProfile
 } from '../services/userProfile';
+import {
+  calculateBMI,
+  getBMICategory,
+  getIdealWeightRange,
+  type ActivityLevel,
+  type Gender,
+  type HealthGoal
+} from '../lib/healthUtils';
 
 type Props = {
   user: User;
@@ -22,6 +39,11 @@ type ProfileForm = {
   studentId: string;
   phone: string;
   photoUrl: string;
+  gender: Gender;
+  heightCm: string;
+  weightKg: string;
+  activityLevel: ActivityLevel;
+  healthGoal: HealthGoal;
 };
 
 const emptyProfile: ProfileForm = {
@@ -31,7 +53,12 @@ const emptyProfile: ProfileForm = {
   faculty: '',
   studentId: '',
   phone: '',
-  photoUrl: ''
+  photoUrl: '',
+  gender: '',
+  heightCm: '',
+  weightKg: '',
+  activityLevel: '',
+  healthGoal: ''
 };
 
 const toStringValue = (value: unknown) => (typeof value === 'string' ? value : '');
@@ -76,7 +103,12 @@ export default function ProfileModal({
           photoUrl:
             toStringValue(data.photoUrl) ||
             user.photoURL ||
-            ''
+            '',
+          gender: (data.gender as Gender) || '',
+          heightCm: data.heightCm ? String(data.heightCm) : '',
+          weightKg: data.weightKg ? String(data.weightKg) : '',
+          activityLevel: (data.activityLevel as ActivityLevel) || '',
+          healthGoal: (data.healthGoal as HealthGoal) || ''
         });
       } catch (error) {
         if (!active) return;
@@ -115,10 +147,27 @@ export default function ProfileModal({
     };
   }, []);
 
-  const updateField = (field: keyof ProfileForm, value: string) => {
+  const updateField = <K extends keyof ProfileForm>(field: K, value: ProfileForm[K]) => {
     setForm(current => ({ ...current, [field]: value }));
     setStatus(null);
   };
+
+  const currentHeight = parseFloat(form.heightCm);
+  const currentWeight = parseFloat(form.weightKg);
+  const liveBMI = useMemo(() => {
+    if (!isNaN(currentHeight) && !isNaN(currentWeight)) {
+      return calculateBMI(currentWeight, currentHeight);
+    }
+    return null;
+  }, [currentHeight, currentWeight]);
+
+  const bmiCategory = useMemo(() => {
+    return liveBMI !== null ? getBMICategory(liveBMI) : null;
+  }, [liveBMI]);
+
+  const idealWeight = useMemo(() => {
+    return !isNaN(currentHeight) ? getIdealWeightRange(currentHeight) : null;
+  }, [currentHeight]);
 
   const handleSave = async () => {
     if (!form.fullName.trim()) {
@@ -141,6 +190,8 @@ export default function ProfileModal({
     try {
       const photoUrl = normalizedPhotoUrl || '';
       const fullName = form.fullName.trim();
+      const hNum = parseFloat(form.heightCm);
+      const wNum = parseFloat(form.weightKg);
 
       await saveUserProfile(user.uid, {
         fullName,
@@ -149,17 +200,22 @@ export default function ProfileModal({
         faculty: form.faculty.trim(),
         studentId: form.studentId.trim(),
         phone: form.phone.trim(),
-        photoUrl
+        photoUrl,
+        gender: form.gender,
+        heightCm: !isNaN(hNum) && hNum > 0 ? hNum : '',
+        weightKg: !isNaN(wNum) && wNum > 0 ? wNum : '',
+        activityLevel: form.activityLevel,
+        healthGoal: form.healthGoal
       });
 
       onProfileSaved?.(photoUrl, fullName);
       setForm(current => ({ ...current, photoUrl }));
-      setStatus({ type: 'success', message: 'Đã lưu hồ sơ nOcnOm.' });
+      setStatus({ type: 'success', message: 'Đã lưu hồ sơ sức khỏe & thông tin nOcnOm.' });
     } catch (error) {
       console.error('Không thể lưu hồ sơ nOcnOm', error);
       setStatus({
         type: 'error',
-        message: 'Không thể lưu hồ sơ. Kiểm tra kết nối hoặc quyền Firestore.'
+        message: 'Không thể lưu hồ sơ. Vui lòng thử lại.'
       });
     } finally {
       setSaving(false);
@@ -303,6 +359,156 @@ export default function ProfileModal({
                   />
                 </label>
               </div>
+
+              {/* Phần Sức khỏe & Thể trạng */}
+              <div className="rounded-3xl border border-blue-200/80 bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-white p-4 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
+                    <HeartPulse className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-slate-900">
+                      Chỉ số Thể trạng & Sức khỏe
+                    </div>
+                    <div className="text-[10px] font-medium text-slate-500">
+                      Tính BMI, nhu cầu Calo & Nước uống khuyến nghị riêng cho bạn
+                    </div>
+                  </div>
+                </div>
+
+                {/* Giới tính */}
+                <div className="mt-3.5">
+                  <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wide text-slate-600">
+                    Giới tính
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'male', label: 'Nam 👦' },
+                      { id: 'female', label: 'Nữ 👧' },
+                      { id: 'other', label: 'Khác ✨' }
+                    ].map(item => (
+                      <button
+                        type="button"
+                        key={item.id}
+                        onClick={() => updateField('gender', item.id as Gender)}
+                        className={
+                          'h-11 rounded-2xl border text-xs font-black transition-all ' +
+                          (form.gender === item.id
+                            ? 'border-blue-600 bg-blue-600 text-white shadow-sm shadow-blue-500/25'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300')
+                        }
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Chiều cao & Cân nặng */}
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wide text-slate-600">
+                      Chiều cao (cm)
+                    </span>
+                    <input
+                      type="number"
+                      min="80"
+                      max="240"
+                      step="0.5"
+                      placeholder="VD: 168"
+                      value={form.heightCm}
+                      onChange={event => updateField('heightCm', event.target.value)}
+                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-3.5 text-sm font-black text-slate-950 shadow-inner focus:border-blue-500 focus:outline-none"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wide text-slate-600">
+                      Cân nặng (kg)
+                    </span>
+                    <input
+                      type="number"
+                      min="25"
+                      max="220"
+                      step="0.1"
+                      placeholder="VD: 58"
+                      value={form.weightKg}
+                      onChange={event => updateField('weightKg', event.target.value)}
+                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-3.5 text-sm font-black text-slate-950 shadow-inner focus:border-blue-500 focus:outline-none"
+                    />
+                  </label>
+                </div>
+
+                {/* Preview BMI trực quan */}
+                {liveBMI !== null && bmiCategory ? (
+                  <div className="mt-3 rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Scale className="h-4 w-4 text-blue-600" />
+                        <span className="text-xs font-black text-slate-900">
+                          Chỉ số BMI: <span className="text-blue-600 font-extrabold">{liveBMI}</span>
+                        </span>
+                      </div>
+                      <span className={'rounded-full px-2.5 py-0.5 text-[10px] font-black ' + bmiCategory.badgeBg + ' ' + bmiCategory.badgeText}>
+                        {bmiCategory.label}
+                      </span>
+                    </div>
+
+                    <div className="mt-2 text-[11px] font-medium text-slate-600">
+                      {bmiCategory.description}
+                    </div>
+
+                    {idealWeight && (
+                      <div className="mt-1.5 flex items-center justify-between border-t border-slate-100 pt-1.5 text-[10px] font-semibold text-slate-500">
+                        <span>Cân nặng chuẩn theo chiều cao:</span>
+                        <span className="font-bold text-slate-800">
+                          {idealWeight.min} - {idealWeight.max} kg
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+
+                {/* Mức độ vận động */}
+                <div className="mt-3">
+                  <label className="block">
+                    <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wide text-slate-600">
+                      Mức độ vận động
+                    </span>
+                    <select
+                      value={form.activityLevel}
+                      onChange={event => updateField('activityLevel', event.target.value as ActivityLevel)}
+                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="">Sinh hoạt sinh viên bình thường (Vừa phải)</option>
+                      <option value="sedentary">Ít vận động (Học bài, ngồi nhiều, ít tập luyện)</option>
+                      <option value="light">Vận động nhẹ (Đi bộ trong KTX, ĐHQG 1-3 ngày/tuần)</option>
+                      <option value="moderate">Vừa phải (Chạy bộ, thể thao 3-5 ngày/tuần)</option>
+                      <option value="active">Năng động (Tập gym, thể thao nặng 6-7 ngày/tuần)</option>
+                    </select>
+                  </label>
+                </div>
+
+                {/* Mục tiêu sức khỏe */}
+                <div className="mt-3">
+                  <label className="block">
+                    <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wide text-slate-600">
+                      Mục tiêu dinh dưỡng
+                    </span>
+                    <select
+                      value={form.healthGoal}
+                      onChange={event => updateField('healthGoal', event.target.value as HealthGoal)}
+                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="">Duy trì vóc dáng & sức khỏe</option>
+                      <option value="maintain">Duy trì cân nặng lý tưởng</option>
+                      <option value="lose">Giảm cân, thon gọn (Thâm hụt nhẹ -300 kcal/ngày)</option>
+                      <option value="gain">Tăng cân, tăng cơ (Thặng dư nhẹ +300 kcal/ngày)</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
 
               <label className="block">
                 <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wide text-slate-500">Trường học</span>

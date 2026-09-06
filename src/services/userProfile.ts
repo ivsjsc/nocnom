@@ -5,6 +5,7 @@ import {
   setDoc
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import type { ActivityLevel, Gender, HealthGoal } from '../lib/healthUtils';
 
 export type UserProfileData = {
   fullName: string;
@@ -14,6 +15,12 @@ export type UserProfileData = {
   studentId: string;
   phone: string;
   photoUrl: string;
+  // Sức khỏe & Thể trạng
+  gender?: Gender;
+  heightCm?: number | string;
+  weightKg?: number | string;
+  activityLevel?: ActivityLevel;
+  healthGoal?: HealthGoal;
 };
 
 const getFirebaseErrorCode = (error: unknown) => {
@@ -34,15 +41,38 @@ const assertCurrentUser = (uid: string) => {
 const profileRef = (uid: string) =>
   doc(db, 'users', uid, 'profile', 'main');
 
+const localCacheKey = (uid: string) => `nocnom_profile_cache_${uid}`;
+
+export const getCachedUserProfile = (uid: string): Partial<UserProfileData> | null => {
+  try {
+    const raw = localStorage.getItem(localCacheKey(uid));
+    if (!raw) return null;
+    return JSON.parse(raw) as Partial<UserProfileData>;
+  } catch {
+    return null;
+  }
+};
+
 export const loadUserProfile = async (
   uid: string
 ): Promise<Partial<UserProfileData>> => {
   assertCurrentUser(uid);
 
+  // Thử đọc từ cache trước nếu có
+  const cached = getCachedUserProfile(uid);
+
   try {
     const snapshot = await getDoc(profileRef(uid));
-    if (!snapshot.exists()) return {};
-    return snapshot.data() as Partial<UserProfileData>;
+    if (!snapshot.exists()) {
+      return cached || {};
+    }
+    const data = snapshot.data() as Partial<UserProfileData>;
+    try {
+      localStorage.setItem(localCacheKey(uid), JSON.stringify(data));
+    } catch {
+      // Bỏ qua lỗi hạn mức localStorage
+    }
+    return data;
   } catch (error) {
     console.error('[firestore-profile]', {
       operation: 'read-profile',
@@ -51,6 +81,7 @@ export const loadUserProfile = async (
       uid,
       message: error instanceof Error ? error.message : String(error)
     });
+    if (cached) return cached;
     throw error;
   }
 };
@@ -74,6 +105,18 @@ export const saveUserProfile = async (
       },
       { merge: true }
     );
+
+    // Cập nhật cache local
+    try {
+      localStorage.setItem(localCacheKey(uid), JSON.stringify(data));
+    } catch {
+      // Ignore cache write error
+    }
+
+    // Phát sự kiện toàn cục để các màn hình cập nhật ngay tức thì
+    window.dispatchEvent(
+      new CustomEvent('nocnom:profile-updated', { detail: data })
+    );
   } catch (error) {
     console.error('[firestore-profile]', {
       operation: 'write-profile',
@@ -85,3 +128,4 @@ export const saveUserProfile = async (
     throw error;
   }
 };
+

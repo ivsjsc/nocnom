@@ -1,20 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  Activity,
+  ArrowUpRight,
+  Award,
   CalendarDays,
+  CheckCircle2,
   ChevronDown,
   ChevronRight,
   ChevronUp,
   Clock3,
+  Droplets,
   Edit3,
   Flame,
+  HeartPulse,
   LockKeyhole,
   Plus,
   Save,
+  Scale,
+  Sparkles,
   Trash2,
+  TrendingUp,
+  UserCheck,
   UtensilsCrossed,
   X
 } from 'lucide-react';
+import type { User } from 'firebase/auth';
 import {
   estimateDishCalories,
   getEditableMealDateRange,
@@ -33,6 +44,23 @@ import {
   loadNutritionAddons,
   type NutritionAddonOption
 } from '../lib/nutritionKnowledge';
+import {
+  calculateAge,
+  calculateBMI,
+  calculateBMR,
+  calculateCalorieGoal,
+  calculateTDEE,
+  calculateWaterRequirement,
+  getBMICategory,
+  getIdealWeightRange,
+  ACTIVITY_LABELS,
+  GOAL_LABELS
+} from '../lib/healthUtils';
+import {
+  getCachedUserProfile,
+  loadUserProfile,
+  type UserProfileData
+} from '../services/userProfile';
 
 const mealKeys: MealKey[] = ['A', 'B', 'C'];
 const mealOrder: Record<MealKey, number> = { A: 0, B: 1, C: 2 };
@@ -81,7 +109,12 @@ type DayGroup = {
   logs: LogEntry[];
 };
 
-export default function LogsPage() {
+type Props = {
+  currentUser?: User | null;
+  onOpenProfile?: () => void;
+};
+
+export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
@@ -91,6 +124,40 @@ export default function LogsPage() {
   const [nutritionAddons, setNutritionAddons] = useState<NutritionAddonOption[]>([]);
   const [editorError, setEditorError] = useState('');
   const [dayMode, setDayMode] = useState<'DETAIL' | 'EDIT'>('DETAIL');
+
+  // Hồ sơ sức khỏe người dùng
+  const [profile, setProfile] = useState<Partial<UserProfileData> | null>(() => {
+    return currentUser ? getCachedUserProfile(currentUser.uid) : null;
+  });
+
+  useEffect(() => {
+    if (!currentUser) {
+      setProfile(null);
+      return;
+    }
+
+    let active = true;
+    void loadUserProfile(currentUser.uid)
+      .then(p => {
+        if (active) setProfile(p);
+      })
+      .catch(err => {
+        console.warn('Chưa tải được hồ sơ sức khỏe từ Firestore', err);
+      });
+
+    const handleProfileUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<UserProfileData>;
+      if (customEvent.detail) {
+        setProfile(customEvent.detail);
+      }
+    };
+
+    window.addEventListener('nocnom:profile-updated', handleProfileUpdate);
+    return () => {
+      active = false;
+      window.removeEventListener('nocnom:profile-updated', handleProfileUpdate);
+    };
+  }, [currentUser]);
 
   useEffect(() => {
     const unsubLogs = mockDb.subscribeLogs(setLogs);
@@ -215,6 +282,120 @@ export default function LogsPage() {
       )
     : 0;
 
+  // Ngày hôm nay theo giờ Việt Nam
+  const todayKey = useMemo(() => getVietnamDateKey(Date.now()), []);
+
+  // Danh sách bữa ăn hôm nay
+  const todayLogs = useMemo(() => {
+    return logs.filter(log => getVietnamDateKey(log.timestamp) === todayKey);
+  }, [logs, todayKey]);
+
+  // Tổng calo hôm nay
+  const todayCalories = useMemo(() => {
+    return todayLogs.reduce(
+      (total, log) => total + resolveCalories(log) + sumMealAddonCalories(log),
+      0
+    );
+  }, [todayLogs, dishes]);
+
+  // Phân bổ calo các bữa ăn hôm nay (Sáng - Trưa - Tối)
+  const mealDistribution = useMemo(() => {
+    let breakfastKcal = 0;
+    let lunchKcal = 0;
+    let dinnerKcal = 0;
+
+    todayLogs.forEach(log => {
+      const kcal = resolveCalories(log) + sumMealAddonCalories(log);
+      if (log.mealKey === 'A') breakfastKcal += kcal;
+      else if (log.mealKey === 'B') lunchKcal += kcal;
+      else if (log.mealKey === 'C') dinnerKcal += kcal;
+    });
+
+    const total = breakfastKcal + lunchKcal + dinnerKcal;
+    return {
+      breakfastKcal,
+      lunchKcal,
+      dinnerKcal,
+      total,
+      breakfastPct: total > 0 ? Math.round((breakfastKcal / total) * 100) : 0,
+      lunchPct: total > 0 ? Math.round((lunchKcal / total) * 100) : 0,
+      dinnerPct: total > 0 ? Math.round((dinnerKcal / total) * 100) : 0
+    };
+  }, [todayLogs, dishes]);
+
+  // Thống kê calo 7 ngày gần nhất
+  const last7DaysData = useMemo(() => {
+    const [tY, tM, tD] = todayKey.split('-').map(Number);
+    const todayUtc = Date.UTC(tY, tM - 1, tD, 12, 0, 0);
+
+    const days: Array<{
+      dateKey: string;
+      shortLabel: string;
+      dayNum: string;
+      calories: number;
+      isToday: boolean;
+      mealCount: number;
+    }> = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(todayUtc - i * 24 * 60 * 60 * 1000);
+      const year = d.getUTCFullYear();
+      const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      const key = `${year}-${month}-${day}`;
+
+      const dayLogs = logs.filter(log => getVietnamDateKey(log.timestamp) === key);
+      const totalKcal = dayLogs.reduce(
+        (sum, log) => sum + resolveCalories(log) + sumMealAddonCalories(log),
+        0
+      );
+
+      const dayOfWeek = d.getUTCDay();
+      const shortDay = dayOfWeek === 0 ? 'CN' : `T${dayOfWeek + 1}`;
+
+      days.push({
+        dateKey: key,
+        shortLabel: i === 0 ? 'Nay' : shortDay,
+        dayNum: `${day}/${month}`,
+        calories: totalKcal,
+        isToday: i === 0,
+        mealCount: dayLogs.length
+      });
+    }
+
+    const maxKcal = Math.max(1600, ...days.map(d => d.calories));
+    const totalWeekKcal = days.reduce((sum, d) => sum + d.calories, 0);
+    const activeDays = days.filter(d => d.calories > 0).length;
+    const avgKcal = activeDays > 0 ? Math.round(totalWeekKcal / activeDays) : 0;
+
+    return { days, maxKcal, avgKcal, totalWeekKcal, activeDays };
+  }, [logs, dishes, todayKey]);
+
+  // Tính toán sức khỏe từ hồ sơ
+  const heightNum = profile?.heightCm ? Number(profile.heightCm) : null;
+  const weightNum = profile?.weightKg ? Number(profile.weightKg) : null;
+  const gender = profile?.gender || '';
+  const activityLevel = profile?.activityLevel || '';
+  const healthGoal = profile?.healthGoal || '';
+  const age = profile?.dateOfBirth ? calculateAge(profile.dateOfBirth) : null;
+
+  // BMI & Phân loại
+  const bmi = heightNum && weightNum ? calculateBMI(weightNum, heightNum) : null;
+  const bmiCategory = bmi !== null ? getBMICategory(bmi) : null;
+  const idealWeight = heightNum ? getIdealWeightRange(heightNum) : null;
+
+  // BMR & TDEE & Mục tiêu calo
+  const bmr = heightNum && weightNum ? calculateBMR(weightNum, heightNum, age || 20, gender) : 1550;
+  const tdee = calculateTDEE(bmr, activityLevel);
+  const targetCalories = calculateCalorieGoal(tdee, healthGoal);
+
+  // Nhu cầu nước
+  const waterReq = weightNum ? calculateWaterRequirement(weightNum) : { ml: 2000, glasses: 8 };
+
+  // Tiến độ Calo hôm nay
+  const calorieProgressPct = Math.min(100, Math.round((todayCalories / targetCalories) * 100));
+  const calorieRemaining = targetCalories - todayCalories;
+
   const openDate = (dateKey: string) => {
     setCalendarDate(dateKey);
     setSelectedDayKey(dateKey);
@@ -295,67 +476,449 @@ export default function LogsPage() {
 
   return (
     <div className="space-y-5 pb-28">
-      <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm">
-            <Clock3 className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
-              Theo dõi theo ngày
+      {/* 1. Header Trang Sức Khỏe */}
+      <section className="overflow-hidden rounded-[26px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 text-white shadow-md shadow-blue-500/20">
+              <Activity className="h-6 w-6" />
             </div>
-            <h2 className="mt-0.5 text-xl font-black text-slate-950 dark:text-slate-100">
-              Lịch sử ăn uống
-            </h2>
-            <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600 dark:text-slate-400">
-              Xem nhanh tổng kcal; chỉ mở chi tiết hoặc chỉnh bữa khi cần.
-            </p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">
+                  Trung tâm Sức khỏe & Dinh dưỡng
+                </span>
+                {bmiCategory && (
+                  <span className={'rounded-full px-2 py-0.5 text-[9px] font-black ' + bmiCategory.badgeBg + ' ' + bmiCategory.badgeText}>
+                    {bmiCategory.label}
+                  </span>
+                )}
+              </div>
+              <h2 className="mt-0.5 text-xl font-black text-slate-950 dark:text-slate-100">
+                Sức khỏe nOcnOm
+              </h2>
+              <p className="mt-0.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                Thể trạng, cân bằng Calo & Nhật ký dinh dưỡng sinh viên
+              </p>
+            </div>
           </div>
+
+          {onOpenProfile && (
+            <button
+              type="button"
+              onClick={onOpenProfile}
+              className="inline-flex items-center justify-center gap-1.5 self-start sm:self-auto rounded-2xl border border-blue-200 bg-blue-50/80 px-3.5 py-2 text-xs font-black text-blue-700 transition-all hover:bg-blue-100 active:scale-95 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300 dark:hover:bg-blue-900/40"
+            >
+              <HeartPulse className="h-4 w-4" />
+              <span>Hồ sơ sức khỏe</span>
+              <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
+            </button>
+          )}
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[26px] border border-slate-200 bg-gradient-to-br from-white via-white to-blue-50/80 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/20">
-        <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400" />
-        <div className="p-4">
+      {/* Thông báo nếu chưa nhập thông tin thể trạng */}
+      {(!heightNum || !weightNum) && (
+        <section className="relative overflow-hidden rounded-[26px] border border-amber-200/80 bg-gradient-to-r from-amber-50/90 via-orange-50/70 to-amber-50/90 p-4 shadow-sm dark:border-amber-900/40 dark:from-amber-950/25 dark:via-orange-950/15 dark:to-amber-950/25">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
-              <CalendarDays className="h-5 w-5" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-sm shadow-amber-500/30">
+              <Sparkles className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="text-sm font-black text-slate-950 dark:text-slate-100">
-                  Ghi bù hoặc chỉnh lịch sử
-                </div>
-                <span className="rounded-lg bg-blue-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
-                  Tối đa 3 ngày trước
-                </span>
+              <div className="text-xs font-black text-amber-950 dark:text-amber-200">
+                Hoàn thiện hồ sơ thể trạng
               </div>
-              <div className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600 dark:text-slate-400">
-                Chọn từ {formatDateKey(editRange.min)} đến hôm nay. Ngày tương lai và ngày cũ hơn chỉ được xem.
+              <p className="mt-1 text-[11px] font-semibold leading-relaxed text-amber-800/90 dark:text-amber-300/80">
+                Cập nhật chiều cao và cân nặng trong Hồ sơ cá nhân để nOcnOm tính chính xác chỉ số BMI, lượng calo TDEE và nhu cầu nước mỗi ngày cho riêng bạn!
+              </p>
+              {onOpenProfile && (
+                <button
+                  type="button"
+                  onClick={onOpenProfile}
+                  className="mt-2.5 inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-3 py-1.5 text-xs font-black text-white shadow-sm hover:bg-amber-700 active:scale-95"
+                >
+                  <span>Cập nhật ngay</span>
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 2. Thẻ Thống Kê Sức Khỏe & Thể Trạng (Health Metric Dashboard) */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* THẺ 1: Chỉ số BMI & Thể trạng */}
+        <section className="flex flex-col justify-between rounded-[26px] border border-slate-200 bg-white p-4.5 shadow-sm transition-all dark:border-slate-800 dark:bg-slate-900">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
+                  <Scale className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <span className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Chỉ số thể trạng
+                  </span>
+                  <span className="text-sm font-black text-slate-950 dark:text-slate-100">
+                    BMI (WHO Châu Á)
+                  </span>
+                </div>
+              </div>
+
+              {bmiCategory && (
+                <span className={'rounded-full px-2.5 py-1 text-[10px] font-black ' + bmiCategory.badgeBg + ' ' + bmiCategory.badgeText}>
+                  {bmiCategory.label}
+                </span>
+              )}
+            </div>
+
+            {/* Chỉ số BMI & Phân loại */}
+            <div className="mt-4 flex items-baseline gap-3">
+              <span className="text-3xl font-black tracking-tight text-slate-950 dark:text-slate-100">
+                {bmi !== null ? bmi : '--'}
+              </span>
+              <span className="text-xs font-bold text-slate-500">
+                {heightNum && weightNum ? `${weightNum} kg · ${heightNum} cm` : 'Chưa có số đo'}
+              </span>
+            </div>
+
+            {/* Thanh đo dải màu BMI Châu Á */}
+            <div className="mt-3">
+              <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                <div className="grid h-full w-full grid-cols-4">
+                  <div className="bg-amber-400" title="Gầy (< 18.5)" />
+                  <div className="bg-emerald-500" title="Lý tưởng (18.5 - 22.9)" />
+                  <div className="bg-orange-500" title="Thừa cân (23 - 24.9)" />
+                  <div className="bg-rose-500" title="Béo phì (>= 25)" />
+                </div>
+              </div>
+              <div className="mt-1.5 flex justify-between text-[9px] font-bold text-slate-500">
+                <span>&lt; 18.5 (Gầy)</span>
+                <span className="text-emerald-600 dark:text-emerald-400">18.5 - 22.9 (Chuẩn)</span>
+                <span>23 - 24.9</span>
+                <span>&ge; 25</span>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-          <input
-            type="date"
-            min={editRange.min}
-            max={editRange.max}
-            value={calendarDate}
-            onChange={event => setCalendarDate(event.target.value)}
-            className="min-h-12 w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 text-sm font-black text-slate-950 shadow-inner outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-blue-500/10"
-            aria-label="Chọn ngày lịch sử ăn uống"
-          />
-          <button
-            type="button"
-            onClick={() => openDate(calendarDate)}
-            className="min-h-12 rounded-2xl bg-blue-600 px-5 text-xs font-black text-white shadow-md shadow-blue-600/20 transition-all hover:bg-blue-700 active:scale-95"
-          >
-            Mở ngày
-          </button>
+          <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-3 text-[11px] font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-400">
+            {idealWeight ? (
+              <div className="flex items-center justify-between">
+                <span>Cân nặng chuẩn theo chiều cao:</span>
+                <span className="font-black text-slate-900 dark:text-slate-100">
+                  {idealWeight.min} - {idealWeight.max} kg
+                </span>
+              </div>
+            ) : (
+              <span>Cập nhật chiều cao để xem khoảng cân nặng lý tưởng cho bạn.</span>
+            )}
+            {bmiCategory && (
+              <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
+                {bmiCategory.description}
+              </p>
+            )}
           </div>
+        </section>
+
+        {/* THẺ 2: Năng lượng Hôm nay (Calo vs Mục tiêu TDEE) & Nhu cầu nước */}
+        <section className="flex flex-col justify-between rounded-[26px] border border-slate-200 bg-white p-4.5 shadow-sm transition-all dark:border-slate-800 dark:bg-slate-900">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
+                  <Flame className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <span className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Năng lượng hôm nay
+                  </span>
+                  <span className="text-sm font-black text-slate-950 dark:text-slate-100">
+                    Calo nạp / Mục tiêu
+                  </span>
+                </div>
+              </div>
+
+              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-black text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
+                Mục tiêu: {targetCalories.toLocaleString('vi-VN')} kcal
+              </span>
+            </div>
+
+            {/* Tiến độ Calo hôm nay */}
+            <div className="mt-4 flex items-baseline justify-between">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl font-black text-slate-950 dark:text-slate-100">
+                  {todayCalories.toLocaleString('vi-VN')}
+                </span>
+                <span className="text-xs font-bold text-slate-500">
+                  / {targetCalories.toLocaleString('vi-VN')} kcal
+                </span>
+              </div>
+              <span className="text-xs font-black text-blue-600 dark:text-blue-400">
+                {calorieProgressPct}%
+              </span>
+            </div>
+
+            <div className="mt-2.5 h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 transition-all duration-500"
+                style={{ width: `${calorieProgressPct}%` }}
+              />
+            </div>
+
+            <div className="mt-2 flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-400">
+              <span>{todayLogs.length} bữa ăn hôm nay</span>
+              <span>
+                {calorieRemaining > 0
+                  ? `Còn thiếu ~${calorieRemaining.toLocaleString('vi-VN')} kcal`
+                  : 'Đã đạt chỉ tiêu Calo!'}
+              </span>
+            </div>
+          </div>
+
+          {/* Gợi ý nước uống */}
+          <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-cyan-100 bg-cyan-50/70 p-3 text-[11px] font-bold text-cyan-900 dark:border-cyan-900/40 dark:bg-cyan-950/30 dark:text-cyan-200">
+            <Droplets className="h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-400" />
+            <div className="min-w-0 flex-1">
+              <span>Nhu cầu nước: </span>
+              <span className="font-extrabold text-cyan-700 dark:text-cyan-300">
+                ~{(waterReq.ml / 1000).toFixed(1)} Lít / ngày
+              </span>
+              <span className="font-normal text-cyan-800/80 dark:text-cyan-300/70">
+                {' '}(khoảng {waterReq.glasses} cốc 250ml)
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* THẺ 3: Xu hướng Calo 7 ngày gần nhất */}
+        <section className="flex flex-col justify-between rounded-[26px] border border-slate-200 bg-white p-4.5 shadow-sm transition-all dark:border-slate-800 dark:bg-slate-900">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+                  <TrendingUp className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <span className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Theo dõi tuần
+                  </span>
+                  <span className="text-sm font-black text-slate-950 dark:text-slate-100">
+                    Calo 7 ngày gần nhất
+                  </span>
+                </div>
+              </div>
+
+              <span className="text-[10px] font-bold text-slate-500">
+                TB: <strong className="text-slate-800 dark:text-slate-200">~{last7DaysData.avgKcal.toLocaleString('vi-VN')}</strong> kcal/ngày
+              </span>
+            </div>
+
+            {/* Biểu đồ cột mini 7 ngày */}
+            <div className="mt-5 grid grid-cols-7 items-end gap-2 pt-2">
+              {last7DaysData.days.map(day => {
+                const heightPct = Math.max(
+                  12,
+                  Math.round((day.calories / last7DaysData.maxKcal) * 100)
+                );
+
+                return (
+                  <button
+                    type="button"
+                    key={day.dateKey}
+                    onClick={() => openDate(day.dateKey)}
+                    className="group flex flex-col items-center gap-1.5 focus:outline-none"
+                    title={`${day.dayNum}: ${day.calories.toLocaleString('vi-VN')} kcal (${day.mealCount} bữa)`}
+                  >
+                    <span className="text-[8px] font-bold text-slate-600 dark:text-slate-400 group-hover:text-blue-600">
+                      {day.calories > 0 ? `${Math.round(day.calories / 100) / 10}k` : '0'}
+                    </span>
+
+                    <div className="relative flex h-24 w-full max-w-[28px] items-end rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+                      <div
+                        className={
+                          'w-full rounded-lg transition-all duration-300 ' +
+                          (day.isToday
+                            ? 'bg-gradient-to-t from-blue-600 to-indigo-500 shadow-sm shadow-blue-500/30'
+                            : day.calories > 0
+                            ? 'bg-blue-300/80 group-hover:bg-blue-400 dark:bg-blue-600/50'
+                            : 'bg-transparent')
+                        }
+                        style={{ height: `${heightPct}%` }}
+                      />
+                    </div>
+
+                    <span
+                      className={
+                        'text-[10px] font-black ' +
+                        (day.isToday
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-slate-700 dark:text-slate-300')
+                      }
+                    >
+                      {day.shortLabel}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between text-[10px] font-bold text-slate-500">
+            <span>Bấm vào cột ngày để xem chi tiết bữa ăn</span>
+            <span className="text-blue-600 font-extrabold">7 ngày qua</span>
+          </div>
+        </section>
+
+        {/* THẺ 4: Tương quan phân bổ bữa ăn (Sáng / Trưa / Tối) */}
+        <section className="flex flex-col justify-between rounded-[26px] border border-slate-200 bg-white p-4.5 shadow-sm transition-all dark:border-slate-800 dark:bg-slate-900">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300">
+                  <UtensilsCrossed className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <span className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Cân bằng bữa ăn
+                  </span>
+                  <span className="text-sm font-black text-slate-950 dark:text-slate-100">
+                    Phân bổ Sáng / Trưa / Tối
+                  </span>
+                </div>
+              </div>
+
+              <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[9px] font-black text-purple-700 dark:bg-purple-500/15 dark:text-purple-300">
+                Hôm nay
+              </span>
+            </div>
+
+            {/* 3 Thống kê bữa */}
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-2.5 text-center dark:border-amber-900/30 dark:bg-amber-950/20">
+                <span className="text-[10px] font-black uppercase text-amber-700 dark:text-amber-400">
+                  Sáng 🌅
+                </span>
+                <div className="mt-1 text-xs font-black text-slate-900 dark:text-slate-100">
+                  {mealDistribution.breakfastKcal} kcal
+                </div>
+                <div className="text-[9px] font-bold text-amber-600 dark:text-amber-400">
+                  {mealDistribution.breakfastPct}%
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-2.5 text-center dark:border-blue-900/30 dark:bg-blue-950/20">
+                <span className="text-[10px] font-black uppercase text-blue-700 dark:text-blue-400">
+                  Trưa ☀️
+                </span>
+                <div className="mt-1 text-xs font-black text-slate-900 dark:text-slate-100">
+                  {mealDistribution.lunchKcal} kcal
+                </div>
+                <div className="text-[9px] font-bold text-blue-600 dark:text-blue-400">
+                  {mealDistribution.lunchPct}%
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-2.5 text-center dark:border-indigo-900/30 dark:bg-indigo-950/20">
+                <span className="text-[10px] font-black uppercase text-indigo-700 dark:text-indigo-400">
+                  Tối 🌙
+                </span>
+                <div className="mt-1 text-xs font-black text-slate-900 dark:text-slate-100">
+                  {mealDistribution.dinnerKcal} kcal
+                </div>
+                <div className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400">
+                  {mealDistribution.dinnerPct}%
+                </div>
+              </div>
+            </div>
+
+            {/* Thanh thanh tỷ lệ màu */}
+            <div className="mt-3.5">
+              <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                {mealDistribution.total > 0 ? (
+                  <>
+                    <div
+                      className="bg-amber-400"
+                      style={{ width: `${mealDistribution.breakfastPct}%` }}
+                      title={`Bữa sáng: ${mealDistribution.breakfastPct}%`}
+                    />
+                    <div
+                      className="bg-blue-500"
+                      style={{ width: `${mealDistribution.lunchPct}%` }}
+                      title={`Bữa trưa: ${mealDistribution.lunchPct}%`}
+                    />
+                    <div
+                      className="bg-indigo-500"
+                      style={{ width: `${mealDistribution.dinnerPct}%` }}
+                      title={`Bữa tối: ${mealDistribution.dinnerPct}%`}
+                    />
+                  </>
+                ) : (
+                  <div className="w-full bg-slate-200 dark:bg-slate-700" />
+                )}
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-3 text-[10px] font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+            💡 Tỷ lệ năng lượng lý tưởng sinh viên: Sáng 30% · Trưa 40% · Tối 30%. Hạn chế ăn đêm nhiều calo sau 21h.
+          </p>
+        </section>
+      </div>
+
+      {/* 3. Phân Mục Nhật Ký Ăn Uống & Ghi Bù */}
+      <div className="pt-2">
+        <div className="flex items-center gap-2 px-1 pb-3">
+          <CalendarDays className="h-5 w-5 text-blue-600" />
+          <h3 className="text-base font-black text-slate-950 dark:text-slate-100">
+            Nhật ký ăn uống theo ngày
+          </h3>
         </div>
-      </section>
+
+        <section className="overflow-hidden rounded-[26px] border border-slate-200 bg-gradient-to-br from-white via-white to-blue-50/80 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/20">
+          <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400" />
+          <div className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
+                <CalendarDays className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-sm font-black text-slate-950 dark:text-slate-100">
+                    Ghi bù hoặc chỉnh lịch sử
+                  </div>
+                  <span className="rounded-lg bg-blue-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
+                    Tối đa 3 ngày trước
+                  </span>
+                </div>
+                <div className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600 dark:text-slate-400">
+                  Chọn từ {formatDateKey(editRange.min)} đến hôm nay. Ngày tương lai và ngày cũ hơn chỉ được xem.
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
+              <input
+                type="date"
+                min={editRange.min}
+                max={editRange.max}
+                value={calendarDate}
+                onChange={event => setCalendarDate(event.target.value)}
+                className="min-h-12 w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 text-sm font-black text-slate-950 shadow-inner outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-blue-500/10"
+                aria-label="Chọn ngày lịch sử ăn uống"
+              />
+              <button
+                type="button"
+                onClick={() => openDate(calendarDate)}
+                className="min-h-12 rounded-2xl bg-blue-600 px-5 text-xs font-black text-white shadow-md shadow-blue-600/20 transition-all hover:bg-blue-700 active:scale-95"
+              >
+                Mở ngày
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+
 
       {groupedDays.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 rounded-[26px] border border-slate-200 dark:border-slate-700 shadow-sm py-14 px-6 text-center">

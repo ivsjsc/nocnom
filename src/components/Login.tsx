@@ -89,6 +89,19 @@ export default function Login({ user, darkMode, onRequestAuth }: LoginProps) {
     };
   }, [user]);
 
+  useEffect(() => {
+    const handleOpenProfile = () => {
+      if (user) {
+        setProfileOpen(true);
+      } else {
+        onRequestAuth();
+      }
+    };
+
+    window.addEventListener('nocnom:open-profile', handleOpenProfile);
+    return () => window.removeEventListener('nocnom:open-profile', handleOpenProfile);
+  }, [user, onRequestAuth]);
+
   const handleAvatarClick = () => {
     if (loading) return;
 
