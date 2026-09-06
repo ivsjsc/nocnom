@@ -435,7 +435,7 @@ const scheduleCloudSync = (
   syncDebounceTimer = setTimeout(async () => {
     if (!currentSyncUid || isRemoteUpdating) return;
     try {
-      await persistUserStateNow(['dishes']);
+      await persistUserStateNow();
     } catch {
       // persistUserStateNow already logged technical details.
     }
@@ -1205,7 +1205,7 @@ export const mockDb = {
       dishListeners.forEach(listener => listener(dishesData));
 
       try {
-        await persistUserStateNow(['dishes']);
+        await persistUserStateNow(['dishes', 'categories']);
       } catch (error) {
         dishesData = dishesData.map((dish, index) =>
           index === existingIndex ? current : dish
@@ -1266,7 +1266,7 @@ export const mockDb = {
     dishListeners.forEach(listener => listener(dishesData));
 
     try {
-      await persistUserStateNow(['dishes']);
+      await persistUserStateNow(['dishes', 'categories']);
     } catch (error) {
       dishesData = dishesData.filter(dish => dish.id !== newDish.id);
       categoriesData = previousCategories;
