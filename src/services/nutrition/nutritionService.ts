@@ -190,19 +190,24 @@ export class NutritionService {
     }
 
     this.addonPromise = (async () => {
-      try {
-        const response = await fetch('/data/nutrition/addons.json', {
-          cache: 'force-cache'
-        });
-        if (!response.ok) {
-          throw new Error('Failed to load addons catalog');
+      // In browser environment, attempt static fetch
+      if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+        try {
+          const response = await fetch('/data/nutrition/addons.json', {
+            cache: 'force-cache'
+          });
+          if (response.ok) {
+            const rows = (await response.json()) as NutritionAddonOption[];
+            this.addonCatalog = rows;
+            return rows;
+          }
+        } catch {
+          // Fall through to build from in-memory dataset
         }
-        const rows = (await response.json()) as NutritionAddonOption[];
-        this.addonCatalog = rows;
-        return rows;
-      } catch (err) {
-        console.warn('[NutritionService] Falling back to building addons from dataset', err);
-        const dataset = await this.init();
+      }
+
+      // Build directly from loaded dataset
+      const dataset = await this.init();
         const fallbackAddons: NutritionAddonOption[] = dataset.foods
           .filter(
             f =>
@@ -231,7 +236,6 @@ export class NutritionService {
           }));
         this.addonCatalog = fallbackAddons;
         return fallbackAddons;
-      }
     })();
 
     const result = await this.addonPromise;
