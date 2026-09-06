@@ -1,3 +1,5 @@
+import { lookupNutrition } from './nutritionKnowledge';
+
 export type VendorExtraInfo = {
   id: string;
   label: string;
@@ -21,6 +23,11 @@ export type Dish = {
   isFavorite: boolean;
   imageUrl?: string;
   calories?: number;
+  calorieSource?: 'manual' | 'knowledge';
+  calorieBasis?: 'serving' | '100g';
+  nutritionRecordId?: string;
+  nutritionConfidence?: 'verified' | 'estimated' | 'unknown';
+  nutritionSource?: string;
   vendors: Vendor[];
 };
 
@@ -188,6 +195,60 @@ const listeners: Record<string, Set<Listener>> = {};
 const dishListeners: Set<Listener> = new Set();
 const categoryListeners: Set<Listener> = new Set();
 const logListeners: Set<Listener> = new Set();
+const nutritionHydrationPending = new Set<string>();
+
+const hydrateDishCaloriesFromKnowledge = async (dishId: string, foodName: string) => {
+  if (nutritionHydrationPending.has(dishId)) return;
+  nutritionHydrationPending.add(dishId);
+
+  try {
+    const result = await lookupNutrition(foodName);
+    if (!result) return;
+
+    const current = dishesData.find(dish => dish.id === dishId);
+    if (!current) return;
+
+    const hasExplicitCalories =
+      typeof current.calories === 'number' &&
+      Number.isFinite(current.calories) &&
+      current.calories > 0 &&
+      current.calorieSource !== 'knowledge';
+
+    if (hasExplicitCalories || current.calorieSource === 'manual') return;
+
+    dishesData = dishesData.map(dish =>
+      dish.id === dishId
+        ? {
+            ...dish,
+            calories: result.calories,
+            calorieSource: 'knowledge',
+            calorieBasis: result.basis,
+            nutritionRecordId: result.record.id,
+            nutritionConfidence: result.record.confidence,
+            nutritionSource: result.record.source
+          }
+        : dish
+    );
+
+    saveToLocalStorage();
+    dishListeners.forEach(listener => listener(dishesData));
+  } finally {
+    nutritionHydrationPending.delete(dishId);
+  }
+};
+
+const hydrateMissingDishCalories = async () => {
+  const candidates = dishesData.filter(dish =>
+    dish.calorieSource === 'knowledge' ||
+    typeof dish.calories !== 'number' ||
+    !Number.isFinite(dish.calories) ||
+    dish.calories <= 0
+  );
+
+  await Promise.all(
+    candidates.map(dish => hydrateDishCaloriesFromKnowledge(dish.id, dish.name))
+  );
+};
 
 export const mockDb = {
   getDoc: (day: string) => dbData[day],
@@ -222,6 +283,7 @@ export const mockDb = {
   subscribeDishes: (callback: Listener) => {
     dishListeners.add(callback);
     callback(dishesData);
+    void hydrateMissingDishCalories();
     return () => dishListeners.delete(callback);
   },
   subscribeLogs: (callback: Listener) => {
@@ -300,7 +362,19 @@ export const mockDb = {
     dishListeners.forEach(l => l(dishesData));
   },
   updateDishCalories: (id: string, calories: number) => {
-    dishesData = dishesData.map(d => d.id === id ? { ...d, calories: Math.round(calories) } : d);
+    dishesData = dishesData.map(d =>
+      d.id === id
+        ? {
+            ...d,
+            calories: Math.round(calories),
+            calorieSource: 'manual',
+            calorieBasis: 'serving',
+            nutritionRecordId: undefined,
+            nutritionConfidence: undefined,
+            nutritionSource: undefined
+          }
+        : d
+    );
     saveToLocalStorage();
     dishListeners.forEach(l => l(dishesData));
   },
@@ -341,9 +415,35 @@ export const mockDb = {
     dishListeners.forEach(l => l(dishesData));
   },
   updateDishName: (id: string, newName: string) => {
-    dishesData = dishesData.map(d => d.id === id ? { ...d, name: newName } : d);
+    const current = dishesData.find(dish => dish.id === id);
+    const shouldRefreshKnowledge =
+      current?.calorieSource === 'knowledge' ||
+      typeof current?.calories !== 'number';
+
+    dishesData = dishesData.map(d =>
+      d.id === id
+        ? {
+            ...d,
+            name: newName,
+            ...(shouldRefreshKnowledge
+              ? {
+                  calories: undefined,
+                  calorieSource: undefined,
+                  calorieBasis: undefined,
+                  nutritionRecordId: undefined,
+                  nutritionConfidence: undefined,
+                  nutritionSource: undefined
+                }
+              : {})
+          }
+        : d
+    );
     saveToLocalStorage();
     dishListeners.forEach(l => l(dishesData));
+
+    if (shouldRefreshKnowledge) {
+      void hydrateDishCaloriesFromKnowledge(id, newName);
+    }
   },
   updateVendor: (dishId: string, vendorId: string, updates: Partial<Vendor>) => {
     dishesData = dishesData.map(dish => {
@@ -406,12 +506,12 @@ export const mockDb = {
       name,
       categoryId,
       isFavorite: false,
-      calories: getDefaultCaloriesForCategory(categoryId),
       vendors: []
     };
     dishesData = [...dishesData, newDish];
     saveToLocalStorage();
     dishListeners.forEach(l => l(dishesData));
+    void hydrateDishCaloriesFromKnowledge(newDish.id, newDish.name);
   },
   addVendor: (dishId: string, name: string, price: number, phone: string, address: string) => {
     dishesData = dishesData.map(dish => {
@@ -442,5 +542,6 @@ export const mockDb = {
     Object.values(listeners).flatMap(set => Array.from(set)).forEach(l => l(dbData));
     dishListeners.forEach(l => l(dishesData));
     categoryListeners.forEach(l => l(categoriesData));
+    void hydrateMissingDishCalories();
   }
 };
