@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Clipboard, Eye, Pencil, Plus, Star } from 'lucide-react';
-import { mockDb, type Category, type Dish, type LogEntry } from '../lib/db';
+import { estimateDishCalories, mockDb, type Category, type Dish, type LogEntry } from '../lib/db';
 import DishDetailModal from './DishDetailModal';
 import DishImage from './DishImage';
 
@@ -65,6 +65,19 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
     const newImage = window.prompt('URL hình ảnh:', dish.imageUrl || '');
     if (newImage !== null && newImage !== (dish.imageUrl || '')) {
       mockDb.updateDishImage(dish.id, newImage.trim());
+    }
+
+    const rawCalories = window.prompt(
+      'Năng lượng ước tính (kcal/phần):',
+      String(estimateDishCalories(dish))
+    );
+    if (rawCalories !== null) {
+      const calories = Number(rawCalories);
+      if (Number.isFinite(calories) && calories > 0 && calories <= 5000) {
+        mockDb.updateDishCalories(dish.id, calories);
+      } else if (rawCalories.trim()) {
+        window.alert('Calo phải là số từ 1 đến 5000 kcal/phần.');
+      }
     }
 
     if (window.confirm('Bạn có muốn thêm một quán phục vụ cho món này?')) {
@@ -177,7 +190,9 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
             <div className="min-w-0 flex-1">
               <div className="text-[11px] font-black uppercase text-blue-500">{categoryName(dish.categoryId)}</div>
               <h3 className="mt-1 font-black text-sm text-slate-950 leading-snug">{dish.name}</h3>
-              <div className="mt-1 text-[11px] font-black uppercase text-slate-500">{dish.vendors.length} quán bán</div>
+              <div className="mt-1 text-[10px] font-black uppercase text-slate-500">
+                {dish.vendors.length} quán bán · ≈ {estimateDishCalories(dish)} kcal
+              </div>
             </div>
 
             <div className="w-[92px] shrink-0 grid grid-cols-2 gap-1">

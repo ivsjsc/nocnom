@@ -1,3 +1,5 @@
+import { lookupNutrition } from './nutritionKnowledge';
+
 export type VendorExtraInfo = {
   id: string;
   label: string;
@@ -20,6 +22,12 @@ export type Dish = {
   categoryId: string;
   isFavorite: boolean;
   imageUrl?: string;
+  calories?: number;
+  calorieSource?: 'manual' | 'knowledge';
+  calorieBasis?: 'serving' | '100g';
+  nutritionRecordId?: string;
+  nutritionConfidence?: 'verified' | 'estimated' | 'unknown';
+  nutritionSource?: string;
   vendors: Vendor[];
 };
 
@@ -28,13 +36,114 @@ export type Category = {
   name: string;
 };
 
+export type MealKey = 'A' | 'B' | 'C';
+export type MealAddonKind = 'fruit' | 'drink';
+
+export type MealAddon = {
+  id: string;
+  kind: MealAddonKind;
+  name: string;
+  calories: number;
+  nutritionRecordId?: string;
+  servingG?: number;
+  kcalMin?: number;
+  kcalMax?: number;
+};
+
 export type LogEntry = {
   id: string;
   dishName: string;
   vendorName: string;
   price: number;
+  calories?: number;
+  addons?: MealAddon[];
+  mealKey?: MealKey;
   timestamp: number;
 };
+
+const VIETNAM_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+const DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_HISTORY_EDIT_DAYS = 3;
+
+function datePartsInVietnam(timestamp: number) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: VIETNAM_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date(timestamp));
+
+  const lookup = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return {
+    year: Number(lookup.year),
+    month: Number(lookup.month),
+    day: Number(lookup.day)
+  };
+}
+
+export const getVietnamDateKey = (timestamp = Date.now()) => {
+  const { year, month, day } = datePartsInVietnam(timestamp);
+  return [
+    String(year).padStart(4, '0'),
+    String(month).padStart(2, '0'),
+    String(day).padStart(2, '0')
+  ].join('-');
+};
+
+function dateKeyToUtcDay(dateKey: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const utc = Date.UTC(year, month - 1, day);
+  const check = new Date(utc);
+
+  if (
+    check.getUTCFullYear() !== year ||
+    check.getUTCMonth() !== month - 1 ||
+    check.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return Math.floor(utc / DAY_MS);
+}
+
+export const getEditableMealDateRange = (now = Date.now()) => {
+  const todayKey = getVietnamDateKey(now);
+  const todayDay = dateKeyToUtcDay(todayKey)!;
+  const minDay = todayDay - MAX_HISTORY_EDIT_DAYS;
+  const minDate = new Date(minDay * DAY_MS);
+
+  return {
+    min: [
+      minDate.getUTCFullYear(),
+      String(minDate.getUTCMonth() + 1).padStart(2, '0'),
+      String(minDate.getUTCDate()).padStart(2, '0')
+    ].join('-'),
+    max: todayKey
+  };
+};
+
+export const isMealDateEditable = (dateKey: string, now = Date.now()) => {
+  const candidate = dateKeyToUtcDay(dateKey);
+  if (candidate === null) return false;
+
+  const today = dateKeyToUtcDay(getVietnamDateKey(now))!;
+  const age = today - candidate;
+  return age >= 0 && age <= MAX_HISTORY_EDIT_DAYS;
+};
+
+function timestampForMealDate(dateKey: string, mealKey: MealKey) {
+  const hour: Record<MealKey, string> = { A: '08:00:00', B: '12:00:00', C: '18:00:00' };
+  const timestamp = Date.parse(`${dateKey}T${hour[mealKey]}+07:00`);
+  if (!Number.isFinite(timestamp)) {
+    throw new Error('Ngày lịch sử không hợp lệ.');
+  }
+  return timestamp;
+}
 
 export const initialCategories: Category[] = [
   { id: 'c1', name: 'Món mặn' },
@@ -46,54 +155,77 @@ export const initialCategories: Category[] = [
   { id: 'c7', name: 'Combo / Phần ăn' },
 ];
 
+const categoryCalorieDefaults: Record<string, number> = {
+  c1: 650,
+  c2: 250,
+  c3: 550,
+  c4: 350,
+  c5: 500,
+  c6: 250,
+  c7: 700
+};
+
+export const getDefaultCaloriesForCategory = (categoryId: string) =>
+  categoryCalorieDefaults[categoryId] ?? 500;
+
+export const estimateDishCalories = (dish: Pick<Dish, 'calories' | 'categoryId'>) => {
+  const calories = Number(dish.calories);
+  if (Number.isFinite(calories) && calories > 0) {
+    return Math.round(calories);
+  }
+
+  return getDefaultCaloriesForCategory(dish.categoryId);
+};
+
 const initialDishes: Dish[] = [
   {
-    id: 'd1', name: 'Cơm gà xối mỡ', categoryId: 'c1', isFavorite: true, imageUrl: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80',
+    id: 'd1', name: 'Cơm gà xối mỡ', categoryId: 'c1', isFavorite: true, calories: 780, imageUrl: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80',
     vendors: [
       { id: 'v1', name: 'Cơm gà Cô Ba', phone: '0901.234.567', address: '123 Đường D1', price: 35000, link: 'https://maps.google.com', extraInfo: [{id: 'e1', label: 'Giờ mở cửa', value: '10:00 - 20:00'}] },
       { id: 'v2', name: 'Quán Hồng Phát', phone: '0987.654.321', address: '456 Điện Biên Phủ', price: 40000, extraInfo: [] }
     ]
   },
   {
-    id: 'd2', name: 'Phở bò / Phở gà', categoryId: 'c3', isFavorite: false, imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb438?auto=format&fit=crop&w=800&q=80',
+    id: 'd2', name: 'Phở bò / Phở gà', categoryId: 'c3', isFavorite: false, calories: 520, imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb438?auto=format&fit=crop&w=800&q=80',
     vendors: [{ id: 'v3', name: 'Phở Quỳnh', phone: '0911.222.333', address: 'Ngã tư Hàng Xanh', price: 45000, extraInfo: [] }]
   },
   {
-    id: 'd3', name: 'Wrap gà + Trái cây', categoryId: 'c4', isFavorite: true, imageUrl: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=800&q=80',
+    id: 'd3', name: 'Wrap gà + Trái cây', categoryId: 'c4', isFavorite: true, calories: 430, imageUrl: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=800&q=80',
     vendors: [{ id: 'v4', name: 'Healthy Box', phone: '0909.888.777', address: 'Khu A', price: 40000, extraInfo: [] }]
   },
   {
-    id: 'd4', name: 'Cơm sườn + Salad', categoryId: 'c1', isFavorite: false, imageUrl: 'https://images.unsplash.com/photo-1555126634-323283e090fa?auto=format&fit=crop&w=800&q=80',
+    id: 'd4', name: 'Cơm sườn + Salad', categoryId: 'c1', isFavorite: false, calories: 720, imageUrl: 'https://images.unsplash.com/photo-1555126634-323283e090fa?auto=format&fit=crop&w=800&q=80',
     vendors: [{ id: 'v5', name: 'Cơm tấm Ba Ghiền', phone: '0922.333.444', address: '84 Đặng Văn Ngữ', price: 45000, extraInfo: [] }]
   },
   {
-    id: 'd5', name: 'Bún riêu / Chả', categoryId: 'c3', isFavorite: false,
+    id: 'd5', name: 'Bún riêu / Chả', categoryId: 'c3', isFavorite: false, calories: 480,
     vendors: [{ id: 'v6', name: 'Bún riêu Cô Mai', phone: '0912.345.678', address: 'Chợ Thị Nghè', price: 30000, extraInfo: [] }]
   },
   {
-    id: 'd6', name: 'Cơm chay', categoryId: 'c1', isFavorite: false,
+    id: 'd6', name: 'Cơm chay', categoryId: 'c5', isFavorite: false, calories: 520,
     vendors: [{ id: 'v7', name: 'Chay Tùy Duyên', phone: '0988.777.666', address: 'Khu B', price: 25000, extraInfo: [] }]
   },
-  { id: 'd7', name: 'Cơm thịt kho', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v8', name: 'Cơm phần Sinh Viên', phone: '0900.111.222', address: 'Hẻm 79', price: 30000, extraInfo: [] }] },
-  { id: 'd8', name: 'Mì xào hải sản', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v9', name: 'Quán Ốc Đêm', phone: '0933.222.111', address: 'Đường D2', price: 35000, extraInfo: [] }] },
-  { id: 'd9', name: 'Salad gạo lứt', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v10', name: 'Eat Clean', phone: '0944.555.666', address: 'Khu C', price: 40000, extraInfo: [] }] },
-  { id: 'd10', name: 'Cơm cá kho', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v11', name: 'Cơm Quê', phone: '0955.666.777', address: 'Đường D3', price: 35000, extraInfo: [] }] },
-  { id: 'd11', name: 'Bún mắm / cá', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v12', name: 'Đặc sản Miền Tây', phone: '0966.777.888', address: 'Khu D', price: 40000, extraInfo: [] }] },
-  { id: 'd12', name: 'Sandwich + Sữa chua', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v13', name: 'Tiệm Bánh', phone: '0977.888.999', address: 'Khu E', price: 30000, extraInfo: [] }] },
-  { id: 'd13', name: 'Cơm bò xào', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v14', name: 'Quán Bò', phone: '0988.999.000', address: 'Khu F', price: 45000, extraInfo: [] }] },
-  { id: 'd14', name: 'Mì Quảng / Hủ tiếu', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v15', name: 'Mì Quảng Bà Mua', phone: '0999.000.111', address: 'Khu G', price: 35000, extraInfo: [] }] },
-  { id: 'd15', name: 'Cơm ngũ cốc', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v16', name: 'Healthy Box', phone: '0909.888.777', address: 'Khu A', price: 45000, extraInfo: [] }] },
-  { id: 'd16', name: 'Cơm tấm', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v17', name: 'Cơm tấm Đêm', phone: '0912.345.678', address: 'Vòng xoay', price: 35000, extraInfo: [] }] },
-  { id: 'd17', name: 'Bún / Miến xào', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v18', name: 'Quán Xào', phone: '0922.111.333', address: 'Khu H', price: 30000, extraInfo: [] }] },
-  { id: 'd18', name: 'Snack box', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v19', name: 'Canteen', phone: '0933.444.555', address: 'Trường', price: 25000, extraInfo: [] }] },
-  { id: 'd19', name: 'Cơm thịt nướng', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v20', name: 'Xiên Nướng', phone: '0944.555.666', address: 'Khu I', price: 35000, extraInfo: [] }] },
-  { id: 'd20', name: 'Lẩu mini / Mì ống', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v21', name: 'Lẩu 1 Người', phone: '0955.666.777', address: 'Khu J', price: 50000, extraInfo: [] }] },
-  { id: 'd21', name: 'Bánh mì + Sữa', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v22', name: 'Bánh Mì Tuấn', phone: '0966.777.888', address: 'Khu K', price: 20000, extraInfo: [] }] },
+  { id: 'd7', name: 'Cơm thịt kho', categoryId: 'c1', isFavorite: false, calories: 650, vendors: [{ id: 'v8', name: 'Cơm phần Sinh Viên', phone: '0900.111.222', address: 'Hẻm 79', price: 30000, extraInfo: [] }] },
+  { id: 'd8', name: 'Mì xào hải sản', categoryId: 'c3', isFavorite: false, calories: 620, vendors: [{ id: 'v9', name: 'Quán Ốc Đêm', phone: '0933.222.111', address: 'Đường D2', price: 35000, extraInfo: [] }] },
+  { id: 'd9', name: 'Salad gạo lứt', categoryId: 'c4', isFavorite: false, calories: 420, vendors: [{ id: 'v10', name: 'Eat Clean', phone: '0944.555.666', address: 'Khu C', price: 40000, extraInfo: [] }] },
+  { id: 'd10', name: 'Cơm cá kho', categoryId: 'c1', isFavorite: false, calories: 680, vendors: [{ id: 'v11', name: 'Cơm Quê', phone: '0955.666.777', address: 'Đường D3', price: 35000, extraInfo: [] }] },
+  { id: 'd11', name: 'Bún mắm / cá', categoryId: 'c3', isFavorite: false, calories: 550, vendors: [{ id: 'v12', name: 'Đặc sản Miền Tây', phone: '0966.777.888', address: 'Khu D', price: 40000, extraInfo: [] }] },
+  { id: 'd12', name: 'Sandwich + Sữa chua', categoryId: 'c4', isFavorite: false, calories: 380, vendors: [{ id: 'v13', name: 'Tiệm Bánh', phone: '0977.888.999', address: 'Khu E', price: 30000, extraInfo: [] }] },
+  { id: 'd13', name: 'Cơm bò xào', categoryId: 'c1', isFavorite: false, calories: 700, vendors: [{ id: 'v14', name: 'Quán Bò', phone: '0988.999.000', address: 'Khu F', price: 45000, extraInfo: [] }] },
+  { id: 'd14', name: 'Mì Quảng / Hủ tiếu', categoryId: 'c3', isFavorite: false, calories: 560, vendors: [{ id: 'v15', name: 'Mì Quảng Bà Mua', phone: '0999.000.111', address: 'Khu G', price: 35000, extraInfo: [] }] },
+  { id: 'd15', name: 'Cơm ngũ cốc', categoryId: 'c4', isFavorite: false, calories: 480, vendors: [{ id: 'v16', name: 'Healthy Box', phone: '0909.888.777', address: 'Khu A', price: 45000, extraInfo: [] }] },
+  { id: 'd16', name: 'Cơm tấm', categoryId: 'c1', isFavorite: false, calories: 650, vendors: [{ id: 'v17', name: 'Cơm tấm Đêm', phone: '0912.345.678', address: 'Vòng xoay', price: 35000, extraInfo: [] }] },
+  { id: 'd17', name: 'Bún / Miến xào', categoryId: 'c3', isFavorite: false, calories: 600, vendors: [{ id: 'v18', name: 'Quán Xào', phone: '0922.111.333', address: 'Khu H', price: 30000, extraInfo: [] }] },
+  { id: 'd18', name: 'Snack box', categoryId: 'c4', isFavorite: false, calories: 320, vendors: [{ id: 'v19', name: 'Canteen', phone: '0933.444.555', address: 'Trường', price: 25000, extraInfo: [] }] },
+  { id: 'd19', name: 'Cơm thịt nướng', categoryId: 'c1', isFavorite: false, calories: 720, vendors: [{ id: 'v20', name: 'Xiên Nướng', phone: '0944.555.666', address: 'Khu I', price: 35000, extraInfo: [] }] },
+  { id: 'd20', name: 'Lẩu mini / Mì ống', categoryId: 'c3', isFavorite: false, calories: 680, vendors: [{ id: 'v21', name: 'Lẩu 1 Người', phone: '0955.666.777', address: 'Khu J', price: 50000, extraInfo: [] }] },
+  { id: 'd21', name: 'Bánh mì + Sữa', categoryId: 'c4', isFavorite: false, calories: 450, vendors: [{ id: 'v22', name: 'Bánh Mì Tuấn', phone: '0966.777.888', address: 'Khu K', price: 20000, extraInfo: [] }] },
 ];
 
 export type MenuItem = {
   dishId: string;
   stock: number;
+  skipped?: boolean;
 };
 
 export type DayMenu = {
@@ -123,7 +255,6 @@ let dishesData: Dish[] = [...initialDishes];
 let categoriesData: Category[] = [...initialCategories];
 let logsData: LogEntry[] = [];
 
-// Load from localStorage if available
 try {
   const storedDbData = (localStorage.getItem('nocnom_timetable') ?? localStorage.getItem('unifood_timetable'));
   if (storedDbData) dbData = JSON.parse(storedDbData);
@@ -142,9 +273,9 @@ try {
 
 const createLocalId = (prefix: string) => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}${crypto.randomUUID()}`;
+    return prefix + crypto.randomUUID();
   }
-  return `${prefix}${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return prefix + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
 };
 
 const saveToLocalStorage = () => {
@@ -163,6 +294,168 @@ const listeners: Record<string, Set<Listener>> = {};
 const dishListeners: Set<Listener> = new Set();
 const categoryListeners: Set<Listener> = new Set();
 const logListeners: Set<Listener> = new Set();
+const nutritionHydrationPending = new Set<string>();
+
+const hydrateDishCaloriesFromKnowledge = async (dishId: string, foodName: string) => {
+  if (nutritionHydrationPending.has(dishId)) return;
+  nutritionHydrationPending.add(dishId);
+
+  try {
+    const result = await lookupNutrition(foodName);
+    if (!result) return;
+
+    const current = dishesData.find(dish => dish.id === dishId);
+    if (!current) return;
+
+    const hasExplicitCalories =
+      typeof current.calories === 'number' &&
+      Number.isFinite(current.calories) &&
+      current.calories > 0 &&
+      current.calorieSource !== 'knowledge';
+
+    if (hasExplicitCalories || current.calorieSource === 'manual') return;
+
+    dishesData = dishesData.map(dish =>
+      dish.id === dishId
+        ? {
+            ...dish,
+            calories: result.calories,
+            calorieSource: 'knowledge',
+            calorieBasis: result.basis,
+            nutritionRecordId: result.record.id,
+            nutritionConfidence: result.record.confidence,
+            nutritionSource: result.record.source
+          }
+        : dish
+    );
+
+    saveToLocalStorage();
+    dishListeners.forEach(listener => listener(dishesData));
+  } finally {
+    nutritionHydrationPending.delete(dishId);
+  }
+};
+
+export const sumMealAddonCalories = (
+  log: Pick<LogEntry, 'addons'>
+): number =>
+  (log.addons ?? []).reduce((total, addon) => {
+    const calories = Number(addon.calories);
+    return total + (
+      Number.isFinite(calories) && calories >= 0
+        ? Math.round(calories)
+        : 0
+    );
+  }, 0);
+
+const normalizeMealAddons = (addons?: MealAddon[]): MealAddon[] => {
+  if (!Array.isArray(addons)) return [];
+
+  const seenKinds = new Set<MealAddonKind>();
+
+  return addons
+    .filter(addon => addon && (addon.kind === 'fruit' || addon.kind === 'drink'))
+    .filter(addon => {
+      if (seenKinds.has(addon.kind)) return false;
+      seenKinds.add(addon.kind);
+      return true;
+    })
+    .map(addon => ({
+      id: String(addon.id).trim(),
+      kind: addon.kind,
+      name: String(addon.name).trim(),
+      calories: Math.max(0, Math.round(Number(addon.calories) || 0)),
+      nutritionRecordId: addon.nutritionRecordId
+        ? String(addon.nutritionRecordId).trim()
+        : undefined,
+      servingG:
+        typeof addon.servingG === 'number' && Number.isFinite(addon.servingG)
+          ? Math.max(0, addon.servingG)
+          : undefined,
+      kcalMin:
+        typeof addon.kcalMin === 'number' && Number.isFinite(addon.kcalMin)
+          ? Math.max(0, Math.round(addon.kcalMin))
+          : undefined,
+      kcalMax:
+        typeof addon.kcalMax === 'number' && Number.isFinite(addon.kcalMax)
+          ? Math.max(0, Math.round(addon.kcalMax))
+          : undefined
+    }))
+    .filter(addon => addon.id && addon.name);
+};
+
+const hydrateMissingDishCalories = async () => {
+  const candidates = dishesData.filter(dish =>
+    dish.calorieSource === 'knowledge' ||
+    typeof dish.calories !== 'number' ||
+    !Number.isFinite(dish.calories) ||
+    dish.calories <= 0
+  );
+
+  await Promise.all(
+    candidates.map(dish => hydrateDishCaloriesFromKnowledge(dish.id, dish.name))
+  );
+};
+
+
+const upsertMealLogData = ({
+  dateKey,
+  mealKey,
+  dishName,
+  vendorName,
+  price,
+  calories,
+  addons
+}: {
+  dateKey: string;
+  mealKey: MealKey;
+  dishName: string;
+  vendorName: string;
+  price: number;
+  calories?: number;
+  addons?: MealAddon[];
+}) => {
+  if (!isMealDateEditable(dateKey)) {
+    throw new Error('Chỉ được thêm hoặc chỉnh sửa lịch sử của hôm nay và tối đa 3 ngày trước.');
+  }
+
+  const normalizedDishName = dishName.trim();
+  const normalizedVendorName = vendorName.trim();
+
+  if (!normalizedDishName) throw new Error('Cần chọn món ăn.');
+  if (!normalizedVendorName) throw new Error('Cần chọn quán hoặc nguồn món.');
+  if (!Number.isFinite(price) || price < 0) throw new Error('Giá món không hợp lệ.');
+
+  const existingIndex = logsData.findIndex(log =>
+    log.mealKey === mealKey &&
+    getVietnamDateKey(log.timestamp) === dateKey
+  );
+
+  const newLog: LogEntry = {
+    id: existingIndex >= 0 ? logsData[existingIndex].id : createLocalId('l'),
+    dishName: normalizedDishName,
+    vendorName: normalizedVendorName,
+    price: Math.round(price),
+    calories:
+      typeof calories === 'number' && Number.isFinite(calories)
+        ? Math.max(0, Math.round(calories))
+        : undefined,
+    addons: normalizeMealAddons(addons),
+    mealKey,
+    timestamp: timestampForMealDate(dateKey, mealKey)
+  };
+
+  logsData = existingIndex >= 0
+    ? [
+        newLog,
+        ...logsData.filter((_, index) => index !== existingIndex)
+      ]
+    : [newLog, ...logsData];
+
+  saveToLocalStorage();
+  logListeners.forEach(listener => listener(logsData));
+  return newLog;
+};
 
 export const mockDb = {
   getDoc: (day: string) => dbData[day],
@@ -197,6 +490,7 @@ export const mockDb = {
   subscribeDishes: (callback: Listener) => {
     dishListeners.add(callback);
     callback(dishesData);
+    void hydrateMissingDishCalories();
     return () => dishListeners.delete(callback);
   },
   subscribeLogs: (callback: Listener) => {
@@ -204,17 +498,54 @@ export const mockDb = {
     callback(logsData);
     return () => logListeners.delete(callback);
   },
-  addLog: (dishName: string, vendorName: string, price: number) => {
-    const newLog: LogEntry = {
-      id: createLocalId('l'),
+  upsertMealLog: upsertMealLogData,
+  deleteMealLog: (logId: string) => {
+    const existing = logsData.find(log => log.id === logId);
+    if (!existing) return;
+
+    const dateKey = getVietnamDateKey(existing.timestamp);
+    if (!isMealDateEditable(dateKey)) {
+      throw new Error('Lịch sử quá 3 ngày chỉ được xem, không thể xóa hoặc chỉnh sửa.');
+    }
+
+    logsData = logsData.filter(log => log.id !== logId);
+    saveToLocalStorage();
+    logListeners.forEach(l => l(logsData));
+  },
+  addLog: (
+    dishName: string,
+    vendorName: string,
+    price: number,
+    calories?: number,
+    mealKey?: MealKey,
+    addons?: MealAddon[]
+  ) => {
+    if (!mealKey) {
+      const now = Date.now();
+      const newLog: LogEntry = {
+        id: createLocalId('l'),
+        dishName,
+        vendorName,
+        price,
+        calories,
+        addons: normalizeMealAddons(addons),
+        timestamp: now
+      };
+      logsData = [newLog, ...logsData];
+      saveToLocalStorage();
+      logListeners.forEach(l => l(logsData));
+      return;
+    }
+
+    upsertMealLogData({
+      dateKey: getVietnamDateKey(),
+      mealKey,
       dishName,
       vendorName,
       price,
-      timestamp: Date.now()
-    };
-    logsData = [newLog, ...logsData];
-    saveToLocalStorage();
-    logListeners.forEach(l => l(logsData));
+      calories,
+      addons
+    });
   },
   selectCombo: (day: string, comboKey: 'A' | 'B' | 'C' | null) => {
     if (comboKey === null) {
@@ -226,14 +557,38 @@ export const mockDb = {
     if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
+  toggleMealSkipped: (day: string, comboKey: 'A' | 'B' | 'C', skipped: boolean) => {
+    dbData[day].options[comboKey].skipped = skipped;
+    saveToLocalStorage();
+    if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
+    if (listeners['all']) listeners['all'].forEach(l => l(dbData));
+  },
   swapDish: (day: string, comboKey: 'A' | 'B' | 'C', newDishId: string) => {
     dbData[day].options[comboKey].dishId = newDishId;
+    dbData[day].options[comboKey].skipped = false;
     saveToLocalStorage();
     if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
   updateDishImage: (id: string, imageUrl: string) => {
     dishesData = dishesData.map(d => d.id === id ? { ...d, imageUrl } : d);
+    saveToLocalStorage();
+    dishListeners.forEach(l => l(dishesData));
+  },
+  updateDishCalories: (id: string, calories: number) => {
+    dishesData = dishesData.map(d =>
+      d.id === id
+        ? {
+            ...d,
+            calories: Math.round(calories),
+            calorieSource: 'manual',
+            calorieBasis: 'serving',
+            nutritionRecordId: undefined,
+            nutritionConfidence: undefined,
+            nutritionSource: undefined
+          }
+        : d
+    );
     saveToLocalStorage();
     dishListeners.forEach(l => l(dishesData));
   },
@@ -274,9 +629,35 @@ export const mockDb = {
     dishListeners.forEach(l => l(dishesData));
   },
   updateDishName: (id: string, newName: string) => {
-    dishesData = dishesData.map(d => d.id === id ? { ...d, name: newName } : d);
+    const current = dishesData.find(dish => dish.id === id);
+    const shouldRefreshKnowledge =
+      current?.calorieSource === 'knowledge' ||
+      typeof current?.calories !== 'number';
+
+    dishesData = dishesData.map(d =>
+      d.id === id
+        ? {
+            ...d,
+            name: newName,
+            ...(shouldRefreshKnowledge
+              ? {
+                  calories: undefined,
+                  calorieSource: undefined,
+                  calorieBasis: undefined,
+                  nutritionRecordId: undefined,
+                  nutritionConfidence: undefined,
+                  nutritionSource: undefined
+                }
+              : {})
+          }
+        : d
+    );
     saveToLocalStorage();
     dishListeners.forEach(l => l(dishesData));
+
+    if (shouldRefreshKnowledge) {
+      void hydrateDishCaloriesFromKnowledge(id, newName);
+    }
   },
   updateVendor: (dishId: string, vendorId: string, updates: Partial<Vendor>) => {
     dishesData = dishesData.map(dish => {
@@ -344,6 +725,7 @@ export const mockDb = {
     dishesData = [...dishesData, newDish];
     saveToLocalStorage();
     dishListeners.forEach(l => l(dishesData));
+    void hydrateDishCaloriesFromKnowledge(newDish.id, newDish.name);
   },
   addVendor: (dishId: string, name: string, price: number, phone: string, address: string) => {
     dishesData = dishesData.map(dish => {
@@ -371,9 +753,9 @@ export const mockDb = {
     categoriesData = data.categories;
     saveToLocalStorage();
     
-    // Notify all listeners
     Object.values(listeners).flatMap(set => Array.from(set)).forEach(l => l(dbData));
     dishListeners.forEach(l => l(dishesData));
     categoryListeners.forEach(l => l(categoriesData));
+    void hydrateMissingDishCalories();
   }
 };

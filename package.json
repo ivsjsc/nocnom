@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "node -e \"require('fs').writeFileSync('public/version.json', JSON.stringify({version: require('./package.json').version, buildTime: Date.now()}, null, 2))\" && vite build",
+    "build": "npm run nutrition:build && node -e \"require('fs').writeFileSync('public/version.json', JSON.stringify({version: require('./package.json').version, buildTime: Date.now()}, null, 2))\" && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "deploy": "npm run build && firebase deploy"
+    "deploy": "npm run build && firebase deploy",
+    "nutrition:build": "node scripts/build-nutrition-index.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
