@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Clipboard, Eye, Pencil, Plus, Star } from 'lucide-react';
 import { estimateDishCalories, mockDb, type Category, type Dish, type LogEntry } from '../lib/db';
 import DishDetailModal from './DishDetailModal';
+import AddDishModal from './AddDishModal';
 import DishImage from './DishImage';
 
 export default function MenuPage({ canManage = false }: { canManage?: boolean }) {
@@ -10,6 +11,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [isAddingDish, setIsAddingDish] = useState(false);
 
   useEffect(() => {
     const unsubDishes = mockDb.subscribeDishes(setDishes);
@@ -30,35 +32,13 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
   const categoryName = (categoryId: string) =>
     categories.find(category => category.id === categoryId)?.name || 'Món ăn';
 
-  const handleAddDish = async () => {
+  const handleAddDish = () => {
     if (!canManage) {
       window.alert('Vui lòng đăng nhập để quản lý kho món.');
       return;
     }
 
-    const name = window.prompt('Tên món mới:');
-    if (!name?.trim()) return;
-
-    const options = categories.map((category, index) => (index + 1) + '. ' + category.name).join('\n');
-    const raw = window.prompt('Chọn danh mục bằng số:\n' + options, '1');
-    const index = Number(raw) - 1;
-    const category = categories[index];
-    if (!category) {
-      window.alert('Danh mục không hợp lệ.');
-      return;
-    }
-
-    const result = await mockDb.addDish(name.trim(), category.id);
-
-    if (result.nutritionMatched && typeof result.dish.calories === 'number') {
-      window.alert(
-        'Đã nhận diện món trong dữ liệu calo: ' +
-          result.dish.name +
-          ' · ≈ ' +
-          result.dish.calories +
-          ' kcal/phần.'
-      );
-    }
+    setIsAddingDish(true);
   };
 
   const handleEditDish = (dish: Dish) => {
@@ -248,6 +228,21 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
           comboKey="A"
           isSelectable={false}
           onClose={() => setSelectedDish(null)}
+        />
+      )}
+
+      {isAddingDish && (
+        <AddDishModal
+          categories={categories}
+          onClose={() => setIsAddingDish(false)}
+          onSaved={(dish, created) => {
+            setIsAddingDish(false);
+            window.alert(
+              created
+                ? 'Đã thêm ' + dish.name + ' vào kho món.'
+                : 'Món đã tồn tại. Đã cập nhật dữ liệu và bổ sung quán/ảnh nếu có.'
+            );
+          }}
         />
       )}
     </div>
