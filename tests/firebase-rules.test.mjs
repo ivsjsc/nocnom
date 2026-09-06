@@ -87,6 +87,28 @@ try {
     getDoc(doc(guest.firestore(), 'users', 'alice', 'profile', 'main'))
   );
 
+  await assertFails(
+    setDoc(
+      aliceProfile,
+      {
+        fullName: 'Alice',
+        unexpectedPrivateField: 'must be rejected'
+      },
+      { merge: true }
+    )
+  );
+
+  await assertFails(
+    setDoc(
+      aliceState,
+      {
+        dishes: [],
+        unsupportedField: true
+      },
+      { merge: true }
+    )
+  );
+
   // Storage owner isolation and MIME/size validation.
   const validPng = new Uint8Array([
     0x89, 0x50, 0x4e, 0x47,
