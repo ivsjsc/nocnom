@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { ExternalLink, LogOut, UserRound } from 'lucide-react';
+import { LogOut, Settings2, UserRound } from 'lucide-react';
 import { signOut, type User } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { isAuthPopupDismissed, signInWithGoogle } from '../lib/auth';
+import ProfileModal from './ProfileModal';
 
 const getInitials = (value?: string | null) => {
   if (!value) return 'NG';
@@ -20,6 +21,7 @@ type LoginProps = {
 export default function Login({ user, darkMode }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,6 +51,7 @@ export default function Login({ user, darkMode }: LoginProps) {
   useEffect(() => {
     if (!user) {
       setMenuOpen(false);
+      setProfileOpen(false);
     }
   }, [user]);
 
@@ -80,6 +83,7 @@ export default function Login({ user, darkMode }: LoginProps) {
     try {
       await signOut(auth);
       setMenuOpen(false);
+      setProfileOpen(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể đăng xuất.';
       window.alert(message);
@@ -102,8 +106,8 @@ export default function Login({ user, darkMode }: LoginProps) {
         type="button"
         onClick={() => void handleAvatarClick()}
         disabled={loading}
-        title={user ? 'Mở tài khoản đăng nhập' : 'Đăng nhập bằng Google'}
-        aria-label={user ? 'Mở tài khoản đăng nhập' : 'Đăng nhập bằng Google'}
+        title={user ? 'Mở tài khoản nOcnOm' : 'Đăng nhập bằng Google'}
+        aria-label={user ? 'Mở tài khoản nOcnOm' : 'Đăng nhập bằng Google'}
         aria-haspopup={user ? 'menu' : undefined}
         aria-expanded={user ? menuOpen : undefined}
         className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-500/20 border border-blue-400 flex items-center justify-center overflow-hidden transition-transform active:scale-95 disabled:opacity-60"
@@ -127,7 +131,7 @@ export default function Login({ user, darkMode }: LoginProps) {
       {user && menuOpen && (
         <div
           role="menu"
-          aria-label="Tài khoản đăng nhập"
+          aria-label="Tài khoản nOcnOm"
           className={
             'absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[min(22rem,calc(100vw-1.5rem))] rounded-[24px] border p-3 shadow-2xl shadow-slate-950/15 ' +
             menuSurface
@@ -135,7 +139,7 @@ export default function Login({ user, darkMode }: LoginProps) {
         >
           <div className="px-2 pb-2 pt-1">
             <div className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
-              Tài khoản đang đăng nhập
+              Tài khoản nOcnOm
             </div>
           </div>
 
@@ -160,7 +164,7 @@ export default function Login({ user, darkMode }: LoginProps) {
 
             <div className="min-w-0">
               <div className="truncate text-sm font-black">
-                {user.displayName || 'Tài khoản Google'}
+                {user.displayName || 'Người dùng nOcnOm'}
               </div>
               <div className="mt-0.5 truncate text-xs font-medium text-slate-500" title={user.email || undefined}>
                 {user.email || 'Đăng nhập bằng Google'}
@@ -169,19 +173,21 @@ export default function Login({ user, darkMode }: LoginProps) {
           </div>
 
           <div className="mt-2 space-y-1">
-            <a
-              href="https://myaccount.google.com/"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
               role="menuitem"
+              onClick={() => {
+                setMenuOpen(false);
+                setProfileOpen(true);
+              }}
               className={
-                'flex min-h-11 items-center justify-between gap-3 rounded-2xl px-3 text-sm font-bold transition-colors ' +
+                'flex min-h-11 w-full items-center justify-between gap-3 rounded-2xl px-3 text-sm font-bold transition-colors ' +
                 (darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50')
               }
             >
-              <span>Quản lý tài khoản Google</span>
-              <ExternalLink className="w-4 h-4 text-slate-400" aria-hidden="true" />
-            </a>
+              <span>Quản lý tài khoản nOcnOm</span>
+              <Settings2 className="w-4 h-4 text-slate-400" aria-hidden="true" />
+            </button>
 
             <button
               type="button"
@@ -198,6 +204,13 @@ export default function Login({ user, darkMode }: LoginProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {user && profileOpen && (
+        <ProfileModal
+          user={user}
+          onClose={() => setProfileOpen(false)}
+        />
       )}
     </div>
   );

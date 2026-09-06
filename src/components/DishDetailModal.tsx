@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { CheckCircle2, ExternalLink, MapPin, Phone, RefreshCw, X } from 'lucide-react';
-import { mockDb, type Dish, type Vendor } from '../lib/db';
+import { estimateDishCalories, mockDb, type Dish, type Vendor } from '../lib/db';
 import { getSafeExternalUrl } from '../lib/url';
 import DishImage from './DishImage';
+import DishPickerModal from './DishPickerModal';
 
 type Props = {
   dish: Dish;
@@ -28,7 +29,7 @@ export default function DishDetailModal({
   };
 
   const handleSelectVendor = (vendor: Vendor) => {
-    mockDb.addLog(dish.name, vendor.name, vendor.price);
+    mockDb.addLog(dish.name, vendor.name, vendor.price, estimateDishCalories(dish));
     mockDb.selectCombo(day, comboKey);
     window.alert('Đã chọn ' + dish.name + ' tại ' + vendor.name + '.');
     onClose();
@@ -36,39 +37,13 @@ export default function DishDetailModal({
 
   if (isSwapping) {
     return (
-      <div className="fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
-        <div className="w-full max-w-lg max-h-[84vh] bg-white rounded-[26px] overflow-hidden shadow-2xl flex flex-col">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-            <div>
-              <div className="text-[11px] font-black uppercase tracking-widest text-blue-500">nOcnOm</div>
-              <h3 className="text-lg font-black text-slate-950">Chọn món khác</h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsSwapping(false)}
-              className="w-11 h-11 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="p-3 overflow-y-auto">
-            {allDishes.map(item => (
-              <button
-                type="button"
-                key={item.id}
-                onClick={() => handleSwap(item.id)}
-                className="w-full p-3 rounded-2xl flex items-center gap-3 text-left hover:bg-blue-50"
-              >
-                <DishImage src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-2xl shrink-0" />
-                <div className="min-w-0">
-                  <div className="font-black text-sm text-slate-950 truncate">{item.name}</div>
-                  <div className="text-[11px] font-bold text-slate-500">{item.vendors.length} quán phục vụ</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <DishPickerModal
+        title="Chọn món khác"
+        dishes={allDishes}
+        selectedDishId={dish.id}
+        onSelect={item => handleSwap(item.id)}
+        onClose={() => setIsSwapping(false)}
+      />
     );
   }
 
@@ -86,6 +61,9 @@ export default function DishDetailModal({
           </button>
           <div className="absolute inset-x-0 bottom-0 pt-20 pb-5 px-5 bg-gradient-to-t from-slate-950/85 to-transparent">
             <h2 className="text-2xl font-black text-white">{dish.name}</h2>
+            <div className="mt-1 text-xs font-bold text-white/80">
+              ≈ {estimateDishCalories(dish)} kcal / phần
+            </div>
           </div>
         </div>
 
