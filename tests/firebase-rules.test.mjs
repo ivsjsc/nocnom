@@ -55,7 +55,12 @@ try {
   await assertSucceeds(
     setDoc(aliceProfile, {
       fullName: 'Alice',
-      photoUrl: 'https://example.com/alice.jpg'
+      photoUrl: 'https://example.com/alice.jpg',
+      gender: 'female',
+      heightCm: 165,
+      weightKg: 58.5,
+      activityLevel: 'moderate',
+      healthGoal: 'maintain'
     })
   );
 
@@ -93,6 +98,26 @@ try {
       {
         fullName: 'Alice',
         unexpectedPrivateField: 'must be rejected'
+      },
+      { merge: true }
+    )
+  );
+
+  await assertFails(
+    setDoc(
+      aliceProfile,
+      {
+        gender: 'unsupported'
+      },
+      { merge: true }
+    )
+  );
+
+  await assertFails(
+    setDoc(
+      aliceProfile,
+      {
+        heightCm: 999
       },
       { merge: true }
     )

@@ -1,0 +1,59 @@
+import fs from 'node:fs';
+
+const css = fs.readFileSync('src/index.css', 'utf8');
+let failures = 0;
+
+function assert(condition: boolean, message: string) {
+  if (condition) {
+    console.log(`[PASS] ${message}`);
+  } else {
+    console.error(`[FAIL] ${message}`);
+    failures++;
+  }
+}
+
+function hexToRgb(hex: string) {
+  const normalized = hex.replace('#', '');
+  return {
+    r: parseInt(normalized.slice(0, 2), 16),
+    g: parseInt(normalized.slice(2, 4), 16),
+    b: parseInt(normalized.slice(4, 6), 16)
+  };
+}
+
+function channel(value: number) {
+  const v = value / 255;
+  return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+}
+
+function luminance(hex: string) {
+  const { r, g, b } = hexToRgb(hex);
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+}
+
+function contrast(foreground: string, background: string) {
+  const l1 = luminance(foreground);
+  const l2 = luminance(background);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function token(name: string) {
+  const match = css.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`));
+  return match?.[1] || '';
+}
+
+const surface = token('light-surface');
+const secondary = token('light-text-secondary');
+const tertiary = token('light-text-tertiary');
+const accent = token('light-accent');
+
+assert(Boolean(surface && secondary && tertiary && accent), 'Required contrast tokens exist');
+assert(contrast(secondary, surface) >= 7, 'Secondary text reaches enhanced contrast on white');
+assert(contrast(tertiary, surface) >= 4.5, 'Tertiary text reaches WCAG AA contrast on white');
+assert(contrast(accent, surface) >= 4.5, 'Blue accent text reaches WCAG AA contrast on white');
+assert(!css.includes('html:not(.dark) .text-blue-300,'), 'Blue-300 is not globally remapped on branded surfaces');
+
+if (failures > 0) process.exit(1);
+console.log('UI contrast tests: PASS');

@@ -11,8 +11,8 @@
   --light-border: #cbd5e1;
   --light-border-soft: #e2e8f0;
   --light-text: #0f172a;
-  --light-text-secondary: #475569;
-  --light-text-tertiary: #64748b;
+  --light-text-secondary: #334155;
+  --light-text-tertiary: #475569;
   --light-accent: #1d4ed8;
   --light-accent-strong: #1e40af;
   --light-accent-soft: #eff6ff;
@@ -153,7 +153,6 @@ html:not(.dark) .text-slate-500 {
   color: var(--light-text-secondary);
 }
 
-html:not(.dark) .text-blue-300,
 html:not(.dark) .text-blue-400,
 html:not(.dark) .text-blue-500 {
   color: var(--light-accent);
@@ -185,6 +184,35 @@ html:not(.dark) .bg-slate-50 {
 html:not(.dark) .app-bottom-nav {
   border-color: var(--light-border);
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+}
+
+/*
+ * Semantic contrast helpers.
+ * Use these for small descriptive copy instead of opacity-based text colors.
+ */
+.text-readable-muted {
+  color: var(--light-text-secondary);
+}
+
+.text-readable-subtle {
+  color: var(--light-text-tertiary);
+}
+
+.dark .text-readable-muted,
+.dark .text-readable-subtle {
+  color: #cbd5e1;
+}
+
+.surface-brand-soft {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 14px 34px rgba(30, 64, 175, 0.08);
+}
+
+.dark .surface-brand-soft {
+  background: linear-gradient(180deg, #0f172a 0%, #111c33 100%);
+  border-color: #334155;
+  box-shadow: none;
 }
 
 .dark {
@@ -219,7 +247,7 @@ html:not(.dark) .app-bottom-nav {
 
 .dark .text-slate-500,
 .dark .text-slate-400 {
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 
 .dark .border-slate-200,
