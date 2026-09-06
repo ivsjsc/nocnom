@@ -552,10 +552,10 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               <Sparkles className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-black text-amber-950 dark:text-amber-100">
+              <div className="warning-title text-sm font-black">
                 Hoàn thiện hồ sơ thể trạng
               </div>
-              <p className="mt-1.5 text-xs font-semibold leading-relaxed text-amber-900 dark:text-amber-100">
+              <p className="warning-copy mt-1.5 text-xs font-bold leading-relaxed">
                 Hoàn thiện các trường còn thiếu để nOcnOm ước tính BMI, BMR/TDEE và mục tiêu calo mà không tự suy đoán dữ liệu cá nhân. Thiếu: {missingHealthFields.join(', ')}.
               </p>
               {onOpenProfile && (
@@ -576,7 +576,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
       {/* 2. Thẻ Thống Kê Sức Khỏe & Thể Trạng (Health Metric Dashboard) */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* THẺ 1: Chỉ số BMI & Thể trạng */}
-        <section className="flex flex-col justify-between rounded-[26px] border border-slate-200 bg-white p-4.5 shadow-sm transition-all dark:border-slate-800 dark:bg-slate-900">
+        <section className="health-card flex flex-col justify-between rounded-[26px] border p-4.5 shadow-sm transition-all">
           <div>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -584,10 +584,10 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   <Scale className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <span className="block text-[11px] font-extrabold tracking-wide text-slate-700 dark:text-slate-300">
+                  <span className="health-kicker block text-[11px] font-black tracking-wide">
                     Chỉ số thể trạng
                   </span>
-                  <span className="text-sm font-black text-slate-950 dark:text-slate-100">
+                  <span className="text-sm font-black text-slate-950 dark:text-white">
                     BMI · ngưỡng tham khảo châu Á
                   </span>
                 </div>
@@ -605,7 +605,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               <span className="text-3xl font-black tracking-tight text-slate-950 dark:text-slate-100">
                 {bmi !== null ? bmi : '--'}
               </span>
-              <span className="inline-flex min-h-7 items-center rounded-full border border-slate-300 bg-slate-100 px-2.5 text-xs font-extrabold text-slate-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
+              <span className="health-chip-muted inline-flex min-h-7 items-center rounded-full px-2.5 text-xs font-black">
                 {heightNum && weightNum ? `${weightNum} kg · ${heightNum} cm` : 'Chưa có số đo'}
               </span>
             </div>
@@ -620,7 +620,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   <div className="bg-rose-500" title="Béo phì (>= 25)" />
                 </div>
               </div>
-              <div className="mt-2 grid grid-cols-4 gap-1 text-[10px] font-extrabold leading-tight text-slate-700 dark:text-slate-300">
+              <div className="health-copy mt-2 grid grid-cols-4 gap-1 text-[10px] font-black leading-tight">
                 <span className="text-left">&lt; 18.5 (Gầy)</span>
                 <span className="text-center text-emerald-700 dark:text-emerald-300">18.5 - 22.9</span>
                 <span className="text-center">23 - 24.9</span>
@@ -629,7 +629,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-3 text-[11px] font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-400">
+          <div className="health-copy mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-[11px] font-bold dark:border-slate-700 dark:bg-slate-950/80">
             {idealWeight ? (
               <div className="flex items-center justify-between">
                 <span>Khoảng cân nặng tham khảo:</span>
@@ -641,7 +641,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               <span>Cập nhật chiều cao để xem khoảng cân nặng tham khảo theo BMI.</span>
             )}
             {bmiCategory && (
-              <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
+              <p className="health-copy mt-1 text-[10px] font-semibold">
                 {bmiCategory.description}
               </p>
             )}
@@ -649,7 +649,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
         </section>
 
         {/* THẺ 2: Năng lượng Hôm nay (Calo vs Mục tiêu TDEE) & Nhu cầu nước */}
-        <section className="flex flex-col justify-between rounded-[26px] border border-slate-200 bg-white p-4.5 shadow-sm transition-all dark:border-slate-800 dark:bg-slate-900">
+        <section className="health-card flex flex-col justify-between rounded-[26px] border p-4.5 shadow-sm transition-all">
           <div>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -657,10 +657,10 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   <Flame className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <span className="block text-[11px] font-extrabold tracking-wide text-slate-700 dark:text-slate-300">
+                  <span className="health-kicker block text-[11px] font-black tracking-wide">
                     Năng lượng hôm nay
                   </span>
-                  <span className="text-sm font-black text-slate-950 dark:text-slate-100">
+                  <span className="text-sm font-black text-slate-950 dark:text-white">
                     Calo nạp / Mục tiêu
                   </span>
                 </div>
@@ -679,7 +679,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                 <span className="text-3xl font-black text-slate-950 dark:text-slate-100">
                   {todayCalories.toLocaleString('vi-VN')}
                 </span>
-                <span className="text-sm font-extrabold text-slate-700 dark:text-slate-300">
+                <span className="health-copy text-sm font-black">
                   / {targetCalories !== null
                     ? `${targetCalories.toLocaleString('vi-VN')} kcal`
                     : '-- kcal'}
@@ -697,7 +697,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               />
             </div>
 
-            <div className="mt-2.5 flex items-center justify-between gap-3 text-xs font-extrabold text-slate-700 dark:text-slate-300">
+            <div className="health-copy mt-2.5 flex items-center justify-between gap-3 text-xs font-black">
               <span>{todayLogs.length} bữa ăn hôm nay</span>
               <span>
                 {calorieRemaining === null
@@ -712,7 +712,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
           </div>
 
           {/* Gợi ý nước uống */}
-          <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-cyan-200 bg-cyan-50 p-3.5 text-xs font-extrabold text-cyan-950 dark:border-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-100">
+          <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-cyan-300 bg-cyan-50 p-3.5 text-xs font-black text-cyan-950 dark:border-cyan-700 dark:bg-cyan-950/70 dark:text-cyan-50">
             <Droplets className="h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-400" />
             <div className="min-w-0 flex-1">
               <span>Ước tính nước: </span>
@@ -735,7 +735,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
         </section>
 
         {/* THẺ 3: Xu hướng Calo 7 ngày gần nhất */}
-        <section className="flex flex-col justify-between rounded-[26px] border border-slate-200 bg-white p-4.5 shadow-sm transition-all dark:border-slate-800 dark:bg-slate-900">
+        <section className="health-card flex flex-col justify-between rounded-[26px] border p-4.5 shadow-sm transition-all">
           <div>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -743,16 +743,16 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   <TrendingUp className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <span className="block text-[11px] font-extrabold tracking-wide text-slate-700 dark:text-slate-300">
+                  <span className="health-kicker block text-[11px] font-black tracking-wide">
                     Theo dõi tuần
                   </span>
-                  <span className="text-sm font-black text-slate-950 dark:text-slate-100">
+                  <span className="text-sm font-black text-slate-950 dark:text-white">
                     Calo 7 ngày gần nhất
                   </span>
                 </div>
               </div>
 
-              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+              <span className="health-copy text-[11px] font-black">
                 TB: <strong className="text-slate-950 dark:text-white">~{last7DaysData.avgKcal.toLocaleString('vi-VN')}</strong> kcal/ngày
               </span>
             </div>
@@ -773,7 +773,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                     className="group flex flex-col items-center gap-1.5 focus:outline-none"
                     title={`${day.dayNum}: ${day.calories.toLocaleString('vi-VN')} kcal (${day.mealCount} bữa)`}
                   >
-                    <span className="text-[8px] font-bold text-slate-600 dark:text-slate-400 group-hover:text-blue-600">
+                    <span className="health-copy text-[9px] font-black group-hover:text-blue-600 dark:group-hover:text-blue-300">
                       {day.calories > 0 ? `${Math.round(day.calories / 100) / 10}k` : '0'}
                     </span>
 
@@ -807,14 +807,14 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
             </div>
           </div>
 
-          <div className="mt-3 flex items-center justify-between gap-2 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+          <div className="health-copy mt-3 flex items-center justify-between gap-2 text-[11px] font-bold">
             <span>Bấm vào cột ngày để xem chi tiết bữa ăn</span>
             <span className="text-blue-600 font-extrabold">7 ngày qua</span>
           </div>
         </section>
 
         {/* THẺ 4: Tương quan phân bổ bữa ăn (Sáng / Trưa / Tối) */}
-        <section className="flex flex-col justify-between rounded-[26px] border border-slate-200 bg-white p-4.5 shadow-sm transition-all dark:border-slate-800 dark:bg-slate-900">
+        <section className="health-card flex flex-col justify-between rounded-[26px] border p-4.5 shadow-sm transition-all">
           <div>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -822,10 +822,10 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   <UtensilsCrossed className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <span className="block text-[11px] font-extrabold tracking-wide text-slate-700 dark:text-slate-300">
+                  <span className="health-kicker block text-[11px] font-black tracking-wide">
                     Cân bằng bữa ăn
                   </span>
-                  <span className="text-sm font-black text-slate-950 dark:text-slate-100">
+                  <span className="text-sm font-black text-slate-950 dark:text-white">
                     Phân bổ Sáng / Trưa / Tối
                   </span>
                 </div>
@@ -903,7 +903,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
             </div>
           </div>
 
-          <p className="mt-3 text-[11px] font-semibold leading-relaxed text-slate-700 dark:text-slate-300">
+          <p className="health-copy mt-3 text-[11px] font-bold leading-relaxed">
             💡 Tỷ lệ năng lượng lý tưởng sinh viên: Sáng 30% · Trưa 40% · Tối 30%. Hạn chế ăn đêm nhiều calo sau 21h.
           </p>
         </section>
@@ -927,7 +927,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="text-sm font-black text-slate-950 dark:text-slate-100">
+                  <div className="text-sm font-black text-slate-950 dark:text-white">
                     Ghi bù hoặc chỉnh lịch sử
                   </div>
                   <span className="rounded-lg bg-blue-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
@@ -1111,7 +1111,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm font-black text-slate-950 dark:text-slate-100">
+                      <div className="text-sm font-black text-slate-950 dark:text-white">
                         Ghi bù / chỉnh bữa ăn
                       </div>
                       <div className="mt-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-400">
