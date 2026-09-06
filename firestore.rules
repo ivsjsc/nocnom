@@ -33,10 +33,31 @@ service cloud.firestore {
           'studentId',
           'phone',
           'photoUrl',
+          'gender',
+          'heightCm',
+          'weightKg',
+          'activityLevel',
+          'healthGoal',
           'email',
           'authProvider',
           'updatedAt'
-        ]);
+        ])
+        && (!('gender' in request.resource.data)
+          || request.resource.data.gender in ['male', 'female', 'other', ''])
+        && (!('heightCm' in request.resource.data)
+          || request.resource.data.heightCm == ''
+          || (request.resource.data.heightCm is number
+            && request.resource.data.heightCm >= 80
+            && request.resource.data.heightCm <= 240))
+        && (!('weightKg' in request.resource.data)
+          || request.resource.data.weightKg == ''
+          || (request.resource.data.weightKg is number
+            && request.resource.data.weightKg >= 25
+            && request.resource.data.weightKg <= 220))
+        && (!('activityLevel' in request.resource.data)
+          || request.resource.data.activityLevel in ['sedentary', 'light', 'moderate', 'active', ''])
+        && (!('healthGoal' in request.resource.data)
+          || request.resource.data.healthGoal in ['maintain', 'lose', 'gain', '']);
       allow delete: if isOwner(userId);
     }
 

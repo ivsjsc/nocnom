@@ -17,6 +17,7 @@ import {
   saveUserProfile
 } from '../services/userProfile';
 import {
+  calculateAge,
   calculateBMI,
   getBMICategory,
   getIdealWeightRange,
@@ -180,6 +181,38 @@ export default function ProfileModal({
       setStatus({
         type: 'error',
         message: 'URL ảnh đại diện không hợp lệ. Hãy dùng URL http/https.'
+      });
+      return;
+    }
+
+    if (form.dateOfBirth.trim() && calculateAge(form.dateOfBirth) === null) {
+      setStatus({
+        type: 'error',
+        message: 'Ngày sinh không hợp lệ hoặc nằm trong tương lai.'
+      });
+      return;
+    }
+
+    const heightValue = Number(form.heightCm);
+    if (
+      form.heightCm.trim() &&
+      (!Number.isFinite(heightValue) || heightValue < 80 || heightValue > 240)
+    ) {
+      setStatus({
+        type: 'error',
+        message: 'Chiều cao phải nằm trong khoảng 80–240 cm.'
+      });
+      return;
+    }
+
+    const weightValue = Number(form.weightKg);
+    if (
+      form.weightKg.trim() &&
+      (!Number.isFinite(weightValue) || weightValue < 25 || weightValue > 220)
+    ) {
+      setStatus({
+        type: 'error',
+        message: 'Cân nặng phải nằm trong khoảng 25–220 kg.'
       });
       return;
     }
@@ -371,7 +404,7 @@ export default function ProfileModal({
                       Chỉ số Thể trạng & Sức khỏe
                     </div>
                     <div className="text-[10px] font-medium text-slate-500">
-                      Tính BMI, nhu cầu Calo & Nước uống khuyến nghị riêng cho bạn
+                      Ước tính BMI, BMR/TDEE và nhu cầu nước dựa trên dữ liệu bạn cung cấp
                     </div>
                   </div>
                 </div>
@@ -383,9 +416,9 @@ export default function ProfileModal({
                   </span>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { id: 'male', label: 'Nam 👦' },
-                      { id: 'female', label: 'Nữ 👧' },
-                      { id: 'other', label: 'Khác ✨' }
+                      { id: 'male', label: 'Nam' },
+                      { id: 'female', label: 'Nữ' },
+                      { id: 'other', label: 'Khác' }
                     ].map(item => (
                       <button
                         type="button"
@@ -403,6 +436,12 @@ export default function ProfileModal({
                     ))}
                   </div>
                 </div>
+
+                {form.gender === 'other' ? (
+                  <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] font-semibold leading-relaxed text-amber-800">
+                    Công thức BMR Mifflin–St Jeor dùng hai nhóm Nam/Nữ. nOcnOm sẽ không tự gán giới tính khi bạn chọn “Khác”, nên mục tiêu BMR/TDEE sẽ để trống.
+                  </div>
+                ) : null}
 
                 {/* Chiều cao & Cân nặng */}
                 <div className="mt-3 grid grid-cols-2 gap-3">
@@ -460,7 +499,7 @@ export default function ProfileModal({
 
                     {idealWeight && (
                       <div className="mt-1.5 flex items-center justify-between border-t border-slate-100 pt-1.5 text-[10px] font-semibold text-slate-500">
-                        <span>Cân nặng chuẩn theo chiều cao:</span>
+                        <span>Khoảng cân nặng tham khảo:</span>
                         <span className="font-bold text-slate-800">
                           {idealWeight.min} - {idealWeight.max} kg
                         </span>
@@ -480,7 +519,7 @@ export default function ProfileModal({
                       onChange={event => updateField('activityLevel', event.target.value as ActivityLevel)}
                       className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
                     >
-                      <option value="">Sinh hoạt sinh viên bình thường (Vừa phải)</option>
+                      <option value="">Chọn mức độ vận động</option>
                       <option value="sedentary">Ít vận động (Học bài, ngồi nhiều, ít tập luyện)</option>
                       <option value="light">Vận động nhẹ (Đi bộ trong KTX, ĐHQG 1-3 ngày/tuần)</option>
                       <option value="moderate">Vừa phải (Chạy bộ, thể thao 3-5 ngày/tuần)</option>
@@ -500,7 +539,7 @@ export default function ProfileModal({
                       onChange={event => updateField('healthGoal', event.target.value as HealthGoal)}
                       className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
                     >
-                      <option value="">Duy trì vóc dáng & sức khỏe</option>
+                      <option value="">Chọn mục tiêu dinh dưỡng</option>
                       <option value="maintain">Duy trì cân nặng lý tưởng</option>
                       <option value="lose">Giảm cân, thon gọn (Thâm hụt nhẹ -300 kcal/ngày)</option>
                       <option value="gain">Tăng cân, tăng cơ (Thặng dư nhẹ +300 kcal/ngày)</option>

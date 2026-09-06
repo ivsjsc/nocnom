@@ -14,7 +14,7 @@ export type BMICategory = {
 /**
  * Tính tuổi từ ngày sinh (định dạng DD/MM/YYYY hoặc YYYY-MM-DD)
  */
-export function calculateAge(dobString: string): number | null {
+export function calculateAge(dobString: string, now = new Date()): number | null {
   if (!dobString || !dobString.trim()) return null;
   const clean = dobString.trim();
 
@@ -24,28 +24,59 @@ export function calculateAge(dobString: string): number | null {
 
   if (clean.includes('/')) {
     const parts = clean.split('/');
-    if (parts.length < 3) return null;
-    day = parseInt(parts[0], 10);
-    month = parseInt(parts[1], 10);
-    year = parseInt(parts[2], 10);
+    if (parts.length !== 3) return null;
+    day = Number(parts[0]);
+    month = Number(parts[1]);
+    year = Number(parts[2]);
   } else if (clean.includes('-')) {
     const parts = clean.split('-');
-    if (parts.length < 3) return null;
-    year = parseInt(parts[0], 10);
-    month = parseInt(parts[1], 10);
-    day = parseInt(parts[2], 10);
+    if (parts.length !== 3) return null;
+    year = Number(parts[0]);
+    month = Number(parts[1]);
+    day = Number(parts[2]);
   } else {
     return null;
   }
 
-  if (isNaN(year) || isNaN(month) || isNaN(day) || year < 1900 || month < 1 || month > 12 || day < 1 || day > 31) {
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day) ||
+    year < 1900 ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31
+  ) {
     return null;
   }
 
-  const today = new Date();
-  let age = today.getFullYear() - year;
-  const monthDiff = today.getMonth() + 1 - month;
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < day)) {
+  const candidate = new Date(Date.UTC(year, month - 1, day));
+  if (
+    candidate.getUTCFullYear() !== year ||
+    candidate.getUTCMonth() !== month - 1 ||
+    candidate.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const currentDay = now.getDate();
+
+  if (
+    year > currentYear ||
+    (year === currentYear && month > currentMonth) ||
+    (year === currentYear && month === currentMonth && day > currentDay)
+  ) {
+    return null;
+  }
+
+  let age = currentYear - year;
+  if (
+    currentMonth < month ||
+    (currentMonth === month && currentDay < day)
+  ) {
     age--;
   }
 
@@ -56,7 +87,17 @@ export function calculateAge(dobString: string): number | null {
  * Tính chỉ số BMI: cân nặng (kg) / [chiều cao (m)]^2
  */
 export function calculateBMI(weightKg: number, heightCm: number): number | null {
-  if (!weightKg || !heightCm || weightKg <= 20 || heightCm <= 80) return null;
+  if (
+    !Number.isFinite(weightKg) ||
+    !Number.isFinite(heightCm) ||
+    weightKg < 25 ||
+    weightKg > 220 ||
+    heightCm < 80 ||
+    heightCm > 240
+  ) {
+    return null;
+  }
+
   const heightM = heightCm / 100;
   const bmi = weightKg / (heightM * heightM);
   return Math.round(bmi * 10) / 10;
@@ -114,7 +155,7 @@ export function getBMICategory(bmi: number): BMICategory {
  * Khoảng cân nặng chuẩn theo chiều cao (BMI 18.5 - 22.9)
  */
 export function getIdealWeightRange(heightCm: number): { min: number; max: number } | null {
-  if (!heightCm || heightCm <= 80) return null;
+  if (!Number.isFinite(heightCm) || heightCm < 80 || heightCm > 240) return null;
   const heightM = heightCm / 100;
   const min = Math.round(18.5 * heightM * heightM);
   const max = Math.round(22.9 * heightM * heightM);
@@ -131,47 +172,77 @@ export function calculateBMR(
   heightCm: number,
   age: number,
   gender: Gender
-): number {
-  const isFemale = gender === 'female';
+): number | null {
+  if (
+    (gender !== 'male' && gender !== 'female') ||
+    !Number.isFinite(weightKg) ||
+    !Number.isFinite(heightCm) ||
+    !Number.isFinite(age) ||
+    weightKg < 25 ||
+    weightKg > 220 ||
+    heightCm < 80 ||
+    heightCm > 240 ||
+    age < 18 ||
+    age > 120
+  ) {
+    return null;
+  }
+
   let bmr = 10 * weightKg + 6.25 * heightCm - 5 * age;
-  bmr += isFemale ? -161 : 5;
-  return Math.round(Math.max(1000, bmr));
+  bmr += gender === 'female' ? -161 : 5;
+  return Math.round(bmr);
 }
 
 /**
  * TDEE - Tổng năng lượng tiêu hao hằng ngày
  */
-export function calculateTDEE(bmr: number, activityLevel: ActivityLevel): number {
-  const multipliers: Record<ActivityLevel, number> = {
-    sedentary: 1.2,     // Ít vận động, ngồi nhiều (học bài, văn phòng)
-    light: 1.375,       // Vận động nhẹ (đi bộ trong ĐHQG 1-3 ngày/tuần)
-    moderate: 1.55,     // Vận động vừa (thể thao 3-5 ngày/tuần)
-    active: 1.725,      // Vận động nhiều (tập gym, thể thao 6-7 ngày/tuần)
-    '': 1.25            // Mặc định sinh viên
+export function calculateTDEE(
+  bmr: number | null,
+  activityLevel: ActivityLevel
+): number | null {
+  if (bmr === null || !Number.isFinite(bmr) || bmr <= 0 || !activityLevel) {
+    return null;
+  }
+
+  const multipliers: Record<Exclude<ActivityLevel, ''>, number> = {
+    sedentary: 1.2,
+    light: 1.375,
+    moderate: 1.55,
+    active: 1.725
   };
-  const factor = multipliers[activityLevel] || 1.25;
-  return Math.round(bmr * factor);
+
+  return Math.round(bmr * multipliers[activityLevel]);
 }
 
 /**
  * Mục tiêu Calo khuyến nghị theo mục tiêu cá nhân
  */
-export function calculateCalorieGoal(tdee: number, goal: HealthGoal): number {
-  if (goal === 'lose') {
-    return Math.max(1200, Math.round(tdee - 300));
+export function calculateCalorieGoal(
+  tdee: number | null,
+  goal: HealthGoal
+): number | null {
+  if (tdee === null || !Number.isFinite(tdee) || tdee <= 0 || !goal) {
+    return null;
   }
-  if (goal === 'gain') {
-    return Math.round(tdee + 300);
-  }
-  return tdee;
+
+  if (goal === 'lose') return Math.round(tdee - 300);
+  if (goal === 'gain') return Math.round(tdee + 300);
+  return Math.round(tdee);
 }
 
 /**
- * Nhu cầu nước khuyến nghị theo cân nặng (35ml - 40ml / kg cân nặng)
+ * Ước tính nước cơ bản theo cân nặng: 35 ml/kg/ngày.
+ * Đây là heuristic tham khảo; nhu cầu thực tế còn phụ thuộc vận động,
+ * thời tiết và tình trạng sức khỏe.
  */
-export function calculateWaterRequirement(weightKg: number): { ml: number; glasses: number } {
+export function calculateWaterRequirement(
+  weightKg: number
+): { ml: number; glasses: number } | null {
+  if (!Number.isFinite(weightKg) || weightKg < 25 || weightKg > 220) {
+    return null;
+  }
+
   const ml = Math.round(weightKg * 35);
-  // Mỗi cốc khoảng 250ml
   const glasses = Math.round(ml / 250);
   return { ml, glasses };
 }
@@ -181,12 +252,12 @@ export const ACTIVITY_LABELS: Record<ActivityLevel, { label: string; desc: strin
   light: { label: 'Vận động nhẹ', desc: 'Đi bộ trong KTX, ĐHQG 1-3 ngày/tuần' },
   moderate: { label: 'Vừa phải', desc: 'Thể thao, chạy bộ 3-5 ngày/tuần' },
   active: { label: 'Năng động', desc: 'Gym, tập nặng 6-7 ngày/tuần' },
-  '': { label: 'Vừa phải (mặc định)', desc: 'Sinh hoạt sinh viên bình thường' }
+  '': { label: 'Chưa chọn', desc: 'Cần chọn để ước tính TDEE' }
 };
 
 export const GOAL_LABELS: Record<HealthGoal, { label: string; desc: string }> = {
   maintain: { label: 'Duy trì vóc dáng', desc: 'Cân bằng calo nạp và tiêu thụ' },
   lose: { label: 'Giảm cân / Thon gọn', desc: 'Thâm hụt nhẹ ~300 kcal/ngày' },
   gain: { label: 'Tăng cân / Tăng cơ', desc: 'Thặng dư nhẹ ~300 kcal/ngày' },
-  '': { label: 'Duy trì sức khỏe', desc: 'Ăn uống đầy đủ, điều độ' }
+  '': { label: 'Chưa chọn', desc: 'Cần chọn để tính mục tiêu calo' }
 };
