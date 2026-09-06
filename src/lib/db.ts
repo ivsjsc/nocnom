@@ -20,6 +20,7 @@ export type Dish = {
   categoryId: string;
   isFavorite: boolean;
   imageUrl?: string;
+  calories?: number;
   vendors: Vendor[];
 };
 
@@ -33,6 +34,7 @@ export type LogEntry = {
   dishName: string;
   vendorName: string;
   price: number;
+  calories?: number;
   timestamp: number;
 };
 
@@ -46,54 +48,77 @@ export const initialCategories: Category[] = [
   { id: 'c7', name: 'Combo / Phần ăn' },
 ];
 
+const categoryCalorieDefaults: Record<string, number> = {
+  c1: 650,
+  c2: 250,
+  c3: 550,
+  c4: 350,
+  c5: 500,
+  c6: 250,
+  c7: 700
+};
+
+export const getDefaultCaloriesForCategory = (categoryId: string) =>
+  categoryCalorieDefaults[categoryId] ?? 500;
+
+export const estimateDishCalories = (dish: Pick<Dish, 'calories' | 'categoryId'>) => {
+  const calories = Number(dish.calories);
+  if (Number.isFinite(calories) && calories > 0) {
+    return Math.round(calories);
+  }
+
+  return getDefaultCaloriesForCategory(dish.categoryId);
+};
+
 const initialDishes: Dish[] = [
   {
-    id: 'd1', name: 'Cơm gà xối mỡ', categoryId: 'c1', isFavorite: true, imageUrl: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80',
+    id: 'd1', name: 'Cơm gà xối mỡ', categoryId: 'c1', isFavorite: true, calories: 780, imageUrl: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80',
     vendors: [
       { id: 'v1', name: 'Cơm gà Cô Ba', phone: '0901.234.567', address: '123 Đường D1', price: 35000, link: 'https://maps.google.com', extraInfo: [{id: 'e1', label: 'Giờ mở cửa', value: '10:00 - 20:00'}] },
       { id: 'v2', name: 'Quán Hồng Phát', phone: '0987.654.321', address: '456 Điện Biên Phủ', price: 40000, extraInfo: [] }
     ]
   },
   {
-    id: 'd2', name: 'Phở bò / Phở gà', categoryId: 'c3', isFavorite: false, imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb438?auto=format&fit=crop&w=800&q=80',
+    id: 'd2', name: 'Phở bò / Phở gà', categoryId: 'c3', isFavorite: false, calories: 520, imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb438?auto=format&fit=crop&w=800&q=80',
     vendors: [{ id: 'v3', name: 'Phở Quỳnh', phone: '0911.222.333', address: 'Ngã tư Hàng Xanh', price: 45000, extraInfo: [] }]
   },
   {
-    id: 'd3', name: 'Wrap gà + Trái cây', categoryId: 'c4', isFavorite: true, imageUrl: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=800&q=80',
+    id: 'd3', name: 'Wrap gà + Trái cây', categoryId: 'c4', isFavorite: true, calories: 430, imageUrl: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=800&q=80',
     vendors: [{ id: 'v4', name: 'Healthy Box', phone: '0909.888.777', address: 'Khu A', price: 40000, extraInfo: [] }]
   },
   {
-    id: 'd4', name: 'Cơm sườn + Salad', categoryId: 'c1', isFavorite: false, imageUrl: 'https://images.unsplash.com/photo-1555126634-323283e090fa?auto=format&fit=crop&w=800&q=80',
+    id: 'd4', name: 'Cơm sườn + Salad', categoryId: 'c1', isFavorite: false, calories: 720, imageUrl: 'https://images.unsplash.com/photo-1555126634-323283e090fa?auto=format&fit=crop&w=800&q=80',
     vendors: [{ id: 'v5', name: 'Cơm tấm Ba Ghiền', phone: '0922.333.444', address: '84 Đặng Văn Ngữ', price: 45000, extraInfo: [] }]
   },
   {
-    id: 'd5', name: 'Bún riêu / Chả', categoryId: 'c3', isFavorite: false,
+    id: 'd5', name: 'Bún riêu / Chả', categoryId: 'c3', isFavorite: false, calories: 480,
     vendors: [{ id: 'v6', name: 'Bún riêu Cô Mai', phone: '0912.345.678', address: 'Chợ Thị Nghè', price: 30000, extraInfo: [] }]
   },
   {
-    id: 'd6', name: 'Cơm chay', categoryId: 'c1', isFavorite: false,
+    id: 'd6', name: 'Cơm chay', categoryId: 'c5', isFavorite: false, calories: 520,
     vendors: [{ id: 'v7', name: 'Chay Tùy Duyên', phone: '0988.777.666', address: 'Khu B', price: 25000, extraInfo: [] }]
   },
-  { id: 'd7', name: 'Cơm thịt kho', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v8', name: 'Cơm phần Sinh Viên', phone: '0900.111.222', address: 'Hẻm 79', price: 30000, extraInfo: [] }] },
-  { id: 'd8', name: 'Mì xào hải sản', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v9', name: 'Quán Ốc Đêm', phone: '0933.222.111', address: 'Đường D2', price: 35000, extraInfo: [] }] },
-  { id: 'd9', name: 'Salad gạo lứt', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v10', name: 'Eat Clean', phone: '0944.555.666', address: 'Khu C', price: 40000, extraInfo: [] }] },
-  { id: 'd10', name: 'Cơm cá kho', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v11', name: 'Cơm Quê', phone: '0955.666.777', address: 'Đường D3', price: 35000, extraInfo: [] }] },
-  { id: 'd11', name: 'Bún mắm / cá', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v12', name: 'Đặc sản Miền Tây', phone: '0966.777.888', address: 'Khu D', price: 40000, extraInfo: [] }] },
-  { id: 'd12', name: 'Sandwich + Sữa chua', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v13', name: 'Tiệm Bánh', phone: '0977.888.999', address: 'Khu E', price: 30000, extraInfo: [] }] },
-  { id: 'd13', name: 'Cơm bò xào', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v14', name: 'Quán Bò', phone: '0988.999.000', address: 'Khu F', price: 45000, extraInfo: [] }] },
-  { id: 'd14', name: 'Mì Quảng / Hủ tiếu', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v15', name: 'Mì Quảng Bà Mua', phone: '0999.000.111', address: 'Khu G', price: 35000, extraInfo: [] }] },
-  { id: 'd15', name: 'Cơm ngũ cốc', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v16', name: 'Healthy Box', phone: '0909.888.777', address: 'Khu A', price: 45000, extraInfo: [] }] },
-  { id: 'd16', name: 'Cơm tấm', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v17', name: 'Cơm tấm Đêm', phone: '0912.345.678', address: 'Vòng xoay', price: 35000, extraInfo: [] }] },
-  { id: 'd17', name: 'Bún / Miến xào', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v18', name: 'Quán Xào', phone: '0922.111.333', address: 'Khu H', price: 30000, extraInfo: [] }] },
-  { id: 'd18', name: 'Snack box', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v19', name: 'Canteen', phone: '0933.444.555', address: 'Trường', price: 25000, extraInfo: [] }] },
-  { id: 'd19', name: 'Cơm thịt nướng', categoryId: 'c1', isFavorite: false, vendors: [{ id: 'v20', name: 'Xiên Nướng', phone: '0944.555.666', address: 'Khu I', price: 35000, extraInfo: [] }] },
-  { id: 'd20', name: 'Lẩu mini / Mì ống', categoryId: 'c3', isFavorite: false, vendors: [{ id: 'v21', name: 'Lẩu 1 Người', phone: '0955.666.777', address: 'Khu J', price: 50000, extraInfo: [] }] },
-  { id: 'd21', name: 'Bánh mì + Sữa', categoryId: 'c4', isFavorite: false, vendors: [{ id: 'v22', name: 'Bánh Mì Tuấn', phone: '0966.777.888', address: 'Khu K', price: 20000, extraInfo: [] }] },
+  { id: 'd7', name: 'Cơm thịt kho', categoryId: 'c1', isFavorite: false, calories: 650, vendors: [{ id: 'v8', name: 'Cơm phần Sinh Viên', phone: '0900.111.222', address: 'Hẻm 79', price: 30000, extraInfo: [] }] },
+  { id: 'd8', name: 'Mì xào hải sản', categoryId: 'c3', isFavorite: false, calories: 620, vendors: [{ id: 'v9', name: 'Quán Ốc Đêm', phone: '0933.222.111', address: 'Đường D2', price: 35000, extraInfo: [] }] },
+  { id: 'd9', name: 'Salad gạo lứt', categoryId: 'c4', isFavorite: false, calories: 420, vendors: [{ id: 'v10', name: 'Eat Clean', phone: '0944.555.666', address: 'Khu C', price: 40000, extraInfo: [] }] },
+  { id: 'd10', name: 'Cơm cá kho', categoryId: 'c1', isFavorite: false, calories: 680, vendors: [{ id: 'v11', name: 'Cơm Quê', phone: '0955.666.777', address: 'Đường D3', price: 35000, extraInfo: [] }] },
+  { id: 'd11', name: 'Bún mắm / cá', categoryId: 'c3', isFavorite: false, calories: 550, vendors: [{ id: 'v12', name: 'Đặc sản Miền Tây', phone: '0966.777.888', address: 'Khu D', price: 40000, extraInfo: [] }] },
+  { id: 'd12', name: 'Sandwich + Sữa chua', categoryId: 'c4', isFavorite: false, calories: 380, vendors: [{ id: 'v13', name: 'Tiệm Bánh', phone: '0977.888.999', address: 'Khu E', price: 30000, extraInfo: [] }] },
+  { id: 'd13', name: 'Cơm bò xào', categoryId: 'c1', isFavorite: false, calories: 700, vendors: [{ id: 'v14', name: 'Quán Bò', phone: '0988.999.000', address: 'Khu F', price: 45000, extraInfo: [] }] },
+  { id: 'd14', name: 'Mì Quảng / Hủ tiếu', categoryId: 'c3', isFavorite: false, calories: 560, vendors: [{ id: 'v15', name: 'Mì Quảng Bà Mua', phone: '0999.000.111', address: 'Khu G', price: 35000, extraInfo: [] }] },
+  { id: 'd15', name: 'Cơm ngũ cốc', categoryId: 'c4', isFavorite: false, calories: 480, vendors: [{ id: 'v16', name: 'Healthy Box', phone: '0909.888.777', address: 'Khu A', price: 45000, extraInfo: [] }] },
+  { id: 'd16', name: 'Cơm tấm', categoryId: 'c1', isFavorite: false, calories: 650, vendors: [{ id: 'v17', name: 'Cơm tấm Đêm', phone: '0912.345.678', address: 'Vòng xoay', price: 35000, extraInfo: [] }] },
+  { id: 'd17', name: 'Bún / Miến xào', categoryId: 'c3', isFavorite: false, calories: 600, vendors: [{ id: 'v18', name: 'Quán Xào', phone: '0922.111.333', address: 'Khu H', price: 30000, extraInfo: [] }] },
+  { id: 'd18', name: 'Snack box', categoryId: 'c4', isFavorite: false, calories: 320, vendors: [{ id: 'v19', name: 'Canteen', phone: '0933.444.555', address: 'Trường', price: 25000, extraInfo: [] }] },
+  { id: 'd19', name: 'Cơm thịt nướng', categoryId: 'c1', isFavorite: false, calories: 720, vendors: [{ id: 'v20', name: 'Xiên Nướng', phone: '0944.555.666', address: 'Khu I', price: 35000, extraInfo: [] }] },
+  { id: 'd20', name: 'Lẩu mini / Mì ống', categoryId: 'c3', isFavorite: false, calories: 680, vendors: [{ id: 'v21', name: 'Lẩu 1 Người', phone: '0955.666.777', address: 'Khu J', price: 50000, extraInfo: [] }] },
+  { id: 'd21', name: 'Bánh mì + Sữa', categoryId: 'c4', isFavorite: false, calories: 450, vendors: [{ id: 'v22', name: 'Bánh Mì Tuấn', phone: '0966.777.888', address: 'Khu K', price: 20000, extraInfo: [] }] },
 ];
 
 export type MenuItem = {
   dishId: string;
   stock: number;
+  skipped?: boolean;
 };
 
 export type DayMenu = {
@@ -123,7 +148,6 @@ let dishesData: Dish[] = [...initialDishes];
 let categoriesData: Category[] = [...initialCategories];
 let logsData: LogEntry[] = [];
 
-// Load from localStorage if available
 try {
   const storedDbData = (localStorage.getItem('nocnom_timetable') ?? localStorage.getItem('unifood_timetable'));
   if (storedDbData) dbData = JSON.parse(storedDbData);
@@ -142,9 +166,9 @@ try {
 
 const createLocalId = (prefix: string) => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}${crypto.randomUUID()}`;
+    return prefix + crypto.randomUUID();
   }
-  return `${prefix}${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return prefix + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
 };
 
 const saveToLocalStorage = () => {
@@ -204,12 +228,13 @@ export const mockDb = {
     callback(logsData);
     return () => logListeners.delete(callback);
   },
-  addLog: (dishName: string, vendorName: string, price: number) => {
+  addLog: (dishName: string, vendorName: string, price: number, calories?: number) => {
     const newLog: LogEntry = {
       id: createLocalId('l'),
       dishName,
       vendorName,
       price,
+      calories,
       timestamp: Date.now()
     };
     logsData = [newLog, ...logsData];
@@ -226,14 +251,26 @@ export const mockDb = {
     if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
+  toggleMealSkipped: (day: string, comboKey: 'A' | 'B' | 'C', skipped: boolean) => {
+    dbData[day].options[comboKey].skipped = skipped;
+    saveToLocalStorage();
+    if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
+    if (listeners['all']) listeners['all'].forEach(l => l(dbData));
+  },
   swapDish: (day: string, comboKey: 'A' | 'B' | 'C', newDishId: string) => {
     dbData[day].options[comboKey].dishId = newDishId;
+    dbData[day].options[comboKey].skipped = false;
     saveToLocalStorage();
     if (listeners[day]) listeners[day].forEach(l => l(dbData[day]));
     if (listeners['all']) listeners['all'].forEach(l => l(dbData));
   },
   updateDishImage: (id: string, imageUrl: string) => {
     dishesData = dishesData.map(d => d.id === id ? { ...d, imageUrl } : d);
+    saveToLocalStorage();
+    dishListeners.forEach(l => l(dishesData));
+  },
+  updateDishCalories: (id: string, calories: number) => {
+    dishesData = dishesData.map(d => d.id === id ? { ...d, calories: Math.round(calories) } : d);
     saveToLocalStorage();
     dishListeners.forEach(l => l(dishesData));
   },
@@ -339,6 +376,7 @@ export const mockDb = {
       name,
       categoryId,
       isFavorite: false,
+      calories: getDefaultCaloriesForCategory(categoryId),
       vendors: []
     };
     dishesData = [...dishesData, newDish];
@@ -371,7 +409,6 @@ export const mockDb = {
     categoriesData = data.categories;
     saveToLocalStorage();
     
-    // Notify all listeners
     Object.values(listeners).flatMap(set => Array.from(set)).forEach(l => l(dbData));
     dishListeners.forEach(l => l(dishesData));
     categoryListeners.forEach(l => l(categoriesData));
