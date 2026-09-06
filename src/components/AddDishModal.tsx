@@ -23,6 +23,7 @@ import {
   searchFoodImages,
   type FoodImageCandidate
 } from '../lib/imageSearch';
+import { getSafeExternalUrl } from '../lib/url';
 
 type Props = {
   categories: Category[];
@@ -173,6 +174,15 @@ export default function AddDishModal({
     setSaveError('');
 
     try {
+      const safeManualImageUrl = manualImageUrl.trim()
+        ? getSafeExternalUrl(manualImageUrl.trim())
+        : null;
+
+      if (manualImageUrl.trim() && !safeManualImageUrl) {
+        setSaveError('URL ảnh chỉ hỗ trợ http:// hoặc https:// hợp lệ.');
+        return;
+      }
+
       const image = selectedImage
         ? {
             url: selectedImage.url,
@@ -181,9 +191,9 @@ export default function AddDishModal({
             license: selectedImage.license,
             attribution: selectedImage.attribution
           }
-        : manualImageUrl.trim()
+        : safeManualImageUrl
           ? {
-              url: manualImageUrl.trim(),
+              url: safeManualImageUrl,
               source: 'manual' as const
             }
           : undefined;
