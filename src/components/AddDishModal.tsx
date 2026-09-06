@@ -17,6 +17,7 @@ import {
 } from '../lib/db';
 import {
   lookupNutrition,
+  normalizeFoodName,
   type NutritionLookupResult
 } from '../lib/nutritionKnowledge';
 import {
@@ -28,6 +29,13 @@ import {
   type FoodImageCandidate
 } from '../lib/imageSearch';
 import { normalizeExternalImageUrl } from '../lib/url';
+import { auth } from '../lib/firebase';
+import {
+  deleteUserImageByPath,
+  describeStorageError,
+  uploadUserFoodImage,
+  validateImageFile
+} from '../services/imageStorage';
 import DishImage from './DishImage';
 
 type Props = {
@@ -49,6 +57,8 @@ export default function AddDishModal({
   const [images, setImages] = useState<FoodImageCandidate[]>([]);
   const [selectedImageId, setSelectedImageId] = useState('');
   const [manualImageUrl, setManualImageUrl] = useState('');
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [localImagePreviewUrl, setLocalImagePreviewUrl] = useState('');
   const [vendors, setVendors] = useState<NewVendorInput[]>([]);
   const [vendorName, setVendorName] = useState('');
   const [vendorPrice, setVendorPrice] = useState('');
@@ -71,6 +81,18 @@ export default function AddDishModal({
     () => normalizeExternalImageUrl(manualImageUrl),
     [manualImageUrl]
   );
+
+  useEffect(() => {
+    if (!selectedImageFile) {
+      setLocalImagePreviewUrl('');
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(selectedImageFile);
+    setLocalImagePreviewUrl(previewUrl);
+
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [selectedImageFile]);
 
   const analyze = async (foodName: string) => {
     const query = foodName.trim();
@@ -191,6 +213,8 @@ export default function AddDishModal({
     setIsSaving(true);
     setSaveError('');
 
+    let uploadedPath: string | null = null;
+
     try {
       const safeManualImageUrl = manualImageUrl.trim()
         ? normalizedManualImageUrl
@@ -201,37 +225,102 @@ export default function AddDishModal({
         return;
       }
 
-      const image = selectedImage
-        ? {
-            url: selectedImage.url,
-            source: selectedImage.source,
-            sourcePageUrl: selectedImage.sourcePageUrl,
-            license: selectedImage.license,
-            attribution: selectedImage.attribution
+      const existingDish = mockDb.getDishesSync().find(
+        dish => normalizeFoodName(dish.name) === normalizeFoodName(cleanName)
+      );
+      const targetDishId =
+        existingDish?.id ||
+        'd' +
+          (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : Date.now().toString(36) + Math.random().toString(36).slice(2));
+
+      let image:
+        | {
+            url: string;
+            source: 'wikimedia-commons' | 'manual' | 'firebase-storage';
+            sourcePageUrl?: string;
+            license?: string;
+            attribution?: string;
+            storagePath?: string;
+            contentType?: string;
+            size?: number;
+            updatedAt?: number;
           }
-        : safeManualImageUrl
-          ? {
-              url: safeManualImageUrl,
-              source: 'manual' as const
-            }
-          : undefined;
+        | undefined;
+
+      if (selectedImageFile) {
+        const user = auth.currentUser;
+        if (!user) {
+          throw new Error('Cần đăng nhập trước khi tải ảnh món lên Firebase Storage.');
+        }
+
+        const uploaded = await uploadUserFoodImage({
+          file: selectedImageFile,
+          uid: user.uid,
+          foodId: targetDishId
+        });
+        uploadedPath = uploaded.imagePath;
+        image = {
+          url: uploaded.imageUrl,
+          source: 'firebase-storage',
+          storagePath: uploaded.imagePath,
+          contentType: uploaded.imageContentType,
+          size: uploaded.imageSize,
+          updatedAt: uploaded.imageUpdatedAt
+        };
+      } else if (selectedImage) {
+        image = {
+          url: selectedImage.url,
+          source: selectedImage.source,
+          sourcePageUrl: selectedImage.sourcePageUrl,
+          license: selectedImage.license,
+          attribution: selectedImage.attribution
+        };
+      } else if (safeManualImageUrl) {
+        image = {
+          url: safeManualImageUrl,
+          source: 'manual'
+        };
+      }
 
       const result = await mockDb.addDish(
         cleanName,
         fallbackCategoryId || categories[0]?.id || 'c1',
         {
+          dishId: targetDishId,
           image,
           vendors
         }
       );
 
+      uploadedPath = null;
       onSaved(result.dish, result.created);
     } catch (error) {
+      if (uploadedPath && auth.currentUser) {
+        try {
+          await deleteUserImageByPath({
+            imagePath: uploadedPath,
+            uid: auth.currentUser.uid
+          });
+        } catch (cleanupError) {
+          console.error('[firebase-storage] Failed to rollback uploaded image', {
+            path: uploadedPath,
+            uid: auth.currentUser.uid,
+            message:
+              cleanupError instanceof Error
+                ? cleanupError.message
+                : String(cleanupError)
+          });
+        }
+      }
       console.error('[menu] Unable to save dish', error);
       setSaveError(
-        error instanceof Error
-          ? error.message
-          : 'Không thể lưu món. Vui lòng thử lại.'
+        selectedImageFile
+          ? describeStorageError(error)
+          : error instanceof Error
+            ? error.message
+            : 'Không thể lưu món. Vui lòng thử lại.'
       );
     } finally {
       setIsSaving(false);
@@ -439,6 +528,7 @@ export default function AddDishModal({
                       type="button"
                       onClick={() => {
                         setSelectedImageId(image.id);
+                        setSelectedImageFile(null);
                         setManualImageUrl('');
                       }}
                       className={
@@ -473,6 +563,59 @@ export default function AddDishModal({
               </div>
             )}
 
+            <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/70 p-3">
+              <label className="block text-[10px] font-black uppercase text-blue-700">
+                Tải ảnh từ thiết bị
+              </label>
+              <div className="mt-1 text-[10px] font-semibold text-slate-600">
+                JPEG, PNG hoặc WebP · tối đa 5 MB · ảnh sẽ được lưu trong Firebase Storage
+              </div>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="mt-3 block w-full text-xs font-semibold text-slate-700 file:mr-3 file:rounded-xl file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-xs file:font-black file:text-white"
+                onChange={event => {
+                  const file = event.target.files?.[0] || null;
+                  if (!file) {
+                    setSelectedImageFile(null);
+                    return;
+                  }
+
+                  try {
+                    validateImageFile(file);
+                    setSelectedImageFile(file);
+                    setSelectedImageId('');
+                    setManualImageUrl('');
+                    setSaveError('');
+                  } catch (error) {
+                    setSelectedImageFile(null);
+                    setSaveError(
+                      error instanceof Error ? error.message : 'Tệp ảnh không hợp lệ.'
+                    );
+                    event.currentTarget.value = '';
+                  }
+                }}
+              />
+
+              {localImagePreviewUrl && (
+                <div className="mt-3 flex items-center gap-3 rounded-2xl bg-white p-3">
+                  <img
+                    src={localImagePreviewUrl}
+                    alt="Ảnh món xem trước"
+                    className="h-24 w-24 shrink-0 rounded-2xl object-cover"
+                  />
+                  <div className="min-w-0 text-[10px] font-semibold text-slate-600">
+                    <div className="truncate font-black text-slate-900">
+                      {selectedImageFile?.name}
+                    </div>
+                    <div className="mt-1">
+                      Preview cục bộ chỉ dùng trước khi lưu; blob URL không được ghi vào Firestore.
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="mt-4">
               <label className="block text-[10px] font-black uppercase text-slate-500">
                 Hoặc dán URL ảnh
@@ -481,7 +624,10 @@ export default function AddDishModal({
                 value={manualImageUrl}
                 onChange={event => {
                   setManualImageUrl(event.target.value);
-                  if (event.target.value.trim()) setSelectedImageId('');
+                  if (event.target.value.trim()) {
+                    setSelectedImageId('');
+                    setSelectedImageFile(null);
+                  }
                 }}
                 placeholder="https://..."
                 className="mt-2 w-full h-11 rounded-xl border border-slate-200 px-3 text-xs"
