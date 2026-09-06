@@ -17,8 +17,9 @@ public/data/nutrition/shards/*.json
         v
 src/lib/nutritionKnowledge.ts
         |
-        v
-Dish.calories -> meal logs -> daily calorie totals
+        +--> Dish.calories -> meal logs -> daily calorie totals
+        |
+        +--> fruit/drink addon catalog -> meal addons -> daily calorie totals
 ```
 
 Raw nutrition datasets MUST live in `data/nutrition/source/`. Do not import a large raw dataset directly from `src/`; that would bundle the entire world food catalog into the mobile JavaScript payload.
@@ -35,9 +36,12 @@ Canonical fields:
 | name | yes | Canonical food/drink name |
 | aliases | no | Alternative names separated by `;` |
 | category | no | Food category |
+| record_type | no | `dish` (default) or `ingredient` |
 | serving_g | no | Standard serving size in grams/ml-equivalent |
 | kcal_per_100g | conditional | Energy per 100 g |
 | kcal_per_serving | conditional | Energy per standard serving |
+| kcal_min | no | Lower estimate for the standard serving |
+| kcal_max | no | Upper estimate for the standard serving |
 | source | recommended | Data origin, e.g. USDA, national database, manufacturer |
 | source_url | no | Reference URL |
 | confidence | no | `verified`, `estimated`, or `unknown` |
@@ -89,3 +93,15 @@ Lookup priority:
 ## Scaling note
 
 The sharded static catalog is appropriate for a large read-only reference dataset on Firebase Hosting. If the source dataset grows into hundreds of MB or requires frequent server-side updates, move the generated index to object storage / a searchable backend while keeping the same canonical schema.
+
+
+## Meal add-ons
+
+The build process also generates `public/data/nutrition/addons.json` from dish records
+whose categories are `Trái cây` or `Đồ uống`. The history/editor UI uses this
+small generated catalog so each breakfast/lunch/dinner can optionally include one
+fruit and one drink without loading the full 300-record dataset into the initial
+JavaScript bundle.
+
+Meal add-ons keep a nutrition record ID and their own calorie snapshot. Historical
+logs therefore remain stable even if the reference dataset is updated later.
