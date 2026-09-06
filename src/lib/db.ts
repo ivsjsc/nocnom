@@ -36,15 +36,101 @@ export type Category = {
   name: string;
 };
 
+export type MealKey = 'A' | 'B' | 'C';
+
 export type LogEntry = {
   id: string;
   dishName: string;
   vendorName: string;
   price: number;
   calories?: number;
-  mealKey?: 'A' | 'B' | 'C';
+  mealKey?: MealKey;
   timestamp: number;
 };
+
+const VIETNAM_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+const DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_HISTORY_EDIT_DAYS = 3;
+
+function datePartsInVietnam(timestamp: number) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: VIETNAM_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date(timestamp));
+
+  const lookup = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return {
+    year: Number(lookup.year),
+    month: Number(lookup.month),
+    day: Number(lookup.day)
+  };
+}
+
+export const getVietnamDateKey = (timestamp = Date.now()) => {
+  const { year, month, day } = datePartsInVietnam(timestamp);
+  return [
+    String(year).padStart(4, '0'),
+    String(month).padStart(2, '0'),
+    String(day).padStart(2, '0')
+  ].join('-');
+};
+
+function dateKeyToUtcDay(dateKey: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const utc = Date.UTC(year, month - 1, day);
+  const check = new Date(utc);
+
+  if (
+    check.getUTCFullYear() !== year ||
+    check.getUTCMonth() !== month - 1 ||
+    check.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return Math.floor(utc / DAY_MS);
+}
+
+export const getEditableMealDateRange = (now = Date.now()) => {
+  const todayKey = getVietnamDateKey(now);
+  const todayDay = dateKeyToUtcDay(todayKey)!;
+  const minDay = todayDay - MAX_HISTORY_EDIT_DAYS;
+  const minDate = new Date(minDay * DAY_MS);
+
+  return {
+    min: [
+      minDate.getUTCFullYear(),
+      String(minDate.getUTCMonth() + 1).padStart(2, '0'),
+      String(minDate.getUTCDate()).padStart(2, '0')
+    ].join('-'),
+    max: todayKey
+  };
+};
+
+export const isMealDateEditable = (dateKey: string, now = Date.now()) => {
+  const candidate = dateKeyToUtcDay(dateKey);
+  if (candidate === null) return false;
+
+  const today = dateKeyToUtcDay(getVietnamDateKey(now))!;
+  const age = today - candidate;
+  return age >= 0 && age <= MAX_HISTORY_EDIT_DAYS;
+};
+
+function timestampForMealDate(dateKey: string, mealKey: MealKey) {
+  const hour: Record<MealKey, string> = { A: '08:00:00', B: '12:00:00', C: '18:00:00' };
+  const timestamp = Date.parse(`${dateKey}T${hour[mealKey]}+07:00`);
+  if (!Number.isFinite(timestamp)) {
+    throw new Error('Ngày lịch sử không hợp lệ.');
+  }
+  return timestamp;
+}
 
 export const initialCategories: Category[] = [
   { id: 'c1', name: 'Món mặn' },
@@ -291,47 +377,105 @@ export const mockDb = {
     callback(logsData);
     return () => logListeners.delete(callback);
   },
+  upsertMealLog: ({
+    dateKey,
+    mealKey,
+    dishName,
+    vendorName,
+    price,
+    calories
+  }: {
+    dateKey: string;
+    mealKey: MealKey;
+    dishName: string;
+    vendorName: string;
+    price: number;
+    calories?: number;
+  }) => {
+    if (!isMealDateEditable(dateKey)) {
+      throw new Error('Chỉ được thêm hoặc chỉnh sửa lịch sử của hôm nay và tối đa 3 ngày trước.');
+    }
+
+    const normalizedDishName = dishName.trim();
+    const normalizedVendorName = vendorName.trim();
+
+    if (!normalizedDishName) throw new Error('Cần chọn món ăn.');
+    if (!normalizedVendorName) throw new Error('Cần chọn quán hoặc nguồn món.');
+    if (!Number.isFinite(price) || price < 0) throw new Error('Giá món không hợp lệ.');
+
+    const existingIndex = logsData.findIndex(log =>
+      log.mealKey === mealKey &&
+      getVietnamDateKey(log.timestamp) === dateKey
+    );
+
+    const newLog: LogEntry = {
+      id: existingIndex >= 0 ? logsData[existingIndex].id : createLocalId('l'),
+      dishName: normalizedDishName,
+      vendorName: normalizedVendorName,
+      price: Math.round(price),
+      calories:
+        typeof calories === 'number' && Number.isFinite(calories)
+          ? Math.max(0, Math.round(calories))
+          : undefined,
+      mealKey,
+      timestamp: timestampForMealDate(dateKey, mealKey)
+    };
+
+    logsData = existingIndex >= 0
+      ? [
+          newLog,
+          ...logsData.filter((_, index) => index !== existingIndex)
+        ]
+      : [newLog, ...logsData];
+
+    saveToLocalStorage();
+    logListeners.forEach(l => l(logsData));
+    return newLog;
+  },
+  deleteMealLog: (logId: string) => {
+    const existing = logsData.find(log => log.id === logId);
+    if (!existing) return;
+
+    const dateKey = getVietnamDateKey(existing.timestamp);
+    if (!isMealDateEditable(dateKey)) {
+      throw new Error('Lịch sử quá 3 ngày chỉ được xem, không thể xóa hoặc chỉnh sửa.');
+    }
+
+    logsData = logsData.filter(log => log.id !== logId);
+    saveToLocalStorage();
+    logListeners.forEach(l => l(logsData));
+  },
   addLog: (
     dishName: string,
     vendorName: string,
     price: number,
     calories?: number,
-    mealKey?: 'A' | 'B' | 'C'
+    mealKey?: MealKey
   ) => {
-    const now = Date.now();
-    const newLog: LogEntry = {
-      id: createLocalId('l'),
+    if (!mealKey) {
+      const now = Date.now();
+      const newLog: LogEntry = {
+        id: createLocalId('l'),
+        dishName,
+        vendorName,
+        price,
+        calories,
+        timestamp: now
+      };
+      logsData = [newLog, ...logsData];
+      saveToLocalStorage();
+      logListeners.forEach(l => l(logsData));
+      return;
+    }
+
+    mockDb.upsertMealLog({
+      dateKey: getVietnamDateKey(),
+      mealKey,
       dishName,
       vendorName,
       price,
-      calories,
-      mealKey,
-      timestamp: now
-    };
-
-    if (mealKey) {
-      const today = new Date(now).toDateString();
-      const existingIndex = logsData.findIndex(log =>
-        log.mealKey === mealKey &&
-        new Date(log.timestamp).toDateString() === today
-      );
-
-      if (existingIndex >= 0) {
-        const existing = logsData[existingIndex];
-        newLog.id = existing.id;
-        logsData = [
-          newLog,
-          ...logsData.filter((_, index) => index !== existingIndex)
-        ];
-      } else {
-        logsData = [newLog, ...logsData];
-      }
-    } else {
-      logsData = [newLog, ...logsData];
-    }
-
-    saveToLocalStorage();
-    logListeners.forEach(l => l(logsData));
+      calories
+    });
   },
   selectCombo: (day: string, comboKey: 'A' | 'B' | 'C' | null) => {
     if (comboKey === null) {
