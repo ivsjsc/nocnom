@@ -11,7 +11,8 @@
     "lint": "tsc --noEmit",
     "test": "tsx tests/nutrition.test.ts",
     "deploy": "npm run build && firebase deploy",
-    "nutrition:build": "node scripts/build-nutrition-index.mjs"
+    "nutrition:build": "node scripts/build-nutrition-index.mjs",
+    "firebase:audit": "node scripts/firebase-config-audit.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

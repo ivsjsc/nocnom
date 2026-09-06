@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Ban, CalendarDays, Clock, Flame, UtensilsCrossed } from 'lucide-react';
+import { Ban, CalendarDays, Clock, Flame, Sparkles, UtensilsCrossed } from 'lucide-react';
 import {
   estimateDishCalories,
   mockDb,
