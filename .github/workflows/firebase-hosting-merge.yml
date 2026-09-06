@@ -1,4 +1,4 @@
-# Firebase Hosting production deploy
+# Firebase production deploy: verify -> deploy rules/indexes -> hosting -> live smoke
 name: Deploy to Firebase Hosting on merge
 on:
   push:
@@ -13,16 +13,45 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
       - run: npm ci
       - run: npm run lint
+      - run: npm test
+
+      - name: Install Firebase verification tooling
+        run: npm install --no-save @firebase/rules-unit-testing firebase-tools
+
+      - name: Firestore + Storage security rules tests
+        run: npx firebase emulators:exec --only firestore,storage "node tests/firebase-rules.test.mjs" --project cocoa-35632
+
       - run: npm run build
+
+      - name: Configure Firebase service account
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_COCOA_35632 }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
+
+      - name: Deploy Firestore rules, indexes and Storage rules
+        run: npx firebase deploy --only firestore:rules,firestore:indexes,storage --project cocoa-35632 --non-interactive
+
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_COCOA_35632 }}
           channelId: live
           projectId: cocoa-35632
+
+      - name: Production Firebase smoke test
+        run: node scripts/firebase-production-smoke.mjs
