@@ -26,6 +26,7 @@ jobs:
 
       - run: npm ci
       - run: npm run lint
+      - run: node --check scripts/deploy-firebase-rules.mjs
       - run: npm test
 
       - name: Install Firebase rules test tooling

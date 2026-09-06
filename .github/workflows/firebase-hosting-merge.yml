@@ -26,6 +26,7 @@ jobs:
 
       - run: npm ci
       - run: npm run lint
+      - run: node --check scripts/deploy-firebase-rules.mjs
       - run: npm test
 
       - name: Install Firebase verification tooling
@@ -48,14 +49,20 @@ jobs:
           npx firebase use
           npx firebase projects:list | grep cocoa-35632
 
-      - name: Deploy Firestore rules and indexes
-        run: npx firebase deploy --only firestore:rules,firestore:indexes --project cocoa-35632 --non-interactive
+      - name: Guard Firestore index changes
+        run: |
+          if git diff --quiet HEAD^ -- firestore.indexes.json; then
+            echo "No Firestore index changes in this release."
+          else
+            echo "::error::firestore.indexes.json changed. Use an explicit index deployment/migration workflow instead of silently ignoring production index changes."
+            exit 1
+          fi
 
-      - name: Deploy Storage rules through Firebase Rules API
+      - name: Deploy Firestore + Storage rules through Firebase Rules API
         env:
           FIREBASE_PROJECT_ID: cocoa-35632
           FIREBASE_STORAGE_BUCKET: cocoa-35632.firebasestorage.app
-        run: node scripts/deploy-storage-rules.mjs
+        run: node scripts/deploy-firebase-rules.mjs
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
