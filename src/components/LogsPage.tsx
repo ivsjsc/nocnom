@@ -90,6 +90,7 @@ export default function LogsPage() {
   const [mealDrafts, setMealDrafts] = useState<Record<MealKey, MealDraft>>(emptyDrafts);
   const [nutritionAddons, setNutritionAddons] = useState<NutritionAddonOption[]>([]);
   const [editorError, setEditorError] = useState('');
+  const [dayMode, setDayMode] = useState<'DETAIL' | 'EDIT'>('DETAIL');
 
   useEffect(() => {
     const unsubLogs = mockDb.subscribeLogs(setLogs);
@@ -217,6 +218,7 @@ export default function LogsPage() {
   const openDate = (dateKey: string) => {
     setCalendarDate(dateKey);
     setSelectedDayKey(dateKey);
+    setDayMode('DETAIL');
     setEditorError('');
   };
 
@@ -367,10 +369,16 @@ export default function LogsPage() {
                     {formatDay(day.timestamp)}
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-bold text-slate-500">
-                    <span>{day.logs.length} bữa đã ghi nhận</span>
+                    <span>{day.logs.length} bữa</span>
                     <span>·</span>
-                    <span className={isMealDateEditable(day.key) ? 'text-blue-600' : 'text-slate-400'}>
-                      {isMealDateEditable(day.key) ? 'Có thể chỉnh sửa' : 'Chỉ xem'}
+                    <span className="font-black text-orange-500">
+                      ≈ {day.logs
+                        .reduce(
+                          (total, log) =>
+                            total + resolveCalories(log) + sumMealAddonCalories(log),
+                          0
+                        )
+                        .toLocaleString('vi-VN')} kcal
                     </span>
                   </div>
                 </div>
@@ -406,7 +414,7 @@ export default function LogsPage() {
                     <span>{selectedDay.logs.length} bữa đã ghi nhận</span>
                     {selectedDayEditable ? (
                       <span className="rounded-lg bg-blue-50 dark:bg-blue-500/10 px-2 py-1 text-[10px] font-black text-blue-600 dark:text-blue-300">
-                        Được chỉnh sửa
+                        Có thể chỉnh sửa
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-1 text-[10px] font-black text-slate-500">
@@ -451,8 +459,33 @@ export default function LogsPage() {
                 </div>
               )}
 
-              {selectedDayEditable && (
+              {dayMode === 'DETAIL' && selectedDayEditable && (
+                <div className="mb-4 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setDayMode('EDIT')}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-black text-white shadow-sm active:scale-95"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    {selectedDay.logs.length > 0 ? 'Chỉnh sửa' : 'Ghi bữa ăn'}
+                  </button>
+                </div>
+              )}
+
+              {dayMode === 'EDIT' && selectedDayEditable && (
                 <section className="mb-5 space-y-3">
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDayMode('DETAIL');
+                        setEditorError('');
+                      }}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 text-xs font-black text-slate-700 dark:text-slate-200"
+                    >
+                      Xong chỉnh sửa
+                    </button>
+                  </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm font-black text-slate-950 dark:text-slate-100">
@@ -563,13 +596,13 @@ export default function LogsPage() {
                 </section>
               )}
 
-              {!selectedDayEditable && (
+              {dayMode === 'DETAIL' && !selectedDayEditable && (
                 <div className="mb-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/60 px-4 py-3 text-xs font-semibold text-slate-500">
                   Lịch sử quá 3 ngày đã được khóa chỉnh sửa. Bạn vẫn có thể xem đầy đủ các bữa đã ghi.
                 </div>
               )}
 
-              {selectedDay.logs.length === 0 ? (
+              {dayMode === 'DETAIL' && (selectedDay.logs.length === 0 ? (
                 <div className="rounded-[22px] border border-dashed border-slate-200 dark:border-slate-700 px-5 py-8 text-center">
                   <UtensilsCrossed className="mx-auto h-6 w-6 text-slate-300" />
                   <div className="mt-2 text-sm font-black text-slate-700 dark:text-slate-200">
@@ -642,7 +675,7 @@ export default function LogsPage() {
                     );
                   })}
                 </div>
-              )}
+              ))}
             </div>
           </div>
         </div>,
