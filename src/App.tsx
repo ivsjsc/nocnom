@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
-import { CalendarDays, Clock3, Home, Menu as MenuIcon, Moon, RefreshCw, RotateCw, Sun, Sparkles } from 'lucide-react';
+import { Clock3, Home, Menu as MenuIcon, Moon, RefreshCw, RotateCw, Sun, Sparkles } from 'lucide-react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import { syncUserWithFirestore } from './lib/db';
 import { useVersionCheck } from './hooks/useVersionCheck';
 import HomePage from './components/HomePage';
-import WeeklyTable from './components/WeeklyTable';
 import LogsPage from './components/LogsPage';
 import MenuPage from './components/MenuPage';
 import Login from './components/Login';
 import AuthModal from './components/AuthModal';
 import { nutritionService } from './services/nutrition';
 
-type Tab = 'home' | 'weekly' | 'logs' | 'menu';
+type Tab = 'home' | 'logs' | 'menu';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
@@ -98,7 +97,6 @@ export default function App() {
 
   const navItems: Array<{ id: Tab; label: string; icon: typeof Home }> = [
     { id: 'home', label: 'Trang chủ', icon: Home },
-    { id: 'weekly', label: 'Lịch ăn', icon: CalendarDays },
     { id: 'logs', label: 'Lịch sử', icon: Clock3 },
     { id: 'menu', label: 'Kho món', icon: MenuIcon }
   ];
@@ -177,7 +175,6 @@ export default function App() {
 
       <main className="app-container app-main">
         {activeTab === 'home' && <HomePage />}
-        {activeTab === 'weekly' && <WeeklyTable />}
         {activeTab === 'logs' && <LogsPage />}
         {activeTab === 'menu' && currentUser && <MenuPage canManage />}
       </main>
