@@ -209,9 +209,28 @@ html:not(.dark) .app-bottom-nav {
   box-shadow: 0 14px 34px rgba(30, 64, 175, 0.08);
 }
 
-.dark .surface-brand-soft {
+.surface-info-strip {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 10px 26px rgba(30, 64, 175, 0.06);
+}
+
+.surface-warning-readable {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  box-shadow: 0 10px 24px rgba(154, 52, 18, 0.08);
+}
+
+.dark .surface-brand-soft,
+.dark .surface-info-strip {
   background: linear-gradient(180deg, #0f172a 0%, #111c33 100%);
   border-color: #334155;
+  box-shadow: none;
+}
+
+.dark .surface-warning-readable {
+  background: #431407;
+  border-color: #9a3412;
   box-shadow: none;
 }
 
