@@ -6,9 +6,20 @@
     "category": "Trái cây",
     "calories": 130,
     "servingG": 300,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-544",
+    "kind": "fruit",
+    "name": "Bưởi 500g phần ăn được",
+    "category": "Trái cây",
+    "calories": 195,
+    "servingG": 500,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-203",
@@ -17,9 +28,20 @@
     "category": "Trái cây",
     "calories": 80,
     "servingG": 180,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-545",
+    "kind": "fruit",
+    "name": "Cam 200g phần ăn được",
+    "category": "Trái cây",
+    "calories": 94,
+    "servingG": 200,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-216",
@@ -28,9 +50,9 @@
     "category": "Trái cây",
     "calories": 150,
     "servingG": 200,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-201",
@@ -39,9 +61,20 @@
     "category": "Trái cây",
     "calories": 110,
     "servingG": 120,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-532",
+    "kind": "fruit",
+    "name": "Chuối cau 100g",
+    "category": "Trái cây",
+    "calories": 90,
+    "servingG": 100,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-209",
@@ -50,9 +83,20 @@
     "category": "Trái cây",
     "calories": 60,
     "servingG": 200,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-537",
+    "kind": "fruit",
+    "name": "Dưa gang 200g",
+    "category": "Trái cây",
+    "calories": 70,
+    "servingG": 200,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-207",
@@ -61,9 +105,31 @@
     "category": "Trái cây",
     "calories": 90,
     "servingG": 300,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-543",
+    "kind": "fruit",
+    "name": "Dưa hấu 500g",
+    "category": "Trái cây",
+    "calories": 150,
+    "servingG": 500,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-536",
+    "kind": "fruit",
+    "name": "Dưa lưới 200g",
+    "category": "Trái cây",
+    "calories": 68,
+    "servingG": 200,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-217",
@@ -72,9 +138,9 @@
     "category": "Trái cây",
     "calories": 350,
     "servingG": 100,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "unknown"
   },
   {
     "id": "vn-dish-211",
@@ -83,9 +149,20 @@
     "category": "Trái cây",
     "calories": 100,
     "servingG": 180,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-533",
+    "kind": "fruit",
+    "name": "Mãng cầu 100g",
+    "category": "Trái cây",
+    "calories": 66,
+    "servingG": 100,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-213",
@@ -94,9 +171,20 @@
     "category": "Trái cây",
     "calories": 130,
     "servingG": 200,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-541",
+    "kind": "fruit",
+    "name": "Măng cụt 200g",
+    "category": "Trái cây",
+    "calories": 146,
+    "servingG": 200,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-215",
@@ -105,9 +193,20 @@
     "category": "Trái cây",
     "calories": 190,
     "servingG": 200,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-538",
+    "kind": "fruit",
+    "name": "Nhãn 200g",
+    "category": "Trái cây",
+    "calories": 124,
+    "servingG": 200,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-210",
@@ -116,9 +215,9 @@
     "category": "Trái cây",
     "calories": 140,
     "servingG": 200,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-206",
@@ -127,9 +226,9 @@
     "category": "Trái cây",
     "calories": 140,
     "servingG": 200,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-204",
@@ -138,9 +237,20 @@
     "category": "Trái cây",
     "calories": 80,
     "servingG": 160,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-540",
+    "kind": "fruit",
+    "name": "Roi 200g",
+    "category": "Trái cây",
+    "calories": 52,
+    "servingG": 200,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-214",
@@ -149,9 +259,9 @@
     "category": "Trái cây",
     "calories": 150,
     "servingG": 100,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-202",
@@ -160,9 +270,20 @@
     "category": "Trái cây",
     "calories": 90,
     "servingG": 180,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-546",
+    "kind": "fruit",
+    "name": "Táo xanh 200g",
+    "category": "Trái cây",
+    "calories": 104,
+    "servingG": 200,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-208",
@@ -171,9 +292,31 @@
     "category": "Trái cây",
     "calories": 120,
     "servingG": 250,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-542",
+    "kind": "fruit",
+    "name": "Thanh long ruột đỏ 250g",
+    "category": "Trái cây",
+    "calories": 135,
+    "servingG": 250,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-539",
+    "kind": "fruit",
+    "name": "Vải 200g",
+    "category": "Trái cây",
+    "calories": 132,
+    "servingG": 200,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   },
   {
     "id": "vn-dish-205",
@@ -182,8 +325,30 @@
     "category": "Trái cây",
     "calories": 120,
     "servingG": 200,
-    "source": "IVS Vietnam calorie dataset",
-    "sourceUrl": "",
-    "confidence": "estimated"
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-534",
+    "kind": "fruit",
+    "name": "Xoài chín 200g",
+    "category": "Trái cây",
+    "calories": 120,
+    "servingG": 200,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
+  },
+  {
+    "id": "vn-dish-535",
+    "kind": "fruit",
+    "name": "Xoài keo 200g",
+    "category": "Trái cây",
+    "calories": 120,
+    "servingG": 200,
+    "source": "Bảng thành phần thực phẩm Việt Nam - Viện Dinh dưỡng 2007 + ước tính khẩu phần quán",
+    "sourceUrl": "https://chuyentrang.viendinhduong.vn/viewfilenew/vi/thu-vien-sach-chuyen-nganh/189/1.html",
+    "confidence": "verified"
   }
 ]

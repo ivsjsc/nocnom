@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-06T17:00:44.546Z",
+  "generatedAt": "2026-09-06T17:11:23.197Z",
   "sourceFiles": [
-    "vietnam-calorie-dataset-300.csv"
+    "nocnom_nutrition_knowledge_v2.json"
   ],
-  "sourceRecordCount": 300,
-  "lookupKeyCount": 396,
-  "shardCount": 204,
-  "addonCount": 17,
+  "sourceRecordCount": 590,
+  "lookupKeyCount": 745,
+  "shardCount": 241,
+  "addonCount": 32,
   "invalidRecordCount": 0,
   "invalidRecords": []
 }
