@@ -299,13 +299,13 @@ export default function LogsPage() {
         <Clock3 className="w-5 h-5 text-slate-900 dark:text-slate-100" />
         <div>
           <h2 className="text-xl font-black text-slate-950 dark:text-slate-100">Lịch sử ăn uống</h2>
-          <p className="mt-0.5 text-[11px] font-semibold text-slate-500">
+          <p className="mt-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
             Xem theo ngày · được ghi bù/chỉnh sửa tối đa 3 ngày trước
           </p>
         </div>
       </div>
 
-      <section className="rounded-[26px] border border-blue-100 dark:border-blue-900/60 bg-blue-50/80 dark:bg-blue-950/30 p-4">
+      <section className="rounded-[26px] border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/30 p-4 shadow-sm">
         <div className="flex items-start gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-slate-900 text-blue-600 shadow-sm">
             <CalendarDays className="h-5 w-5" />
@@ -314,7 +314,7 @@ export default function LogsPage() {
             <div className="text-sm font-black text-slate-950 dark:text-slate-100">
               Ghi bù hoặc chỉnh lịch sử
             </div>
-            <div className="mt-1 text-[11px] font-semibold text-slate-500">
+            <div className="mt-1 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
               Chọn từ {formatDateKey(editRange.min)} đến hôm nay. Ngày tương lai và quá 3 ngày không được sửa.
             </div>
           </div>
@@ -327,7 +327,7 @@ export default function LogsPage() {
             max={editRange.max}
             value={calendarDate}
             onChange={event => setCalendarDate(event.target.value)}
-            className="min-h-12 w-full rounded-2xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-900 px-3 text-sm font-bold text-slate-950 dark:text-slate-100"
+            className="min-h-12 w-full rounded-2xl border border-blue-300 dark:border-blue-800 bg-white dark:bg-slate-900 px-3 text-sm font-bold text-slate-950 dark:text-slate-100 shadow-sm"
             aria-label="Chọn ngày lịch sử ăn uống"
           />
           <button
@@ -357,7 +357,7 @@ export default function LogsPage() {
               type="button"
               key={day.key}
               onClick={() => openDate(day.key)}
-              className="w-full rounded-[26px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-left shadow-sm transition-all hover:border-blue-300 dark:hover:border-blue-500 active:scale-[0.99]"
+              className="w-full rounded-[26px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-left shadow-sm transition-all hover:border-blue-400 dark:hover:border-blue-500 active:scale-[0.99]"
             >
               <div className="flex items-center gap-4">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300">
@@ -368,10 +368,10 @@ export default function LogsPage() {
                   <div className="text-sm font-black capitalize text-slate-950 dark:text-slate-100">
                     {formatDay(day.timestamp)}
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-bold text-slate-500">
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-bold text-slate-600 dark:text-slate-400">
                     <span>{day.logs.length} bữa</span>
                     <span>·</span>
-                    <span className="font-black text-orange-500">
+                    <span className="font-black text-orange-700 dark:text-orange-300">
                       ≈ {day.logs
                         .reduce(
                           (total, log) =>
@@ -383,7 +383,7 @@ export default function LogsPage() {
                   </div>
                 </div>
 
-                <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
+                <ChevronRight className="h-5 w-5 shrink-0 text-slate-600 dark:text-slate-400" />
               </div>
             </button>
           ))}
@@ -410,7 +410,7 @@ export default function LogsPage() {
                   <h3 className="mt-1 text-xl font-black capitalize text-slate-950 dark:text-slate-100">
                     {formatDay(selectedDay.timestamp)}
                   </h3>
-                  <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-slate-500">
+                  <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
                     <span>{selectedDay.logs.length} bữa đã ghi nhận</span>
                     {selectedDayEditable ? (
                       <span className="rounded-lg bg-blue-50 dark:bg-blue-500/10 px-2 py-1 text-[10px] font-black text-blue-600 dark:text-blue-300">
@@ -491,7 +491,7 @@ export default function LogsPage() {
                       <div className="text-sm font-black text-slate-950 dark:text-slate-100">
                         Ghi bù / chỉnh bữa ăn
                       </div>
-                      <div className="mt-0.5 text-[10px] font-semibold text-slate-500">
+                      <div className="mt-0.5 text-[10px] font-semibold text-slate-600 dark:text-slate-400">
                         Mỗi bữa có một món chính và có thể thêm trái cây hoặc nước uống.
                       </div>
                     </div>
@@ -527,7 +527,7 @@ export default function LogsPage() {
 
                         <div className="mt-3 space-y-2">
                           <label className="block">
-                            <span className="text-[10px] font-black text-slate-500">Món ăn</span>
+                            <span className="text-[10px] font-black text-slate-600 dark:text-slate-400">Món ăn</span>
                             <select
                               value={draft.dishId}
                               onChange={event => {
@@ -547,7 +547,7 @@ export default function LogsPage() {
                           </label>
 
                           <label className="block">
-                            <span className="text-[10px] font-black text-slate-500">Quán / nguồn món</span>
+                            <span className="text-[10px] font-black text-slate-600 dark:text-slate-400">Quán / nguồn món</span>
                             <select
                               value={draft.vendorId}
                               onChange={event => patchDraft(mealKey, { vendorId: event.target.value })}
@@ -644,13 +644,13 @@ export default function LogsPage() {
                             <h4 className="mt-0.5 truncate text-sm font-black text-slate-950 dark:text-slate-100">
                               {log.dishName}
                             </h4>
-                            <div className="mt-1 text-[10px] font-bold text-slate-500">
+                            <div className="mt-1 text-[10px] font-bold text-slate-600 dark:text-slate-400">
                               ≈ {calories.toLocaleString('vi-VN')} kcal · {log.price.toLocaleString('vi-VN')}đ
                             </div>
                           </div>
                         </div>
 
-                        <div className="mt-3 rounded-xl bg-white dark:bg-slate-900 px-3 py-2 text-[10px] font-bold text-slate-500">
+                        <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-400">
                           Quán: {log.vendorName}
                         </div>
 
