@@ -18,11 +18,18 @@ import {
   getVietnamDateKey,
   isMealDateEditable,
   mockDb,
+  sumMealAddonCalories,
   type Dish,
   type LogEntry,
+  type MealAddon,
   type MealKey
 } from '../lib/db';
 import DishImage from './DishImage';
+import MealAddonPicker, { type MealAddonSelection } from './MealAddonPicker';
+import {
+  loadNutritionAddons,
+  type NutritionAddonOption
+} from '../lib/nutritionKnowledge';
 
 const mealKeys: MealKey[] = ['A', 'B', 'C'];
 const mealOrder: Record<MealKey, number> = { A: 0, B: 1, C: 2 };
@@ -35,12 +42,14 @@ const mealLabels: Record<MealKey, string> = {
 type MealDraft = {
   dishId: string;
   vendorId: string;
+  fruitId: string;
+  drinkId: string;
 };
 
 const emptyDrafts = (): Record<MealKey, MealDraft> => ({
-  A: { dishId: '', vendorId: '' },
-  B: { dishId: '', vendorId: '' },
-  C: { dishId: '', vendorId: '' }
+  A: { dishId: '', vendorId: '', fruitId: '', drinkId: '' },
+  B: { dishId: '', vendorId: '', fruitId: '', drinkId: '' },
+  C: { dishId: '', vendorId: '', fruitId: '', drinkId: '' }
 });
 
 const timestampForDateKey = (dateKey: string) =>
@@ -76,11 +85,13 @@ export default function LogsPage() {
   const editRange = useMemo(() => getEditableMealDateRange(), []);
   const [calendarDate, setCalendarDate] = useState(editRange.max);
   const [mealDrafts, setMealDrafts] = useState<Record<MealKey, MealDraft>>(emptyDrafts);
+  const [nutritionAddons, setNutritionAddons] = useState<NutritionAddonOption[]>([]);
   const [editorError, setEditorError] = useState('');
 
   useEffect(() => {
     const unsubLogs = mockDb.subscribeLogs(setLogs);
     const unsubDishes = mockDb.subscribeDishes(setDishes);
+    void loadNutritionAddons().then(setNutritionAddons);
     return () => {
       unsubLogs();
       unsubDishes();
@@ -177,7 +188,9 @@ export default function LogsPage() {
       const vendor = dish.vendors.find(item => item.name === log.vendorName);
       next[mealKey] = {
         dishId: dish.id,
-        vendorId: vendor?.id || ''
+        vendorId: vendor?.id || '',
+        fruitId: log.addons?.find(addon => addon.kind === 'fruit')?.nutritionRecordId || '',
+        drinkId: log.addons?.find(addon => addon.kind === 'drink')?.nutritionRecordId || ''
       };
     });
 
@@ -186,7 +199,10 @@ export default function LogsPage() {
   }, [dishes, selectedDay?.key, logs]);
 
   const selectedDayCalories = selectedDay
-    ? selectedDay.logs.reduce((total, log) => total + resolveCalories(log), 0)
+    ? selectedDay.logs.reduce(
+        (total, log) => total + resolveCalories(log) + sumMealAddonCalories(log),
+        0
+      )
     : 0;
 
   const openDate = (dateKey: string) => {
@@ -222,6 +238,21 @@ export default function LogsPage() {
       return;
     }
 
+    const selectedAddonIds = [draft.fruitId, draft.drinkId].filter(Boolean);
+    const addons: MealAddon[] = selectedAddonIds
+      .map(id => nutritionAddons.find(item => item.id === id))
+      .filter((item): item is NutritionAddonOption => Boolean(item))
+      .map(item => ({
+        id: item.id,
+        kind: item.kind,
+        name: item.name,
+        calories: item.calories,
+        nutritionRecordId: item.id,
+        servingG: item.servingG,
+        kcalMin: item.kcalMin,
+        kcalMax: item.kcalMax
+      }));
+
     try {
       mockDb.upsertMealLog({
         dateKey: selectedDayKey,
@@ -229,7 +260,8 @@ export default function LogsPage() {
         dishName: dish.name,
         vendorName: vendor?.name || 'Không ghi quán',
         price: vendor?.price || 0,
-        calories: estimateDishCalories(dish)
+        calories: estimateDishCalories(dish),
+        addons
       });
       setEditorError('');
     } catch (error) {
@@ -495,6 +527,17 @@ export default function LogsPage() {
                             </select>
                           </label>
 
+                          <MealAddonPicker
+                            value={{
+                              fruitId: draft.fruitId,
+                              drinkId: draft.drinkId
+                            }}
+                            onChange={(selection: MealAddonSelection) =>
+                              patchDraft(mealKey, selection)
+                            }
+                            compact
+                          />
+
                           <button
                             type="button"
                             onClick={() => saveMeal(mealKey)}
@@ -533,7 +576,9 @@ export default function LogsPage() {
                 <div className="space-y-3">
                   {selectedDay.logs.map((log, index) => {
                     const dish = findDish(log.dishName);
-                    const calories = resolveCalories(log);
+                    const mainCalories = resolveCalories(log);
+                    const addonCalories = sumMealAddonCalories(log);
+                    const calories = mainCalories + addonCalories;
                     const mealLabel = log.mealKey
                       ? mealLabels[log.mealKey]
                       : 'Món ' + (index + 1);
@@ -566,6 +611,24 @@ export default function LogsPage() {
                         <div className="mt-3 rounded-xl bg-white dark:bg-slate-900 px-3 py-2 text-[10px] font-bold text-slate-500">
                           Quán: {log.vendorName}
                         </div>
+
+                        {(log.addons?.length ?? 0) > 0 && (
+                          <div className="mt-2 space-y-1 rounded-xl border border-emerald-100 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/20 px-3 py-2">
+                            {log.addons?.map(addon => (
+                              <div
+                                key={addon.kind + '-' + addon.id}
+                                className="flex items-center justify-between gap-3 text-[10px] font-bold"
+                              >
+                                <span className="text-emerald-800 dark:text-emerald-200">
+                                  {addon.kind === 'fruit' ? 'Trái cây' : 'Nước uống'} · {addon.name}
+                                </span>
+                                <span className="shrink-0 text-emerald-700 dark:text-emerald-300">
+                                  ≈ {addon.calories.toLocaleString('vi-VN')} kcal
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </article>
                     );
                   })}
