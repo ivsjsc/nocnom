@@ -21,8 +21,42 @@ service cloud.firestore {
     }
 
     // --- NHÓM 2: DỮ LIỆU CÁ NHÂN NGƯỜI DÙNG ---
+    // nOcnOm profile is private and uses an explicit field allow-list.
+    match /users/{userId}/profile/{profileId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && request.resource.data.keys().hasOnly([
+          'fullName',
+          'dateOfBirth',
+          'school',
+          'faculty',
+          'studentId',
+          'phone',
+          'photoUrl',
+          'email',
+          'authProvider',
+          'updatedAt'
+        ]);
+      allow delete: if isOwner(userId);
+    }
+
+    // nOcnOm app state is private and stored as a single user-owned document.
+    match /users/{userId}/data/{dataId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && request.resource.data.keys().hasOnly([
+          'timetable',
+          'dishes',
+          'categories',
+          'logs',
+          'updatedAt'
+        ]);
+      allow delete: if isOwner(userId);
+    }
+
+    // No unmodeled user subcollection is implicitly exposed.
     match /users/{userId}/{document=**} {
-      allow read, write: if isOwner(userId);
+      allow read, write: if false;
     }
 
     // --- NHÓM 3: BINOC APP (Messages, Rooms, Calls, FCM) ---
