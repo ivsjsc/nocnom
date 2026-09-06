@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Save, ShieldCheck, UserRound, X } from 'lucide-react';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
@@ -93,6 +94,15 @@ export default function ProfileModal({ user, onClose }: Props) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
   const updateField = (field: keyof ProfileForm, value: string) => {
     setForm(current => ({ ...current, [field]: value }));
     setStatus(null);
@@ -136,9 +146,10 @@ export default function ProfileModal({ user, onClose }: Props) {
     }
   };
 
-  return (
+  return createPortal(
+    (
     <div
-      className="fixed inset-0 z-[70] bg-slate-950/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3"
+      className="fixed inset-0 z-[100] bg-slate-950/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3"
       role="dialog"
       aria-modal="true"
       aria-label="Quản lý tài khoản nOcnOm"
@@ -146,8 +157,8 @@ export default function ProfileModal({ user, onClose }: Props) {
         if (event.currentTarget === event.target) onClose();
       }}
     >
-      <div className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
-        <div className="flex items-center justify-between gap-4 border-b border-slate-100 p-5">
+      <div className="flex w-full max-w-lg max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
+        <div className="shrink-0 flex items-center justify-between gap-4 border-b border-slate-100 p-5">
           <div className="min-w-0">
             <div className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-500">
               Tài khoản nOcnOm
@@ -164,7 +175,7 @@ export default function ProfileModal({ user, onClose }: Props) {
           </button>
         </div>
 
-        <div className="max-h-[calc(90vh-84px)] overflow-y-auto p-5">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
           <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-4">
             <div className="h-12 w-12 overflow-hidden rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black">
               {user.photoURL ? (
@@ -296,5 +307,7 @@ export default function ProfileModal({ user, onClose }: Props) {
         </div>
       </div>
     </div>
+    ),
+    document.body
   );
 }
