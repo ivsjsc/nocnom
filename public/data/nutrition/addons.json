@@ -1,0 +1,189 @@
+[
+  {
+    "id": "vn-dish-212",
+    "kind": "fruit",
+    "name": "Bưởi 300g",
+    "category": "Trái cây",
+    "calories": 130,
+    "servingG": 300,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-203",
+    "kind": "fruit",
+    "name": "Cam 1 quả vừa",
+    "category": "Trái cây",
+    "calories": 80,
+    "servingG": 180,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-216",
+    "kind": "fruit",
+    "name": "Chôm chôm 200g",
+    "category": "Trái cây",
+    "calories": 150,
+    "servingG": 200,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-201",
+    "kind": "fruit",
+    "name": "Chuối 1 quả vừa",
+    "category": "Trái cây",
+    "calories": 110,
+    "servingG": 120,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-209",
+    "kind": "fruit",
+    "name": "Dâu tây 200g",
+    "category": "Trái cây",
+    "calories": 60,
+    "servingG": 200,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-207",
+    "kind": "fruit",
+    "name": "Dưa hấu 300g",
+    "category": "Trái cây",
+    "calories": 90,
+    "servingG": 300,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-217",
+    "kind": "fruit",
+    "name": "Dừa tươi cơm 100g",
+    "category": "Trái cây",
+    "calories": 350,
+    "servingG": 100,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-211",
+    "kind": "fruit",
+    "name": "Lê 1 quả",
+    "category": "Trái cây",
+    "calories": 100,
+    "servingG": 180,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-213",
+    "kind": "fruit",
+    "name": "Mãng cầu 200g",
+    "category": "Trái cây",
+    "calories": 130,
+    "servingG": 200,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-215",
+    "kind": "fruit",
+    "name": "Mít 200g",
+    "category": "Trái cây",
+    "calories": 190,
+    "servingG": 200,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-210",
+    "kind": "fruit",
+    "name": "Nho 200g",
+    "category": "Trái cây",
+    "calories": 140,
+    "servingG": 200,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-206",
+    "kind": "fruit",
+    "name": "Ổi 1 quả",
+    "category": "Trái cây",
+    "calories": 140,
+    "servingG": 200,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-204",
+    "kind": "fruit",
+    "name": "Quýt 2 quả",
+    "category": "Trái cây",
+    "calories": 80,
+    "servingG": 160,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-214",
+    "kind": "fruit",
+    "name": "Sầu riêng 100g cơm",
+    "category": "Trái cây",
+    "calories": 150,
+    "servingG": 100,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-202",
+    "kind": "fruit",
+    "name": "Táo 1 quả vừa",
+    "category": "Trái cây",
+    "calories": 90,
+    "servingG": 180,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-208",
+    "kind": "fruit",
+    "name": "Thanh long 1 quả",
+    "category": "Trái cây",
+    "calories": 120,
+    "servingG": 250,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  },
+  {
+    "id": "vn-dish-205",
+    "kind": "fruit",
+    "name": "Xoài chín 1 quả nhỏ",
+    "category": "Trái cây",
+    "calories": 120,
+    "servingG": 200,
+    "source": "IVS Vietnam calorie dataset",
+    "sourceUrl": "",
+    "confidence": "estimated"
+  }
+]

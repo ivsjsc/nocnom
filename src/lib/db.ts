@@ -1,4 +1,6 @@
 import { lookupNutrition } from './nutritionKnowledge';
+import { doc, getDoc, onSnapshot, setDoc, serverTimestamp, type Unsubscribe } from 'firebase/firestore';
+import { db } from './firebase';
 
 export type VendorExtraInfo = {
   id: string;
@@ -287,6 +289,121 @@ const saveToLocalStorage = () => {
   } catch (e) {
     console.error("Error saving to localStorage", e);
   }
+  scheduleCloudSync();
+};
+
+let currentSyncUid: string | null = null;
+let firestoreUnsubscribe: Unsubscribe | null = null;
+let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let isRemoteUpdating = false;
+
+const notifyAllListeners = () => {
+  Object.values(listeners).flatMap(set => Array.from(set)).forEach(l => l(dbData));
+  dishListeners.forEach(l => l(dishesData));
+  categoryListeners.forEach(l => l(categoriesData));
+  logListeners.forEach(l => l(logsData));
+};
+
+const scheduleCloudSync = () => {
+  if (!currentSyncUid || isRemoteUpdating) return;
+
+  if (syncDebounceTimer) {
+    clearTimeout(syncDebounceTimer);
+  }
+
+  syncDebounceTimer = setTimeout(async () => {
+    if (!currentSyncUid || isRemoteUpdating) return;
+    const uid = currentSyncUid;
+    try {
+      const userStateDoc = doc(db, 'users', uid, 'data', 'appState');
+      await setDoc(userStateDoc, {
+        timetable: dbData,
+        dishes: dishesData,
+        categories: categoriesData,
+        logs: logsData,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      console.error('Không thể đồng bộ dữ liệu lên Firestore:', err);
+    }
+  }, 800);
+};
+
+export const syncUserWithFirestore = (uid: string | null) => {
+  if (firestoreUnsubscribe) {
+    firestoreUnsubscribe();
+    firestoreUnsubscribe = null;
+  }
+
+  if (syncDebounceTimer) {
+    clearTimeout(syncDebounceTimer);
+    syncDebounceTimer = null;
+  }
+
+  currentSyncUid = uid;
+
+  if (!uid) {
+    return;
+  }
+
+  const userStateDoc = doc(db, 'users', uid, 'data', 'appState');
+
+  // Lắng nghe realtime từ Firestore
+  firestoreUnsubscribe = onSnapshot(
+    userStateDoc,
+    async (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data) {
+          isRemoteUpdating = true;
+          try {
+            if (data.timetable && typeof data.timetable === 'object') {
+              dbData = data.timetable as Timetable;
+            }
+            if (Array.isArray(data.dishes)) {
+              dishesData = data.dishes as Dish[];
+            }
+            if (Array.isArray(data.categories)) {
+              categoriesData = data.categories as Category[];
+            }
+            if (Array.isArray(data.logs)) {
+              logsData = data.logs as LogEntry[];
+            }
+
+            try {
+              localStorage.setItem('nocnom_timetable', JSON.stringify(dbData));
+              localStorage.setItem('nocnom_dishes', JSON.stringify(dishesData));
+              localStorage.setItem('nocnom_categories', JSON.stringify(categoriesData));
+              localStorage.setItem('nocnom_logs', JSON.stringify(logsData));
+            } catch (e) {
+              console.error('Lỗi cache localStorage:', e);
+            }
+
+            notifyAllListeners();
+          } finally {
+            isRemoteUpdating = false;
+          }
+        }
+      } else {
+        // Tài liệu chưa tồn tại trên Firestore (người dùng mới đăng nhập lần đầu)
+        // Đồng bộ dữ liệu hiện có lên Firestore
+        try {
+          await setDoc(userStateDoc, {
+            timetable: dbData,
+            dishes: dishesData,
+            categories: categoriesData,
+            logs: logsData,
+            updatedAt: serverTimestamp()
+          });
+        } catch (err) {
+          console.error('Lỗi tạo tài liệu dữ liệu ban đầu trên Firestore:', err);
+        }
+      }
+    },
+    (error) => {
+      console.error('Lỗi lắng nghe realtime Firestore:', error);
+    }
+  );
 };
 
 type Listener = (data: any) => void;

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { CalendarDays, Clock3, Home, Menu as MenuIcon, Moon, RefreshCw, RotateCw, Sun, Sparkles } from 'lucide-react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from './lib/firebase';
+import { syncUserWithFirestore } from './lib/db';
 import { useVersionCheck } from './hooks/useVersionCheck';
 import HomePage from './components/HomePage';
 import WeeklyTable from './components/WeeklyTable';
@@ -40,6 +41,7 @@ export default function App() {
   useEffect(() => {
     return onAuthStateChanged(auth, user => {
       setCurrentUser(user);
+      syncUserWithFirestore(user ? user.uid : null);
       setAuthChecked(true);
 
       if (!user) {
