@@ -293,31 +293,92 @@ const defaultTimetable: Timetable = {
   sun: { dayName: "Chủ Nhật", options: { A: { dishId: 'd19', stock: 50 }, B: { dishId: 'd20', stock: 30 }, C: { dishId: 'd21', stock: 20 } } }
 };
 
-let dbData = { ...defaultTimetable };
-let dishesData: Dish[] = [...initialDishes];
-let categoriesData: Category[] = [...initialCategories];
-let logsData: LogEntry[] = [];
+const deepClone = <T,>(value: T): T =>
+  JSON.parse(JSON.stringify(value)) as T;
 
-try {
-  const storedDbData = (localStorage.getItem('nocnom_timetable') ?? localStorage.getItem('unifood_timetable'));
-  if (storedDbData) dbData = JSON.parse(storedDbData);
+const normalizeCachedCategories = (categories: Category[]) =>
+  categories.map(category => ({
+    ...category,
+    name: category.name.replace(/\s*\(Mì\/Phở\/Bún\)/gi, '')
+  }));
 
-  const storedDishesData = (localStorage.getItem('nocnom_dishes') ?? localStorage.getItem('unifood_dishes'));
-  if (storedDishesData) dishesData = JSON.parse(storedDishesData);
+const createDefaultUserState = () => ({
+  timetable: deepClone(defaultTimetable),
+  dishes: deepClone(initialDishes),
+  categories: deepClone(initialCategories),
+  logs: [] as LogEntry[]
+});
 
-  const storedCategoriesData = (localStorage.getItem('nocnom_categories') ?? localStorage.getItem('unifood_categories'));
-  if (storedCategoriesData) {
-    categoriesData = (JSON.parse(storedCategoriesData) as Category[]).map(c => ({
-      ...c,
-      name: c.name.replace(/\s*\(Mì\/Phở\/Bún\)/gi, '')
-    }));
+let activeCacheUid: string | null = null;
+
+const cacheKey = (
+  key: 'timetable' | 'dishes' | 'categories' | 'logs',
+  uid: string | null = activeCacheUid
+) => uid
+  ? `nocnom_user_${uid}_${key}`
+  : `nocnom_${key}`;
+
+const readCachedState = (uid: string | null) => {
+  try {
+    const timetableRaw =
+      localStorage.getItem(cacheKey('timetable', uid)) ??
+      (!uid ? localStorage.getItem('unifood_timetable') : null);
+    const dishesRaw =
+      localStorage.getItem(cacheKey('dishes', uid)) ??
+      (!uid ? localStorage.getItem('unifood_dishes') : null);
+    const categoriesRaw =
+      localStorage.getItem(cacheKey('categories', uid)) ??
+      (!uid ? localStorage.getItem('unifood_categories') : null);
+    const logsRaw =
+      localStorage.getItem(cacheKey('logs', uid)) ??
+      (!uid ? localStorage.getItem('unifood_logs') : null);
+
+    if (
+      !timetableRaw &&
+      !dishesRaw &&
+      !categoriesRaw &&
+      !logsRaw
+    ) {
+      return null;
+    }
+
+    const fallback = createDefaultUserState();
+
+    return {
+      timetable: timetableRaw
+        ? JSON.parse(timetableRaw) as Timetable
+        : fallback.timetable,
+      dishes: dishesRaw
+        ? JSON.parse(dishesRaw) as Dish[]
+        : fallback.dishes,
+      categories: categoriesRaw
+        ? normalizeCachedCategories(
+            JSON.parse(categoriesRaw) as Category[]
+          )
+        : fallback.categories,
+      logs: logsRaw
+        ? JSON.parse(logsRaw) as LogEntry[]
+        : fallback.logs
+    };
+  } catch (error) {
+    console.error('[local-cache] Unable to read app state', {
+      uid,
+      message:
+        error instanceof Error
+          ? error.message
+          : String(error)
+    });
+    return null;
   }
+};
 
-  const storedLogsData = (localStorage.getItem('nocnom_logs') ?? localStorage.getItem('unifood_logs'));
-  if (storedLogsData) logsData = JSON.parse(storedLogsData);
-} catch (e) {
-  console.error("Error loading from localStorage", e);
-}
+const initialCachedState =
+  readCachedState(null) ?? createDefaultUserState();
+
+let dbData = initialCachedState.timetable;
+let dishesData: Dish[] = initialCachedState.dishes;
+let categoriesData: Category[] = initialCachedState.categories;
+let logsData: LogEntry[] = initialCachedState.logs;
 
 const createLocalId = (prefix: string) => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -328,12 +389,30 @@ const createLocalId = (prefix: string) => {
 
 const writeLocalCache = () => {
   try {
-    localStorage.setItem('nocnom_timetable', JSON.stringify(dbData));
-    localStorage.setItem('nocnom_dishes', JSON.stringify(dishesData));
-    localStorage.setItem('nocnom_categories', JSON.stringify(categoriesData));
-    localStorage.setItem('nocnom_logs', JSON.stringify(logsData));
+    localStorage.setItem(
+      cacheKey('timetable'),
+      JSON.stringify(dbData)
+    );
+    localStorage.setItem(
+      cacheKey('dishes'),
+      JSON.stringify(dishesData)
+    );
+    localStorage.setItem(
+      cacheKey('categories'),
+      JSON.stringify(categoriesData)
+    );
+    localStorage.setItem(
+      cacheKey('logs'),
+      JSON.stringify(logsData)
+    );
   } catch (error) {
-    console.error('[local-cache] Unable to persist app state', error);
+    console.error('[local-cache] Unable to persist app state', {
+      uid: activeCacheUid,
+      message:
+        error instanceof Error
+          ? error.message
+          : String(error)
+    });
   }
 };
 
@@ -460,13 +539,40 @@ export const syncUserWithFirestore = (uid: string | null) => {
 
   dirtyDomains.clear();
   currentSyncUid = uid;
+  activeCacheUid = uid;
   const generation = ++syncGeneration;
 
   if (!uid) {
+    const anonymousState =
+      readCachedState(null) ?? createDefaultUserState();
+
+    isRemoteUpdating = true;
+    try {
+      dbData = anonymousState.timetable;
+      dishesData = anonymousState.dishes;
+      categoriesData = anonymousState.categories;
+      logsData = anonymousState.logs;
+      notifyAllListeners();
+    } finally {
+      isRemoteUpdating = false;
+    }
     return;
   }
 
-  const fallback = currentUserState();
+  const fallback =
+    readCachedState(uid) ?? createDefaultUserState();
+
+  // Never expose the previous account's state while this user is loading.
+  isRemoteUpdating = true;
+  try {
+    dbData = fallback.timetable;
+    dishesData = fallback.dishes;
+    categoriesData = fallback.categories;
+    logsData = fallback.logs;
+    notifyAllListeners();
+  } finally {
+    isRemoteUpdating = false;
+  }
 
   void (async () => {
     try {
