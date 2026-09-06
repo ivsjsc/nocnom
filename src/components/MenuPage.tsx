@@ -141,28 +141,40 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
 
   return (
     <div className="space-y-5 pb-28">
-      <section className="rounded-[30px] bg-gradient-to-br from-[#3f63f4] to-[#2f4ed8] text-white p-6 shadow-lg shadow-blue-900/10 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="text-xs font-black uppercase tracking-wide text-blue-100">Quản lý kho món</div>
-          <div className="text-[11px] font-extrabold text-blue-200">{dishes.length} món</div>
+      <section className="surface-brand-soft rounded-[30px] p-5 sm:p-6 space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-xs font-black uppercase tracking-[0.14em] text-blue-700 dark:text-blue-300">
+              Quản lý kho món
+            </div>
+            <div className="mt-1 text-[11px] font-semibold text-readable-muted">
+              Tìm món, kiểm tra calo và quản lý các quán đang bán.
+            </div>
+          </div>
+          <div className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-black text-blue-800 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200">
+            {dishes.length} món
+          </div>
         </div>
 
         {/* Search input in Kho Mon */}
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-300" aria-hidden="true" />
+          <Search
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600 dark:text-slate-300"
+            aria-hidden="true"
+          />
           <input
             type="search"
             value={searchQuery}
             onChange={event => setSearchQuery(event.target.value)}
             placeholder="Tìm tên món, danh mục hoặc quán..."
-            className="h-11 w-full rounded-2xl border border-white/20 bg-white/10 pl-10 pr-10 text-xs font-semibold text-white placeholder:text-blue-200/70 focus:border-white focus:bg-white/20 focus:outline-none transition-all"
+            className="h-12 w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-10 text-sm font-bold text-slate-950 shadow-sm placeholder:text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-blue-500/15"
             aria-label="Tìm kiếm trong Kho món"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-xl text-blue-200 hover:bg-white/20 transition-colors"
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition-colors"
               aria-label="Xóa nội dung tìm kiếm"
             >
               <X className="w-4 h-4" />
@@ -171,13 +183,17 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-white/20 bg-white/10 p-3.5">
-            <div className="text-[10px] font-black uppercase text-blue-100">Tổng số món</div>
-            <div className="mt-0.5 text-xl font-black">{dishes.length}</div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <div className="text-[10px] font-black uppercase tracking-wide text-slate-700 dark:text-slate-300">
+              Tổng số món
+            </div>
+            <div className="mt-1 text-xl font-black text-slate-950 dark:text-white">{dishes.length}</div>
           </div>
-          <div className="rounded-2xl border border-white/20 bg-white/10 p-3.5">
-            <div className="text-[10px] font-black uppercase text-blue-100">Lượt phục vụ</div>
-            <div className="mt-0.5 text-xl font-black text-amber-200">{logs.length}</div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <div className="text-[10px] font-black uppercase tracking-wide text-slate-700 dark:text-slate-300">
+              Lượt phục vụ
+            </div>
+            <div className="mt-1 text-xl font-black text-amber-700 dark:text-amber-300">{logs.length}</div>
           </div>
         </div>
 
@@ -185,7 +201,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
           <button
             type="button"
             onClick={handleAddDish}
-            className="rounded-2xl border border-white/20 bg-white/10 h-11 flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-wide hover:bg-white/15 transition-colors"
+            className="h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-wide shadow-sm shadow-blue-600/20 hover:bg-blue-700 transition-colors"
           >
             <Plus className="w-4 h-4" />
             Món mới
@@ -193,7 +209,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
           <button
             type="button"
             onClick={handleCopy}
-            className="rounded-2xl border border-white/20 bg-white/10 h-11 flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-wide hover:bg-white/15 transition-colors"
+            className="h-11 rounded-2xl border border-slate-300 bg-white text-slate-800 flex items-center justify-center gap-2 text-[11px] font-black uppercase tracking-wide hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <Clipboard className="w-4 h-4" />
             Sao chép
@@ -263,7 +279,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
               <div className="min-w-0 flex-1">
                 <div className="text-[11px] font-black uppercase text-blue-600 dark:text-blue-400">{categoryName(dish.categoryId)}</div>
                 <h3 className="mt-1 font-black text-sm text-slate-900 dark:text-slate-100 leading-snug">{dish.name}</h3>
-                <div className="mt-1 text-[10px] font-black uppercase text-slate-500 dark:text-slate-400">
+                <div className="mt-1 text-[11px] font-extrabold text-slate-700 dark:text-slate-300">
                   {dish.vendors.length} quán bán · ≈ {estimateDishCalories(dish)} kcal
                 </div>
               </div>
