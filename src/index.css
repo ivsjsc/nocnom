@@ -153,9 +153,16 @@ html:not(.dark) .text-slate-500 {
   color: var(--light-text-secondary);
 }
 
+html:not(.dark) .text-blue-300,
 html:not(.dark) .text-blue-400,
 html:not(.dark) .text-blue-500 {
   color: var(--light-accent);
+}
+
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder {
+  color: var(--light-text-tertiary);
+  opacity: 1;
 }
 
 html:not(.dark) .text-orange-500,
