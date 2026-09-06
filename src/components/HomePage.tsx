@@ -91,22 +91,29 @@ export default function HomePage() {
   return (
     <div className="space-y-6 pb-28">
       <section className="grid grid-cols-2 gap-3">
-        <div className="bg-white rounded-[22px] border border-slate-200 shadow-sm p-4 flex flex-col justify-between">
-          <div className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-slate-600 dark:text-slate-400">Lời chúc</div>
-          <div className="mt-1 text-base font-black text-blue-600 leading-tight">
-            {(() => {
-              const hour = time.getHours();
-              if (hour >= 4 && hour < 11) return 'Chào buổi sáng';
-              if (hour >= 11 && hour < 18) return 'Chào buổi trưa';
-              return 'Chào buổi tối';
-            })()}
+        <div className="bg-gradient-to-br from-white to-slate-50/80 dark:from-slate-800 dark:to-slate-900/90 rounded-[24px] border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:shadow-md transition-all duration-300 p-4.5 flex flex-col justify-center relative overflow-hidden group">
+          <div className="absolute -right-2 -bottom-2 w-16 h-16 bg-blue-500/5 rounded-full blur-xl group-hover:bg-blue-500/10 transition-all" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-inner">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div className="text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight leading-tight">
+              {(() => {
+                const hour = time.getHours();
+                if (hour >= 4 && hour < 11) return 'Chào buổi sáng';
+                if (hour >= 11 && hour < 18) return 'Chào buổi trưa';
+                return 'Chào buổi tối';
+              })()}
+            </div>
           </div>
         </div>
-        <div className="bg-white rounded-[22px] border border-slate-200 shadow-sm p-4 flex flex-col justify-between">
-          <div className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-slate-600 dark:text-slate-400">Bây giờ là</div>
-          <div className="mt-1 text-xl font-black text-orange-600 flex items-center gap-1.5">
-            <Clock className="w-4 h-4 shrink-0 text-orange-500" />
-            <span>
+        <div className="bg-gradient-to-br from-white to-amber-50/40 dark:from-slate-800 dark:to-slate-900/90 rounded-[24px] border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:shadow-md transition-all duration-300 p-4.5 flex flex-col justify-center relative overflow-hidden group">
+          <div className="absolute -right-2 -bottom-2 w-16 h-16 bg-amber-500/5 rounded-full blur-xl group-hover:bg-amber-500/10 transition-all" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8.5 h-8.5 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-500/20">
+              <Clock className="w-4.5 h-4.5 animate-pulse" />
+            </div>
+            <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
               {time.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
