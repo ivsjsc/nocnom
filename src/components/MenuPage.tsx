@@ -121,7 +121,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
           </div>
           <div className="rounded-2xl border border-white/20 bg-white/10 p-4">
             <div className="text-[11px] font-black uppercase text-blue-50">Lượt phục vụ</div>
-            <div className="mt-1 text-2xl font-black text-orange-400">{logs.length}</div>
+            <div className="mt-1 text-2xl font-black text-amber-200">{logs.length}</div>
           </div>
         </div>
 
@@ -157,7 +157,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
           onClick={() => setActiveCategory('all')}
           className={
             'shrink-0 min-w-14 px-4 min-h-11 rounded-xl text-[11px] font-black uppercase ' +
-            (activeCategory === 'all' ? 'bg-blue-500 text-white' : 'bg-white text-slate-900 border border-slate-100')
+            (activeCategory === 'all' ? 'bg-blue-700 text-white' : 'bg-white text-slate-900 border border-slate-200')
           }
         >
           Tất cả
@@ -169,7 +169,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
             onClick={() => setActiveCategory(category.id)}
             className={
               'shrink-0 max-w-28 px-4 min-h-11 rounded-xl text-[11px] leading-tight font-black uppercase ' +
-              (activeCategory === category.id ? 'bg-blue-500 text-white' : 'bg-white text-slate-900 border border-slate-100')
+              (activeCategory === category.id ? 'bg-blue-700 text-white' : 'bg-white text-slate-900 border border-slate-200')
             }
           >
             {category.name}
@@ -197,7 +197,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
               <button
                 type="button"
                 onClick={() => handleEditDish(dish)}
-                className="min-w-11 min-h-11 rounded-xl bg-slate-900 text-blue-400 flex items-center justify-center"
+                className="min-w-11 min-h-11 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-300 flex items-center justify-center"
                 aria-label={'Sửa ' + dish.name}
               >
                 <Pencil className="w-4 h-4" />
@@ -211,7 +211,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
                   }
                   mockDb.toggleFavoriteDish(dish.id);
                 }}
-                className="min-w-11 min-h-11 rounded-xl bg-slate-900 text-slate-500 flex items-center justify-center"
+                className="min-w-11 min-h-11 rounded-xl border border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 flex items-center justify-center"
                 aria-label={'Yêu thích ' + dish.name}
               >
                 <Star className={'w-4 h-4 ' + (dish.isFavorite ? 'fill-yellow-400 text-yellow-400' : '')} />
@@ -219,7 +219,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
               <button
                 type="button"
                 onClick={() => setSelectedDish(dish)}
-                className="col-span-2 min-h-11 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center"
+                className="col-span-2 min-h-11 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300 flex items-center justify-center"
                 aria-label={'Xem ' + dish.name}
               >
                 <Eye className="w-4 h-4" />
