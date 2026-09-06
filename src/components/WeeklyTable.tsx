@@ -122,7 +122,7 @@ export default function WeeklyTable() {
             <h2 className="text-xl font-black tracking-[0.14em] text-slate-950 dark:text-slate-100">
               LỊCH ĂN
             </h2>
-            <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-500">
+            <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600 dark:text-slate-400">
               Xem nhanh theo ngày. Chạm món để xem; chỉ mở bộ chọn khi cần đổi món.
             </p>
           </div>
@@ -149,7 +149,7 @@ export default function WeeklyTable() {
               className={
                 'overflow-hidden rounded-[22px] border bg-white dark:bg-slate-900 shadow-sm ' +
                 (isToday
-                  ? 'border-blue-200 dark:border-blue-800'
+                  ? 'border-blue-300 dark:border-blue-800'
                   : 'border-slate-200 dark:border-slate-800')
               }
             >
@@ -182,7 +182,7 @@ export default function WeeklyTable() {
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                  <div className="mt-1 flex items-center gap-2 text-[10px] font-bold text-slate-600 dark:text-slate-400">
                     <span>{activeMeals.length} bữa</span>
                     <span>·</span>
                     <span>≈ {totalCalories.toLocaleString('vi-VN')} kcal</span>
@@ -192,7 +192,7 @@ export default function WeeklyTable() {
                 <motion.span
                   animate={{ rotate: isExpanded ? 180 : 0 }}
                   transition={{ duration: 0.18, ease: 'easeOut' }}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-600 dark:text-slate-400"
                 >
                   <ChevronDown className="h-5 w-5" />
                 </motion.span>
@@ -228,7 +228,7 @@ export default function WeeklyTable() {
                               </div>
 
                               <div className="min-w-0 flex-1">
-                                <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">
+                                <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-600 dark:text-slate-400">
                                   {mealLabel}
                                 </div>
                                 <div className="mt-0.5 truncate text-xs font-black text-slate-600 dark:text-slate-300">
@@ -274,13 +274,13 @@ export default function WeeklyTable() {
                               />
 
                               <div className="min-w-0 flex-1">
-                                <div className="text-[9px] font-black uppercase tracking-[0.14em] text-blue-500">
+                                <div className="text-[9px] font-black uppercase tracking-[0.14em] text-blue-700 dark:text-blue-300">
                                   {mealLabel}
                                 </div>
                                 <div className="mt-0.5 truncate text-sm font-black text-slate-950 dark:text-slate-100">
                                   {dish.name}
                                 </div>
-                                <div className="mt-0.5 truncate text-[10px] font-bold text-slate-500">
+                                <div className="mt-0.5 truncate text-[10px] font-bold text-slate-600 dark:text-slate-400">
                                   {categoryName(dish)} · ≈ {estimateDishCalories(dish)} kcal
                                 </div>
                               </div>
@@ -289,7 +289,7 @@ export default function WeeklyTable() {
                             <button
                               type="button"
                               onClick={() => setSwapTarget({ day, comboKey })}
-                              className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl border border-blue-200 dark:border-blue-900 bg-white dark:bg-slate-900 px-2.5 text-[10px] font-black text-blue-600 dark:text-blue-300 active:scale-95"
+                              className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl border border-blue-300 dark:border-blue-900 bg-blue-50 dark:bg-slate-900 px-2.5 text-[10px] font-black text-blue-700 dark:text-blue-300 active:scale-95"
                               aria-label={'Thay món cho ' + mealLabel}
                             >
                               <RefreshCw className="h-3.5 w-3.5" />
@@ -301,7 +301,7 @@ export default function WeeklyTable() {
                               onClick={() =>
                                 setActionTarget({ dish, day, comboKey })
                               }
-                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-white dark:hover:bg-slate-900 active:scale-95"
+                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-900 active:scale-95"
                               aria-label={'Tùy chọn ' + mealLabel}
                             >
                               <MoreHorizontal className="h-5 w-5" />
@@ -379,7 +379,7 @@ export default function WeeklyTable() {
                   className="h-11 w-11 shrink-0 rounded-2xl"
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[9px] font-black uppercase tracking-[0.14em] text-blue-500">
+                  <div className="text-[9px] font-black uppercase tracking-[0.14em] text-blue-700 dark:text-blue-300">
                     {mealLabels[comboKeys.indexOf(actionTarget.comboKey)]}
                   </div>
                   <div className="truncate text-sm font-black text-slate-950 dark:text-slate-100">
