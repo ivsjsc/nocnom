@@ -29,7 +29,7 @@ export default function DishDetailModal({
   };
 
   const handleSelectVendor = (vendor: Vendor) => {
-    mockDb.addLog(dish.name, vendor.name, vendor.price, estimateDishCalories(dish));
+    mockDb.addLog(dish.name, vendor.name, vendor.price, estimateDishCalories(dish), comboKey);
     mockDb.selectCombo(day, comboKey);
     window.alert('Đã chọn ' + dish.name + ' tại ' + vendor.name + '.');
     onClose();
