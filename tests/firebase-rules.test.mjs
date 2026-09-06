@@ -109,6 +109,108 @@ try {
     )
   );
 
+  // Firestore schema v2 split-state owner isolation and field validation.
+  const aliceTimetableV2 = doc(
+    alice.firestore(),
+    'users',
+    'alice',
+    'state',
+    'timetable'
+  );
+  const aliceDishesV2 = doc(
+    alice.firestore(),
+    'users',
+    'alice',
+    'state',
+    'dishes'
+  );
+  const aliceMetaV2 = doc(
+    alice.firestore(),
+    'users',
+    'alice',
+    'state',
+    'meta'
+  );
+
+  await assertSucceeds(
+    setDoc(aliceTimetableV2, {
+      value: {},
+      schemaVersion: 2
+    })
+  );
+  await assertSucceeds(
+    setDoc(aliceDishesV2, {
+      items: [],
+      schemaVersion: 2
+    })
+  );
+  await assertSucceeds(
+    setDoc(aliceMetaV2, {
+      schemaVersion: 2,
+      migrationSource: 'appState-v1'
+    })
+  );
+
+  await assertSucceeds(getDoc(aliceTimetableV2));
+  await assertSucceeds(getDoc(aliceDishesV2));
+  await assertSucceeds(getDoc(aliceMetaV2));
+
+  await assertFails(
+    getDoc(
+      doc(
+        bob.firestore(),
+        'users',
+        'alice',
+        'state',
+        'dishes'
+      )
+    )
+  );
+  await assertFails(
+    setDoc(
+      doc(
+        bob.firestore(),
+        'users',
+        'alice',
+        'state',
+        'logs'
+      ),
+      {
+        items: [],
+        schemaVersion: 2
+      }
+    )
+  );
+
+  await assertFails(
+    setDoc(aliceDishesV2, {
+      items: [],
+      schemaVersion: 1
+    })
+  );
+  await assertFails(
+    setDoc(aliceDishesV2, {
+      items: [],
+      schemaVersion: 2,
+      unexpectedField: true
+    })
+  );
+  await assertFails(
+    setDoc(
+      doc(
+        alice.firestore(),
+        'users',
+        'alice',
+        'state',
+        'unknown'
+      ),
+      {
+        items: [],
+        schemaVersion: 2
+      }
+    )
+  );
+
   // Storage owner isolation and MIME/size validation.
   const validPng = new Uint8Array([
     0x89, 0x50, 0x4e, 0x47,
