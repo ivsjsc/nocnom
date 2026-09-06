@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Ban, Flame, List, UtensilsCrossed } from 'lucide-react';
-import { estimateDishCalories, mockDb, type Dish, type LogEntry, type Timetable } from '../lib/db';
+import {
+  estimateDishCalories,
+  mockDb,
+  sumMealAddonCalories,
+  type Dish,
+  type LogEntry,
+  type Timetable
+} from '../lib/db';
 import DishDetailModal from './DishDetailModal';
 import DishImage from './DishImage';
 
@@ -62,12 +69,14 @@ export default function HomePage() {
   }, 0);
 
   const consumedCalories = todayLogs.reduce((total, log) => {
+    const addonCalories = sumMealAddonCalories(log);
+
     if (typeof log.calories === 'number' && Number.isFinite(log.calories)) {
-      return total + Math.max(0, Math.round(log.calories));
+      return total + Math.max(0, Math.round(log.calories)) + addonCalories;
     }
 
     const matchedDish = dishes.find(dish => dish.name === log.dishName);
-    return total + (matchedDish ? estimateDishCalories(matchedDish) : 0);
+    return total + (matchedDish ? estimateDishCalories(matchedDish) : 0) + addonCalories;
   }, 0);
 
   return (
