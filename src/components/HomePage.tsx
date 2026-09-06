@@ -210,15 +210,18 @@ export default function HomePage() {
       </section>
 
       <section className="space-y-3">
-        <div className="flex items-center gap-3 px-1">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+        <div
+          className="surface-info-strip flex items-start gap-3 rounded-[22px] p-4"
+          data-ui="weekly-schedule-intro"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm shadow-blue-600/20">
             <CalendarDays className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-base font-black text-slate-950 dark:text-slate-100">
+            <h2 className="text-base font-black text-slate-950 dark:text-white">
               Lịch ăn tuần này
             </h2>
-            <p className="mt-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+            <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-700 dark:text-slate-300">
               Các ngày còn lại trong tuần. Chạm ngày để xem; chỉ mở bộ chọn khi cần đổi món.
             </p>
           </div>
