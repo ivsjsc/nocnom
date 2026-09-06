@@ -30,7 +30,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
   const categoryName = (categoryId: string) =>
     categories.find(category => category.id === categoryId)?.name || 'Món ăn';
 
-  const handleAddDish = () => {
+  const handleAddDish = async () => {
     if (!canManage) {
       window.alert('Vui lòng đăng nhập để quản lý kho món.');
       return;
@@ -48,7 +48,17 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
       return;
     }
 
-    mockDb.addDish(name.trim(), category.id);
+    const result = await mockDb.addDish(name.trim(), category.id);
+
+    if (result.nutritionMatched && typeof result.dish.calories === 'number') {
+      window.alert(
+        'Đã nhận diện món trong dữ liệu calo: ' +
+          result.dish.name +
+          ' · ≈ ' +
+          result.dish.calories +
+          ' kcal/phần.'
+      );
+    }
   };
 
   const handleEditDish = (dish: Dish) => {
