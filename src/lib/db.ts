@@ -296,10 +296,20 @@ const defaultTimetable: Timetable = {
 const deepClone = <T,>(value: T): T =>
   JSON.parse(JSON.stringify(value)) as T;
 
+const normalizeCategoryName = (category: Category) => {
+  // c3 is a built-in category. Keep its label compact across cache,
+  // migrated Firestore data and realtime updates.
+  if (category.id === 'c3') return 'Món nước';
+
+  return category.name
+    .replace(/\s*\(\s*Mì\s*\/\s*Phở\s*\/\s*Bún\s*\)\s*/giu, '')
+    .trim();
+};
+
 const normalizeCachedCategories = (categories: Category[]) =>
   categories.map(category => ({
     ...category,
-    name: category.name.replace(/\s*\(Mì\/Phở\/Bún\)/gi, '')
+    name: normalizeCategoryName(category)
   }));
 
 const createDefaultUserState = () => ({
@@ -588,16 +598,27 @@ export const syncUserWithFirestore = (uid: string | null) => {
         return;
       }
 
+      const normalizedLoadedCategories = normalizeCachedCategories(
+        loaded.state.categories
+      );
+      const shouldPersistNormalizedCategories =
+        JSON.stringify(normalizedLoadedCategories) !==
+        JSON.stringify(loaded.state.categories);
+
       isRemoteUpdating = true;
       try {
         dbData = loaded.state.timetable;
         dishesData = loaded.state.dishes;
-        categoriesData = loaded.state.categories;
+        categoriesData = normalizedLoadedCategories;
         logsData = loaded.state.logs;
         writeLocalCache();
         notifyAllListeners();
       } finally {
         isRemoteUpdating = false;
+      }
+
+      if (shouldPersistNormalizedCategories) {
+        scheduleCloudSync(['categories']);
       }
 
       firestoreUnsubscribe = subscribeUserStateDomains({
@@ -610,6 +631,8 @@ export const syncUserWithFirestore = (uid: string | null) => {
             return;
           }
 
+          let shouldPersistNormalizedCategories = false;
+
           isRemoteUpdating = true;
           try {
             if (domain === 'timetable') {
@@ -617,7 +640,14 @@ export const syncUserWithFirestore = (uid: string | null) => {
             } else if (domain === 'dishes') {
               dishesData = value as Dish[];
             } else if (domain === 'categories') {
-              categoriesData = value as Category[];
+              const incomingCategories = value as Category[];
+              const normalizedCategories =
+                normalizeCachedCategories(incomingCategories);
+
+              categoriesData = normalizedCategories;
+              shouldPersistNormalizedCategories =
+                JSON.stringify(normalizedCategories) !==
+                JSON.stringify(incomingCategories);
             } else if (domain === 'logs') {
               logsData = value as LogEntry[];
             }
@@ -626,6 +656,10 @@ export const syncUserWithFirestore = (uid: string | null) => {
             notifyAllListeners();
           } finally {
             isRemoteUpdating = false;
+          }
+
+          if (shouldPersistNormalizedCategories) {
+            scheduleCloudSync(['categories']);
           }
         },
         onError: (domain, error) => {

@@ -303,12 +303,12 @@ export default function ProfileModal({
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm font-black text-slate-950">{form.fullName || user.displayName || 'Người dùng nOcnOm'}</div>
-              <div className="truncate text-xs font-semibold text-slate-500">{user.email}</div>
+              <div className="truncate text-xs font-bold text-slate-700">{user.email}</div>
             </div>
             <ShieldCheck className="w-5 h-5 shrink-0 text-blue-600" aria-hidden="true" />
           </div>
 
-          <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+          <p className="mt-3 text-[11px] font-semibold leading-relaxed text-slate-700">
             Tài khoản có thể đăng nhập bằng Email/Password hoặc Google. Thông tin bên dưới là hồ sơ riêng của nOcnOm.
           </p>
 
@@ -330,7 +330,7 @@ export default function ProfileModal({
                   className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
                   inputMode="url"
                 />
-                <div className="mt-1.5 text-[10px] font-semibold text-slate-500">
+                <div className="mt-1.5 text-[10px] font-bold text-slate-700">
                   Dán URL ảnh trực tiếp. Ảnh này là hồ sơ riêng của nOcnOm và sẽ được dùng ở avatar trên header.
                 </div>
                 {form.photoUrl.trim() && !normalizedPhotoUrl ? (
@@ -403,7 +403,7 @@ export default function ProfileModal({
                     <div className="text-xs font-black text-slate-900">
                       Chỉ số Thể trạng & Sức khỏe
                     </div>
-                    <div className="text-[10px] font-medium text-slate-500">
+                    <div className="text-[10px] font-semibold text-slate-700">
                       Ước tính BMI, BMR/TDEE và nhu cầu nước dựa trên dữ liệu bạn cung cấp
                     </div>
                   </div>

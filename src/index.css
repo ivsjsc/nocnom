@@ -17,6 +17,17 @@
   --light-accent-strong: #1e40af;
   --light-accent-soft: #eff6ff;
   --light-warning: #c2410c;
+
+  /* Health surfaces: explicit contrast contracts for light/dark cards. */
+  --health-card-light: #ffffff;
+  --health-card-dark: #0b1220;
+  --health-text-light: #0f172a;
+  --health-muted-light: #334155;
+  --health-text-dark: #f8fafc;
+  --health-muted-dark: #e2e8f0;
+  --health-subtle-dark: #cbd5e1;
+  --health-border-light: #cbd5e1;
+  --health-border-dark: #334155;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -230,8 +241,62 @@ html:not(.dark) .app-bottom-nav {
 
 .dark .surface-warning-readable {
   background: #431407;
-  border-color: #9a3412;
+  border-color: #c2410c;
   box-shadow: none;
+}
+
+/* Health card contrast contract. */
+.health-card {
+  background: var(--health-card-light);
+  border-color: var(--health-border-light);
+  color: var(--health-text-light);
+}
+
+.health-kicker {
+  color: var(--health-muted-light);
+}
+
+.health-copy {
+  color: var(--health-muted-light);
+}
+
+.health-chip-muted {
+  background: #f1f5f9;
+  border: 1px solid #94a3b8;
+  color: #1e293b;
+}
+
+.dark .health-card {
+  background: var(--health-card-dark);
+  border-color: var(--health-border-dark);
+  color: var(--health-text-dark);
+}
+
+.dark .health-kicker {
+  color: var(--health-muted-dark);
+}
+
+.dark .health-copy {
+  color: var(--health-subtle-dark);
+}
+
+.dark .health-chip-muted {
+  background: #1e293b;
+  border-color: #64748b;
+  color: var(--health-text-dark);
+}
+
+.warning-title {
+  color: #7c2d12;
+}
+
+.warning-copy {
+  color: #7c2d12;
+}
+
+.dark .warning-title,
+.dark .warning-copy {
+  color: #ffedd5;
 }
 
 .dark {

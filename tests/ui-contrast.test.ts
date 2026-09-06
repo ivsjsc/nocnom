@@ -48,12 +48,37 @@ const surface = token('light-surface');
 const secondary = token('light-text-secondary');
 const tertiary = token('light-text-tertiary');
 const accent = token('light-accent');
+const healthCardLight = token('health-card-light');
+const healthCardDark = token('health-card-dark');
+const healthTextLight = token('health-text-light');
+const healthMutedLight = token('health-muted-light');
+const healthTextDark = token('health-text-dark');
+const healthMutedDark = token('health-muted-dark');
 
-assert(Boolean(surface && secondary && tertiary && accent), 'Required contrast tokens exist');
+assert(
+  Boolean(
+    surface &&
+    secondary &&
+    tertiary &&
+    accent &&
+    healthCardLight &&
+    healthCardDark &&
+    healthTextLight &&
+    healthMutedLight &&
+    healthTextDark &&
+    healthMutedDark
+  ),
+  'Required contrast tokens exist'
+);
 assert(contrast(secondary, surface) >= 7, 'Secondary text reaches enhanced contrast on white');
 assert(contrast(tertiary, surface) >= 4.5, 'Tertiary text reaches WCAG AA contrast on white');
 assert(contrast(accent, surface) >= 4.5, 'Blue accent text reaches WCAG AA contrast on white');
 assert(!css.includes('html:not(.dark) .text-blue-300,'), 'Blue-300 is not globally remapped on branded surfaces');
+assert(contrast(healthTextLight, healthCardLight) >= 7, 'Health primary text reaches enhanced contrast in light mode');
+assert(contrast(healthMutedLight, healthCardLight) >= 7, 'Health supporting text reaches enhanced contrast in light mode');
+assert(contrast(healthTextDark, healthCardDark) >= 7, 'Health primary text reaches enhanced contrast in dark mode');
+assert(contrast(healthMutedDark, healthCardDark) >= 7, 'Health supporting text reaches enhanced contrast in dark mode');
+assert(css.includes('.health-card') && css.includes('.health-copy'), 'Health semantic contrast classes are defined');
 
 if (failures > 0) process.exit(1);
 console.log('UI contrast tests: PASS');
