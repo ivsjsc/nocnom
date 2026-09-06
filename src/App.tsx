@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { CalendarDays, Clock3, Home, Menu as MenuIcon, Moon, RefreshCw, RotateCw, Sun, Sparkles } from 'lucide-react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from './lib/firebase';
-import { isAuthPopupDismissed, signInWithGoogle } from './lib/auth';
 import { useVersionCheck } from './hooks/useVersionCheck';
 import HomePage from './components/HomePage';
 import WeeklyTable from './components/WeeklyTable';
 import LogsPage from './components/LogsPage';
 import MenuPage from './components/MenuPage';
 import Login from './components/Login';
+import AuthModal from './components/AuthModal';
 
 type Tab = 'home' | 'weekly' | 'logs' | 'menu';
 
@@ -16,7 +16,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
-  const [menuAuthLoading, setMenuAuthLoading] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authDestination, setAuthDestination] = useState<Tab | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { hasNewVersion, reloadApp } = useVersionCheck(45000);
   const [darkMode, setDarkMode] = useState(() => {
@@ -47,27 +48,34 @@ export default function App() {
     });
   }, []);
 
-  const handleTabSelect = async (tab: Tab) => {
-    if (tab !== 'menu' || currentUser) {
-      setActiveTab(tab);
+  const openAuth = (destination: Tab | null = null) => {
+    setAuthDestination(destination);
+    setAuthModalOpen(true);
+  };
+
+  const closeAuth = () => {
+    setAuthModalOpen(false);
+    setAuthDestination(null);
+  };
+
+  const handleAuthenticated = (user: User) => {
+    setCurrentUser(user);
+
+    if (authDestination) {
+      setActiveTab(authDestination);
+    }
+
+    setAuthDestination(null);
+    setAuthModalOpen(false);
+  };
+
+  const handleTabSelect = (tab: Tab) => {
+    if (tab === 'menu' && !currentUser) {
+      openAuth('menu');
       return;
     }
 
-    if (menuAuthLoading) return;
-
-    setMenuAuthLoading(true);
-    try {
-      const credential = await signInWithGoogle();
-      setCurrentUser(credential.user);
-      setActiveTab('menu');
-    } catch (error) {
-      if (!isAuthPopupDismissed(error)) {
-        const message = error instanceof Error ? error.message : 'Không thể đăng nhập.';
-        window.alert('Không thể mở Kho món. Vui lòng đăng nhập lại.\n\n' + message);
-      }
-    } finally {
-      setMenuAuthLoading(false);
-    }
+    setActiveTab(tab);
   };
 
   if (!authChecked) {
@@ -87,7 +95,6 @@ export default function App() {
 
   return (
     <div className={'app-shell min-h-screen transition-colors ' + (darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-950')}>
-      {/* Banner khi có phiên bản mới */}
       {hasNewVersion && (
         <div className="sticky top-0 z-50 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2.5 shadow-lg flex items-center justify-between text-xs sm:text-sm font-medium animate-pulse">
           <div className="flex items-center gap-2">
@@ -149,7 +156,11 @@ export default function App() {
             >
               {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-            <Login user={currentUser} darkMode={darkMode} />
+            <Login
+              user={currentUser}
+              darkMode={darkMode}
+              onRequestAuth={() => openAuth()}
+            />
           </div>
         </div>
       </header>
@@ -174,14 +185,12 @@ export default function App() {
             <button
               type="button"
               key={item.id}
-              onClick={() => void handleTabSelect(item.id)}
-              disabled={item.id === 'menu' && menuAuthLoading}
+              onClick={() => handleTabSelect(item.id)}
               aria-label={requiresLogin ? item.label + ' - yêu cầu đăng nhập' : item.label}
               aria-current={active ? 'page' : undefined}
-              aria-busy={item.id === 'menu' && menuAuthLoading ? 'true' : undefined}
               title={requiresLogin ? 'Đăng nhập để quản lý kho món' : undefined}
               className={
-                'app-nav-item disabled:opacity-60 ' +
+                'app-nav-item ' +
                 (active
                   ? (darkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-50 text-blue-600')
                   : (darkMode ? 'text-slate-400' : 'text-slate-500'))
@@ -193,7 +202,14 @@ export default function App() {
           );
         })}
       </nav>
+
+      {authModalOpen && (
+        <AuthModal
+          darkMode={darkMode}
+          onClose={closeAuth}
+          onAuthenticated={handleAuthenticated}
+        />
+      )}
     </div>
   );
 }
-
