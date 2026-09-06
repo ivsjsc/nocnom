@@ -1,0 +1,301 @@
+id,name,aliases,category,serving_g,kcal_per_100g,kcal_per_serving,source,source_url,confidence,locale
+vn-dish-001,Phở bò tái,pho bo tai,Phở & mì nước,500,82.0,410,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-002,Phở bò chín,pho bo chin,Phở & mì nước,500,88.0,440,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-003,Phở bò tái nạm,pho bo tai nam,Phở & mì nước,550,94.55,520,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-004,Phở bò tái gầu,pho bo tai gau,Phở & mì nước,550,100.0,550,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-005,Phở bò viên,pho bo vien,Phở & mì nước,500,90.0,450,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-006,Phở gà,pho ga,Phở & mì nước,500,80.0,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-007,Phở gà đùi,pho ga dui,Phở & mì nước,550,94.55,520,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-008,Phở xào bò,pho xao bo,Phở & mì nước,450,164.44,740,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-009,Phở áp chảo,pho ap chao,Phở & mì nước,450,180.0,810,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-010,Hủ tiếu Nam Vang,hu tieu nam vang,Phở & mì nước,500,88.0,440,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-011,Hủ tiếu bò kho,hu tieu bo kho,Phở & mì nước,500,104.0,520,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-012,Hủ tiếu xương,hu tieu xuong,Phở & mì nước,500,84.0,420,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-013,Hủ tiếu gõ,hu tieu go,Phở & mì nước,450,88.89,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-014,Hủ tiếu khô,hu tieu kho,Phở & mì nước,450,151.11,680,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-015,Mì hoành thánh,mi hoanh thanh,Phở & mì nước,500,100.0,500,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-016,Mì bò viên,mi bo vien,Phở & mì nước,500,94.0,470,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-017,Mì gà,mi ga,Phở & mì nước,500,88.0,440,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-018,Mì Quảng gà,mi quang ga,Phở & mì nước,450,135.56,610,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-019,Mì Quảng tôm thịt,mi quang tom thit,Phở & mì nước,450,151.11,680,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-020,Bún bò Huế,bun bo hue,Phở & mì nước,550,92.73,510,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-021,Bún bò tái + 1 cục huyết,bun bo tai huyet;bun bo tai 1 cuc huyet,Phở & mì nước,550,94.55,520,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-022,Bún bò giò heo,bun bo gio heo,Phở & mì nước,600,110.0,660,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-023,Bún bò chả cua,bun bo cha cua,Phở & mì nước,550,105.45,580,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-024,Bún riêu cua,bun rieu cua,Phở & mì nước,550,78.18,430,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-025,Bún riêu giò,bun rieu gio,Phở & mì nước,600,91.67,550,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-026,Bún riêu chả,bun rieu cha,Phở & mì nước,600,95.0,570,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-027,Bún mắm,bun mam,Phở & mì nước,550,105.45,580,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-028,Bún cá,bun ca,Phở & mì nước,550,90.91,500,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-029,Bún cá rô,bun ca ro,Phở & mì nước,550,87.27,480,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-030,Bún mọc,bun moc,Phở & mì nước,550,87.27,480,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-031,Bún thịt nướng,bun thit nuong,Phở & mì nước,450,155.56,700,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-032,Bún chả Hà Nội,bun cha;bun cha ha noi,Phở & mì nước,500,160.0,800,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-033,Bún nem nướng,bun nem nuong,Phở & mì nước,450,168.89,760,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-034,Bún thịt xào,bun thit xao,Phở & mì nước,450,155.56,700,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-035,Bún xào chay,bun xao chay,Phở & mì nước,450,124.44,560,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-036,Bún đậu mắm tôm,bun dau mam tom,Phở & mì nước,500,210.0,1050,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-037,Bún đậu chả cốm,bun dau cha com,Phở & mì nước,550,220.0,1210,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-038,Bún đậu thịt luộc,bun dau thit luoc,Phở & mì nước,550,185.45,1020,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-039,Bún cá viên chiên,bun ca vien chien,Phở & mì nước,500,130.0,650,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-040,Cơm trắng 1 chén,com trang;com trang 1 chen,Cơm,150,133.33,200,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-041,Cơm trắng 2 chén,com trang 2 chen,Cơm,300,130.0,390,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-042,Cơm chiên trứng,com chien trung,Cơm,350,188.57,660,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-043,Cơm chiên dương châu,com chien duong chau,Cơm,400,205.0,820,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-044,Cơm chiên hải sản,com chien hai san,Cơm,400,195.0,780,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-045,Cơm chiên tôm,com chien tom,Cơm,400,190.0,760,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-046,Cơm chiên tôm phủ trứng,com chien tom phu trung,Cơm,450,184.44,830,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-047,Cơm chiên cá mặn,com chien ca man,Cơm,400,210.0,840,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-048,Cơm chiên bò,com chien bo,Cơm,400,205.0,820,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-049,Cơm chiên gà,com chien ga,Cơm,400,195.0,780,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-050,Cơm rang dưa bò,com rang dua bo,Cơm,400,185.0,740,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-051,Cơm sườn nướng,com suon nuong,Cơm,450,191.11,860,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-052,Cơm tấm sườn bì chả,com tam suon bi cha,Cơm,500,216.0,1080,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-053,Cơm tấm sườn,com tam suon,Cơm,450,204.44,920,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-054,Cơm tấm bì,com tam bi,Cơm,400,170.0,680,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-055,Cơm tấm chả,com tam cha,Cơm,400,180.0,720,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-056,Cơm gà chiên nước mắm,com ga chien nuoc mam,Cơm,450,215.56,970,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-057,Cơm gà xối mỡ,com ga xoi mo,Cơm,500,230.0,1150,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-058,Cơm gà luộc,com ga luoc,Cơm,450,155.56,700,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-059,Cơm gà Hải Nam,com ga hai nam,Cơm,450,175.56,790,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-060,Cơm bò lúc lắc,com bo luc lac,Cơm,450,195.56,880,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-061,Cơm bò xào hành tây,com bo xao;com bo xao hanh tay,Cơm,450,175.56,790,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-062,Cơm thịt kho trứng,com thit kho trung,Cơm,500,180.0,900,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-063,Cơm thịt nướng,com thit nuong,Cơm,450,184.44,830,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-064,Cơm cá kho,com ca kho,Cơm,450,164.44,740,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-065,Cơm cá chiên,com ca chien,Cơm,450,191.11,860,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-066,Cơm cá kho tộ,com ca kho to,Cơm,500,170.0,850,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-067,Cơm sườn ram,com suon ram,Cơm,450,204.44,920,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-068,Cơm heo quay,com heo quay,Cơm,450,208.89,940,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-069,Cơm vịt quay,com vit quay,Cơm,450,215.56,970,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-070,Cơm cà ri gà,com ca ri ga,Cơm,500,170.0,850,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-071,Cơm cà ri bò,com ca ri bo,Cơm,500,180.0,900,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-072,Cơm bò kho,com bo kho,Cơm,500,156.0,780,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-073,Cơm xá xíu,com xa xiu,Cơm,450,184.44,830,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-074,Cơm chay,com chay,Cơm,400,125.0,500,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-075,Cơm rau xào đậu hũ,com rau xao dau hu,Cơm,400,125.0,500,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-076,Bánh mì không,banh mi khong,Bánh mì & bánh mặn,90,266.67,240,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-077,Bánh mì thịt,banh mi thit,Bánh mì & bánh mặn,170,241.18,410,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-078,Bánh mì thịt nướng,banh mi thit nuong,Bánh mì & bánh mặn,180,244.44,440,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-079,Bánh mì xíu mại,banh mi xiu mai,Bánh mì & bánh mặn,180,244.44,440,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-080,Bánh mì chả lụa,banh mi cha lua,Bánh mì & bánh mặn,170,235.29,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-081,Bánh mì pate,banh mi pate,Bánh mì & bánh mặn,160,256.25,410,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-082,Bánh mì trứng,banh mi trung,Bánh mì & bánh mặn,160,237.5,380,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-083,Bánh mì ốp la,banh mi op la,Bánh mì & bánh mặn,200,220.0,440,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-084,Bánh mì cá,banh mi ca,Bánh mì & bánh mặn,170,223.53,380,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-085,Bánh mì gà xé,banh mi ga xe,Bánh mì & bánh mặn,170,217.65,370,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-086,Bánh mì heo quay,banh mi heo quay,Bánh mì & bánh mặn,180,250.0,450,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-087,Bánh mì chả cá,banh mi cha ca,Bánh mì & bánh mặn,180,222.22,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-088,Bánh mì xá xíu,banh mi xa xiu,Bánh mì & bánh mặn,180,250.0,450,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-089,Bánh mì bơ đường,banh mi bo duong,Bánh mì & bánh mặn,120,333.33,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-090,Bánh mì phô mai,banh mi pho mai,Bánh mì & bánh mặn,130,323.08,420,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-091,Bánh bao nhân thịt,banh bao thit;banh bao nhan thit,Bánh mì & bánh mặn,120,216.67,260,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-092,Bánh bao xá xíu,banh bao xa xiu,Bánh mì & bánh mặn,120,233.33,280,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-093,Bánh bao kim sa,banh bao kim sa,Bánh mì & bánh mặn,90,277.78,250,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-094,Bánh giò,banh gio,Bánh mì & bánh mặn,150,213.33,320,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-095,Bánh cuốn nhân thịt,banh cuon thit;banh cuon nhan thit,Bánh mì & bánh mặn,300,106.67,320,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-096,Bánh cuốn trứng,banh cuon trung,Bánh mì & bánh mặn,300,110.0,330,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-097,Bánh ướt thịt nướng,banh uot thit nuong,Bánh mì & bánh mặn,350,134.29,470,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-098,Bánh hỏi heo quay,banh hoi heo quay,Bánh mì & bánh mặn,450,180.0,810,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-099,Bánh hỏi thịt nướng,banh hoi thit nuong,Bánh mì & bánh mặn,450,168.89,760,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-100,Bánh xèo tôm thịt,banh xeo tom thit,Bánh mì & bánh mặn,300,210.0,630,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-101,Bánh khọt,banh khot,Bánh mì & bánh mặn,250,220.0,550,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-102,Bánh căn trứng,banh can trung,Bánh mì & bánh mặn,250,192.0,480,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-103,Bánh căn hải sản,banh can hai san,Bánh mì & bánh mặn,250,196.0,490,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-104,Bánh bèo,banh beo,Bánh mì & bánh mặn,250,144.0,360,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-105,Bánh nậm,banh nam,Bánh mì & bánh mặn,200,145.0,290,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-106,Bánh bột lọc,banh bot loc,Bánh mì & bánh mặn,250,168.0,420,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-107,Bánh ít trần,banh it tran,Bánh mì & bánh mặn,150,180.0,270,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-108,Bánh đúc nóng,banh duc nong,Bánh mì & bánh mặn,350,120.0,420,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-109,Gỏi cuốn tôm thịt,goi cuon tom thit,Đồ ăn vặt & chiên,150,106.67,160,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-110,Gỏi cuốn thịt,goi cuon thit,Đồ ăn vặt & chiên,150,106.67,160,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-111,Gỏi cuốn chay,goi cuon chay,Đồ ăn vặt & chiên,150,80.0,120,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-112,Chả giò chiên,cha gio chien,Đồ ăn vặt & chiên,150,300.0,450,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-113,Chả giò 4 cái,cha gio 4 cai,Đồ ăn vặt & chiên,160,300.0,480,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-114,Nem nướng cuốn bánh tráng,nem nuong cuon;nem nuong cuon banh trang,Đồ ăn vặt & chiên,250,176.0,440,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-115,Bánh tráng trộn,banh trang tron,Đồ ăn vặt & chiên,250,220.0,550,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-116,Bánh tráng cuốn,banh trang cuon,Đồ ăn vặt & chiên,200,200.0,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-117,Bánh tráng nướng,banh trang nuong,Đồ ăn vặt & chiên,180,238.89,430,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-118,Bánh tráng sốt bơ,banh trang sot bo,Đồ ăn vặt & chiên,180,250.0,450,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-119,Cá viên chiên,ca vien chien,Đồ ăn vặt & chiên,150,226.67,340,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-120,Bò viên chiên,bo vien chien,Đồ ăn vặt & chiên,150,246.67,370,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-121,Xúc xích chiên,xuc xich chien,Đồ ăn vặt & chiên,100,300.0,300,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-122,Khoai tây chiên,khoai tay chien,Đồ ăn vặt & chiên,150,306.67,460,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-123,Khoai lang chiên,khoai lang chien,Đồ ăn vặt & chiên,150,300.0,450,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-124,Khoai tây lắc phô mai,khoai tay lac pho mai,Đồ ăn vặt & chiên,180,327.78,590,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-125,Gà rán 1 miếng,ga ran 1 mieng,Đồ ăn vặt & chiên,120,283.33,340,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-126,Gà rán 2 miếng,ga ran 2 mieng,Đồ ăn vặt & chiên,240,279.17,670,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-127,Cánh gà chiên,canh ga chien,Đồ ăn vặt & chiên,150,266.67,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-128,Đùi gà chiên,dui ga chien,Đồ ăn vặt & chiên,180,266.67,480,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-129,Gà popcorn,ga popcorn,Đồ ăn vặt & chiên,150,293.33,440,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-130,Gà sốt cay,ga sot cay,Đồ ăn vặt & chiên,200,275.0,550,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-131,Tôm chiên xù,tom chien xu,Đồ ăn vặt & chiên,160,262.5,420,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-132,Mực chiên giòn,muc chien gion,Đồ ăn vặt & chiên,170,247.06,420,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-133,Đậu hũ chiên,dau hu chien,Đồ ăn vặt & chiên,150,220.0,330,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-134,Đậu hũ sốt,dau hu sot,Đồ ăn vặt & chiên,250,144.0,360,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-135,Chả cá chiên,cha ca chien,Đồ ăn vặt & chiên,150,226.67,340,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-136,Xôi chiên,xoi chien,Đồ ăn vặt & chiên,180,277.78,500,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-137,Bắp xào,bap xao,Đồ ăn vặt & chiên,250,156.0,390,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-138,Trứng cút lộn xào me,trung cut lon xao me,Đồ ăn vặt & chiên,180,177.78,320,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-139,Trứng cút luộc 10 quả,trung cut 10 qua;trung cut luoc 10 qua,Đồ ăn vặt & chiên,90,155.56,140,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-140,Lẩu thái hải sản 1 người,lau thai hai san;lau thai hai san 1 nguoi,Lẩu & món canh,600,105.0,630,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-141,Lẩu bò 1 người,lau bo;lau bo 1 nguoi,Lẩu & món canh,600,115.0,690,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-142,Lẩu gà 1 người,lau ga;lau ga 1 nguoi,Lẩu & món canh,600,95.0,570,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-143,Lẩu nấm chay 1 người,lau nam chay;lau nam chay 1 nguoi,Lẩu & món canh,550,65.45,360,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-144,Canh chua cá,canh chua ca,Lẩu & món canh,400,55.0,220,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-145,Canh chua tôm,canh chua tom,Lẩu & món canh,400,60.0,240,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-146,Canh rau ngót thịt băm,canh rau ngot thit;canh rau ngot thit bam,Lẩu & món canh,350,65.71,230,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-147,Canh bí đỏ thịt bằm,canh bi do thit;canh bi do thit bam,Lẩu & món canh,350,74.29,260,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-148,Canh cải thịt băm,canh cai thit;canh cai thit bam,Lẩu & món canh,350,60.0,210,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-149,Canh khổ qua nhồi thịt,canh kho qua;canh kho qua nhoi thit,Lẩu & món canh,400,75.0,300,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-150,Canh mướp nấu hến,canh muop hen;canh muop nau hen,Lẩu & món canh,350,45.71,160,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-151,Canh rong biển thịt bằm,canh rong bien;canh rong bien thit bam,Lẩu & món canh,350,51.43,180,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-152,Canh bí xanh tôm,canh bi xanh tom,Lẩu & món canh,350,51.43,180,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-153,Canh chua nghêu,canh chua ngheu,Lẩu & món canh,400,55.0,220,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-154,Cháo lòng,chao long,Ăn sáng truyền thống,450,95.56,430,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-155,Cháo sườn,chao suon,Ăn sáng truyền thống,450,88.89,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-156,Cháo gà,chao ga,Ăn sáng truyền thống,450,84.44,380,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-157,Cháo thịt bằm,chao thit bam,Ăn sáng truyền thống,450,80.0,360,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-158,Cháo cá,chao ca,Ăn sáng truyền thống,450,82.22,370,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-159,Cháo hải sản,chao hai san,Ăn sáng truyền thống,450,88.89,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-160,Xôi gà,xoi ga,Ăn sáng truyền thống,300,210.0,630,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-161,Xôi mặn,xoi man,Ăn sáng truyền thống,300,220.0,660,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-162,Xôi xéo,xoi xeo,Ăn sáng truyền thống,250,220.0,550,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-163,Xôi đậu xanh,xoi dau xanh,Ăn sáng truyền thống,250,196.0,490,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-164,Xôi đậu phộng,xoi dau phong,Ăn sáng truyền thống,250,204.0,510,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-165,Xôi bắp,xoi bap,Ăn sáng truyền thống,250,192.0,480,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-166,Bánh mì + 1 trứng ốp la,banh mi trung op la;banh mi 1 trung op la,Ăn sáng truyền thống,180,227.78,410,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-167,Bánh mì + 2 trứng ốp la,banh mi 2 trung;banh mi 2 trung op la,Ăn sáng truyền thống,230,230.43,530,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-168,Cơm chay thập cẩm,com chay thap cam,Đồ chay,400,125.0,500,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-169,Bún chay,bun chay,Đồ chay,450,84.44,380,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-170,Phở chay,pho chay,Đồ chay,500,72.0,360,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-171,Miến chay,mien chay,Đồ chay,450,80.0,360,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-172,Hủ tiếu chay,hu tieu chay,Đồ chay,450,80.0,360,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-173,Bún Huế chay,bun hue chay,Đồ chay,500,80.0,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-174,Đậu hũ sốt cà chua,dau hu sot ca;dau hu sot ca chua,Đồ chay,250,120.0,300,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-175,Đậu hũ kho,dau hu kho,Đồ chay,250,136.0,340,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-176,Đậu hũ sả ớt,dau hu sa ot,Đồ chay,250,156.0,390,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-177,Nấm xào,nam xao,Đồ chay,250,88.0,220,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-178,Rau củ xào,rau cu xao,Đồ chay,300,73.33,220,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-179,Nấm kho tiêu,nam kho tieu,Đồ chay,250,104.0,260,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-180,Mì căn xào,mi can xao,Đồ chay,250,160.0,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-181,Chả giò chay,cha gio chay,Đồ chay,150,260.0,390,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-182,Gỏi cuốn chay sốt mè,goi cuon chay me;goi cuon chay sot me,Đồ chay,180,122.22,220,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-183,Chè đậu đỏ,che dau do,Tráng miệng & chè,250,152.0,380,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-184,Chè đậu đen,che dau den,Tráng miệng & chè,250,144.0,360,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-185,Chè đậu xanh,che dau xanh,Tráng miệng & chè,250,152.0,380,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-186,Chè bà ba,che ba ba,Tráng miệng & chè,300,160.0,480,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-187,Chè thái,che thai,Tráng miệng & chè,350,174.29,610,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-188,Chè khúc bạch,che khuc bach,Tráng miệng & chè,300,166.67,500,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-189,Chè sương sa hạt lựu,che suong sa hat luu,Tráng miệng & chè,300,146.67,440,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-190,Chè bưởi,che buoi,Tráng miệng & chè,300,150.0,450,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-191,Chè chuối,che chuoi,Tráng miệng & chè,300,160.0,480,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-192,Chè khoai dẻo,che khoai deo,Tráng miệng & chè,300,166.67,500,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-193,Tàu hũ nước đường,tau hu nuoc duong,Tráng miệng & chè,250,96.0,240,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-194,Sữa chua có đường,sua chua co duong,Tráng miệng & chè,100,100.0,100,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-195,Sữa chua nếp cẩm,sua chua nep cam,Tráng miệng & chè,180,133.33,240,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-196,Flan caramel,flan,Tráng miệng & chè,100,150.0,150,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-197,Rau câu,rau cau,Tráng miệng & chè,150,66.67,100,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-198,Kem vani 2 viên,kem vani;kem vani 2 vien,Tráng miệng & chè,120,208.33,250,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-199,Kem dừa,kem dua,Tráng miệng & chè,120,216.67,260,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-200,Kem bơ,kem bo,Tráng miệng & chè,250,160.0,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-201,Chuối 1 quả vừa,chuoi;chuoi 1 qua vua,Trái cây,120,91.67,110,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-202,Táo 1 quả vừa,tao;tao 1 qua vua,Trái cây,180,50.0,90,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-203,Cam 1 quả vừa,cam;cam 1 qua vua,Trái cây,180,44.44,80,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-204,Quýt 2 quả,quyt;quyt 2 qua,Trái cây,160,50.0,80,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-205,Xoài chín 1 quả nhỏ,xoai chin;xoai chin 1 qua nho,Trái cây,200,60.0,120,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-206,Ổi 1 quả,oi;oi 1 qua,Trái cây,200,70.0,140,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-207,Dưa hấu 300g,dua hau;dua hau 300g,Trái cây,300,30.0,90,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-208,Thanh long 1 quả,thanh long;thanh long 1 qua,Trái cây,250,48.0,120,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-209,Dâu tây 200g,dau tay;dau tay 200g,Trái cây,200,30.0,60,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-210,Nho 200g,nho,Trái cây,200,70.0,140,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-211,Lê 1 quả,le;le 1 qua,Trái cây,180,55.56,100,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-212,Bưởi 300g,buoi;buoi 300g,Trái cây,300,43.33,130,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-213,Mãng cầu 200g,mang cau;mang cau 200g,Trái cây,200,65.0,130,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-214,Sầu riêng 100g cơm,sau rieng;sau rieng 100g com,Trái cây,100,150.0,150,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-215,Mít 200g,mit;mit 200g,Trái cây,200,95.0,190,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-216,Chôm chôm 200g,chom chom;chom chom 200g,Trái cây,200,75.0,150,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-217,Dừa tươi cơm 100g,dua tuoi com;dua tuoi com 100g,Trái cây,100,350.0,350,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-218,Cà phê đen không đường,ca phe den;ca phe den khong duong,Đồ uống,250,0.0,0,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-219,Cà phê sữa đá,ca phe sua da,Đồ uống,300,90.0,270,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-220,Bạc xỉu,bac xiu,Đồ uống,300,110.0,330,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-221,Cà phê muối,ca phe muoi,Đồ uống,300,106.67,320,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-222,Trà đào cam sả,tra dao cam sa,Đồ uống,500,44.0,220,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-223,Trà tắc,tra tac,Đồ uống,500,56.0,280,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-224,Trà chanh,tra chanh,Đồ uống,500,50.0,250,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-225,Trà sữa trân châu,tra sua tran chau,Đồ uống,500,110.0,550,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-226,Trà sữa ít đường,tra sua it duong,Đồ uống,500,80.0,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-227,Matcha latte,,Đồ uống,400,70.0,280,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-228,Matcha đá xay,matcha da xay,Đồ uống,450,104.44,470,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-229,Chocolate đá,chocolate da,Đồ uống,400,85.0,340,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-230,Nước cam,nuoc cam,Đồ uống,300,46.67,140,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-231,Nước ép dưa hấu,nuoc ep dua hau,Đồ uống,300,30.0,90,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-232,Nước ép ổi,nuoc ep oi,Đồ uống,300,46.67,140,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-233,Nước ép cà rốt,nuoc ep ca rot,Đồ uống,300,40.0,120,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-234,Sinh tố bơ,sinh to bo,Đồ uống,400,105.0,420,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-235,Sinh tố xoài,sinh to xoai,Đồ uống,400,90.0,360,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-236,Sinh tố dâu,sinh to dau,Đồ uống,400,80.0,320,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-237,Sinh tố chuối,sinh to chuoi,Đồ uống,400,95.0,380,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-238,Nước mía,nuoc mia,Đồ uống,400,75.0,300,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-239,Nước dừa tươi,nuoc dua;nuoc dua tuoi,Đồ uống,400,20.0,80,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-240,Nước ngọt có gas lon 330ml,nuoc ngot 330ml;nuoc ngot co gas lon 330ml,Đồ uống,330,42.42,140,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-241,Nước tăng lực lon 250ml,nuoc tang luc 250ml;nuoc tang luc lon 250ml,Đồ uống,250,44.0,110,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-242,Bánh bông lan,banh bong lan,Bánh ngọt & ăn nhẹ,100,300.0,300,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-243,Bánh bông lan trứng muối,banh bong lan trung muoi,Bánh ngọt & ăn nhẹ,120,333.33,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-244,Bánh su kem 2 cái,banh su kem;banh su kem 2 cai,Bánh ngọt & ăn nhẹ,100,280.0,280,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-245,Croissant bơ,croissant;croissant bo,Bánh ngọt & ăn nhẹ,80,400.0,320,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-246,Donut phủ đường,donut;donut phu duong,Bánh ngọt & ăn nhẹ,70,400.0,280,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-247,Bánh tiramisu,tiramisu;banh tiramisu,Bánh ngọt & ăn nhẹ,120,300.0,360,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-248,Cheesecake 1 lát,cheesecake;cheesecake 1 lat,Bánh ngọt & ăn nhẹ,120,333.33,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-249,Brownie 1 miếng,brownie;brownie 1 mieng,Bánh ngọt & ăn nhẹ,80,412.5,330,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-250,Mochi 2 viên,mochi;mochi 2 vien,Bánh ngọt & ăn nhẹ,80,250.0,200,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-251,Bánh trung thu thập cẩm 1/4 cái,banh trung thu;banh trung thu thap cam 1 4 cai,Bánh ngọt & ăn nhẹ,100,420.0,420,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-252,Bắp rang bơ 1 phần,bap rang bo;bap rang bo 1 phan,Bánh ngọt & ăn nhẹ,100,430.0,430,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-253,Hạt điều rang 30g,hat dieu;hat dieu rang 30g,Bánh ngọt & ăn nhẹ,30,566.67,170,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-254,Đậu phộng rang 30g,dau phong;dau phong rang 30g,Bánh ngọt & ăn nhẹ,30,566.67,170,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-255,Hạt dẻ cười 30g,hat de cuoi;hat de cuoi 30g,Bánh ngọt & ăn nhẹ,30,566.67,170,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-256,Granola 50g,granola,Bánh ngọt & ăn nhẹ,50,440.0,220,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-257,Yến mạch cán 50g khô,yen mach;yen mach can 50g kho,Bánh ngọt & ăn nhẹ,50,380.0,190,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-258,Hamburger bò,hamburger bo,Thức ăn nhanh,220,250.0,550,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-259,Cheeseburger,,Thức ăn nhanh,230,269.57,620,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-260,Burger gà,burger ga,Thức ăn nhanh,220,245.45,540,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-261,Hot dog,,Thức ăn nhanh,180,277.78,500,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-262,Pizza hải sản 2 miếng,pizza hai san 2 mieng,Thức ăn nhanh,220,259.09,570,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-263,Pizza pepperoni 2 miếng,pizza pepperoni 2 mieng,Thức ăn nhanh,220,272.73,600,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-264,Pizza phô mai 2 miếng,pizza pho mai 2 mieng,Thức ăn nhanh,220,263.64,580,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-265,Mì Ý sốt bò bằm,mi y bo bam;mi y sot bo bam,Thức ăn nhanh,400,170.0,680,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-266,Mì Ý carbonara,mi y carbonara,Thức ăn nhanh,400,200.0,800,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-267,Mì Ý sốt cà chua,mi y sot ca;mi y sot ca chua,Thức ăn nhanh,400,145.0,580,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-268,Gà viên/nuggets 6 miếng,nuggets 6;ga vien nuggets 6 mieng,Thức ăn nhanh,120,291.67,350,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-269,Khoai tây nghiền,khoai tay nghien,Thức ăn nhanh,200,110.0,220,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-270,Nui xào bò,nui xao bo,Món xào,450,164.44,740,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-271,Nui xào trứng,nui xao trung,Món xào,400,155.0,620,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-272,Nui nấu thịt,nui nau thit,Món xào,450,120.0,540,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-273,Miến gà,mien ga,Món nước,500,82.0,410,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-274,Miến măng gà,mien mang ga,Món nước,500,90.0,450,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-275,Miến lươn,mien luon,Món nước,450,135.56,610,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-276,Bún thịt xào sả,bun thit xao sa,Món bún,450,160.0,720,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-277,Bún nem chả,bun nem cha,Món bún,500,164.0,820,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-278,Bún tôm,bun tom,Món bún,500,80.0,400,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-279,Bún măng vịt,bun mang vit,Món bún,550,105.45,580,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-280,Bún ngan,bun ngan,Món bún,550,105.45,580,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-281,Bún hải sản,bun hai san,Món bún,550,94.55,520,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-282,Cơm chiên kim chi,com chien kim chi,Cơm,400,190.0,760,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-283,Cơm chiên kim chi bò,com chien kim chi bo,Cơm,450,204.44,920,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-284,Cơm chiên cá mặn trứng,com chien ca man trung,Cơm,450,204.44,920,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-285,Cơm cá viên sốt cà,com ca vien sot ca,Cơm,450,168.89,760,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-286,Cơm gà sốt teriyaki,com ga teriyaki;com ga sot teriyaki,Cơm,450,184.44,830,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-287,Cơm bò sốt tiêu đen,com bo tieu den;com bo sot tieu den,Cơm,450,191.11,860,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-288,Cơm sườn bì,com suon bi,Cơm,450,208.89,940,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-289,Cơm thịt kho tàu,com thit kho tau,Cơm,450,175.56,790,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-290,Bánh mì thịt nướng đặc biệt,banh mi thit nuong dac biet,Bánh mì,220,250.0,550,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-291,Bánh mì chảo,banh mi chao,Bánh mì,350,220.0,770,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-292,Bánh mì sốt vang,banh mi sot vang,Bánh mì,350,188.57,660,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-293,Bánh cuốn chả,banh cuon cha,Bánh,350,125.71,440,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-294,Bánh hỏi lòng heo,banh hoi long heo,Bánh,450,175.56,790,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-295,Bánh ít lá gai,banh it la gai,Bánh,100,210.0,210,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-296,Bánh chuối chiên,banh chuoi chien,Đồ ăn vặt,120,258.33,310,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-297,Bắp nướng mỡ hành,bap nuong mo hanh,Đồ ăn vặt,180,150.0,270,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-298,Khoai lang nướng,khoai lang nuong,Đồ ăn vặt,200,95.0,190,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-299,Trứng nướng,trung nuong,Đồ ăn vặt,120,183.33,220,IVS Vietnam calorie dataset,,estimated,vi-VN
+vn-dish-300,Cá nướng muối ớt,ca nuong muoi ot,Hải sản,300,170.0,510,IVS Vietnam calorie dataset,,estimated,vi-VN
