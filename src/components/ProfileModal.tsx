@@ -118,7 +118,7 @@ export default function ProfileModal({ user, onClose }: Props) {
           studentId: form.studentId.trim(),
           phone: form.phone.trim(),
           email: user.email || '',
-          authProvider: 'google',
+          authProvider: user.providerData.map(provider => provider.providerId).join(',') || 'password',
           updatedAt: serverTimestamp()
         },
         { merge: true }
@@ -186,7 +186,7 @@ export default function ProfileModal({ user, onClose }: Props) {
           </div>
 
           <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-            Google chỉ dùng để xác thực đăng nhập. Thông tin bên dưới là hồ sơ riêng của nOcnOm và không mở trang quản lý tài khoản Google.
+            Tài khoản có thể đăng nhập bằng Email/Password hoặc Google. Thông tin bên dưới là hồ sơ riêng của nOcnOm.
           </p>
 
           {loading ? (
