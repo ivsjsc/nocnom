@@ -336,6 +336,63 @@ const hydrateMissingDishCalories = async () => {
   );
 };
 
+
+const upsertMealLogData = ({
+  dateKey,
+  mealKey,
+  dishName,
+  vendorName,
+  price,
+  calories
+}: {
+  dateKey: string;
+  mealKey: MealKey;
+  dishName: string;
+  vendorName: string;
+  price: number;
+  calories?: number;
+}) => {
+  if (!isMealDateEditable(dateKey)) {
+    throw new Error('Chỉ được thêm hoặc chỉnh sửa lịch sử của hôm nay và tối đa 3 ngày trước.');
+  }
+
+  const normalizedDishName = dishName.trim();
+  const normalizedVendorName = vendorName.trim();
+
+  if (!normalizedDishName) throw new Error('Cần chọn món ăn.');
+  if (!normalizedVendorName) throw new Error('Cần chọn quán hoặc nguồn món.');
+  if (!Number.isFinite(price) || price < 0) throw new Error('Giá món không hợp lệ.');
+
+  const existingIndex = logsData.findIndex(log =>
+    log.mealKey === mealKey &&
+    getVietnamDateKey(log.timestamp) === dateKey
+  );
+
+  const newLog: LogEntry = {
+    id: existingIndex >= 0 ? logsData[existingIndex].id : createLocalId('l'),
+    dishName: normalizedDishName,
+    vendorName: normalizedVendorName,
+    price: Math.round(price),
+    calories:
+      typeof calories === 'number' && Number.isFinite(calories)
+        ? Math.max(0, Math.round(calories))
+        : undefined,
+    mealKey,
+    timestamp: timestampForMealDate(dateKey, mealKey)
+  };
+
+  logsData = existingIndex >= 0
+    ? [
+        newLog,
+        ...logsData.filter((_, index) => index !== existingIndex)
+      ]
+    : [newLog, ...logsData];
+
+  saveToLocalStorage();
+  logListeners.forEach(listener => listener(logsData));
+  return newLog;
+};
+
 export const mockDb = {
   getDoc: (day: string) => dbData[day],
   getAll: () => dbData,
@@ -377,61 +434,7 @@ export const mockDb = {
     callback(logsData);
     return () => logListeners.delete(callback);
   },
-  upsertMealLog: ({
-    dateKey,
-    mealKey,
-    dishName,
-    vendorName,
-    price,
-    calories
-  }: {
-    dateKey: string;
-    mealKey: MealKey;
-    dishName: string;
-    vendorName: string;
-    price: number;
-    calories?: number;
-  }) => {
-    if (!isMealDateEditable(dateKey)) {
-      throw new Error('Chỉ được thêm hoặc chỉnh sửa lịch sử của hôm nay và tối đa 3 ngày trước.');
-    }
-
-    const normalizedDishName = dishName.trim();
-    const normalizedVendorName = vendorName.trim();
-
-    if (!normalizedDishName) throw new Error('Cần chọn món ăn.');
-    if (!normalizedVendorName) throw new Error('Cần chọn quán hoặc nguồn món.');
-    if (!Number.isFinite(price) || price < 0) throw new Error('Giá món không hợp lệ.');
-
-    const existingIndex = logsData.findIndex(log =>
-      log.mealKey === mealKey &&
-      getVietnamDateKey(log.timestamp) === dateKey
-    );
-
-    const newLog: LogEntry = {
-      id: existingIndex >= 0 ? logsData[existingIndex].id : createLocalId('l'),
-      dishName: normalizedDishName,
-      vendorName: normalizedVendorName,
-      price: Math.round(price),
-      calories:
-        typeof calories === 'number' && Number.isFinite(calories)
-          ? Math.max(0, Math.round(calories))
-          : undefined,
-      mealKey,
-      timestamp: timestampForMealDate(dateKey, mealKey)
-    };
-
-    logsData = existingIndex >= 0
-      ? [
-          newLog,
-          ...logsData.filter((_, index) => index !== existingIndex)
-        ]
-      : [newLog, ...logsData];
-
-    saveToLocalStorage();
-    logListeners.forEach(l => l(logsData));
-    return newLog;
-  },
+  upsertMealLog: upsertMealLogData,
   deleteMealLog: (logId: string) => {
     const existing = logsData.find(log => log.id === logId);
     if (!existing) return;
@@ -468,7 +471,7 @@ export const mockDb = {
       return;
     }
 
-    mockDb.upsertMealLog({
+    upsertMealLogData({
       dateKey: getVietnamDateKey(),
       mealKey,
       dishName,
