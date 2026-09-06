@@ -23,6 +23,8 @@ import {
   searchFoodImages,
   type FoodImageCandidate
 } from '../lib/imageSearch';
+import { normalizeExternalImageUrl } from '../lib/url';
+import DishImage from './DishImage';
 
 type Props = {
   categories: Category[];
@@ -56,6 +58,11 @@ export default function AddDishModal({
   const selectedImage = useMemo(
     () => images.find(item => item.id === selectedImageId),
     [images, selectedImageId]
+  );
+
+  const normalizedManualImageUrl = useMemo(
+    () => normalizeExternalImageUrl(manualImageUrl),
+    [manualImageUrl]
   );
 
   const analyze = async (foodName: string) => {
@@ -182,10 +189,14 @@ export default function AddDishModal({
             attribution: selectedImage.attribution
           }
         : manualImageUrl.trim()
-          ? {
-              url: manualImageUrl.trim(),
-              source: 'manual' as const
-            }
+          ? normalizedManualImageUrl
+            ? {
+                url: normalizedManualImageUrl,
+                source: 'manual' as const
+              }
+            : (() => {
+                throw new Error('URL hình ảnh không hợp lệ. Hãy dùng URL http/https trực tiếp hoặc link chia sẻ Google Drive/Dropbox/GitHub được hỗ trợ.');
+              })()
           : undefined;
 
       const result = await mockDb.addDish(
@@ -307,7 +318,7 @@ export default function AddDishModal({
                   2. Hình món
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  Tự tìm tối đa 6 ảnh · chọn 1 ảnh trước khi lưu
+                  Tự tìm tối đa 6 ảnh · hoặc dán URL ảnh trực tiếp / link chia sẻ được hỗ trợ
                 </div>
               </div>
               <ImageIcon className="w-5 h-5 text-blue-500" />
@@ -375,6 +386,30 @@ export default function AddDishModal({
                 placeholder="https://..."
                 className="mt-2 w-full h-11 rounded-xl border border-slate-200 px-3 text-xs"
               />
+
+              {manualImageUrl.trim() ? (
+                normalizedManualImageUrl ? (
+                  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                    <div className="mb-2 text-[10px] font-black uppercase tracking-wide text-slate-500">
+                      Xem trước URL ảnh
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <DishImage
+                        src={manualImageUrl}
+                        alt={name || 'Ảnh món xem trước'}
+                        className="h-20 w-20 shrink-0 rounded-2xl border border-slate-200"
+                      />
+                      <div className="min-w-0 text-[10px] font-semibold leading-relaxed text-slate-500">
+                        Nếu ô bên trái vẫn hiện biểu tượng món ăn thì host ảnh đang chặn tải trực tiếp hoặc URL là trang web chứ không phải ảnh.
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-[10px] font-bold text-rose-700">
+                    URL không hợp lệ. Chỉ hỗ trợ http/https.
+                  </div>
+                )
+              ) : null}
             </div>
           </section>
 
