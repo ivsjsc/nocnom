@@ -295,48 +295,65 @@ export default function LogsPage() {
 
   return (
     <div className="space-y-5 pb-28">
-      <div className="flex items-center gap-2 px-2">
-        <Clock3 className="w-5 h-5 text-slate-900 dark:text-slate-100" />
-        <div>
-          <h2 className="text-xl font-black text-slate-950 dark:text-slate-100">Lịch sử ăn uống</h2>
-          <p className="mt-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-            Xem theo ngày · được ghi bù/chỉnh sửa tối đa 3 ngày trước
-          </p>
-        </div>
-      </div>
-
-      <section className="rounded-[26px] border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/30 p-4 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-slate-900 text-blue-600 shadow-sm">
-            <CalendarDays className="h-5 w-5" />
+      <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm">
+            <Clock3 className="h-5 w-5" />
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-black text-slate-950 dark:text-slate-100">
-              Ghi bù hoặc chỉnh lịch sử
+          <div className="min-w-0">
+            <div className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
+              Theo dõi theo ngày
             </div>
-            <div className="mt-1 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-              Chọn từ {formatDateKey(editRange.min)} đến hôm nay. Ngày tương lai và quá 3 ngày không được sửa.
-            </div>
+            <h2 className="mt-0.5 text-xl font-black text-slate-950 dark:text-slate-100">
+              Lịch sử ăn uống
+            </h2>
+            <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600 dark:text-slate-400">
+              Xem nhanh tổng kcal; chỉ mở chi tiết hoặc chỉnh bữa khi cần.
+            </p>
           </div>
         </div>
+      </section>
 
-        <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
+      <section className="overflow-hidden rounded-[26px] border border-slate-200 bg-gradient-to-br from-white via-white to-blue-50/80 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/20">
+        <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400" />
+        <div className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
+              <CalendarDays className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="text-sm font-black text-slate-950 dark:text-slate-100">
+                  Ghi bù hoặc chỉnh lịch sử
+                </div>
+                <span className="rounded-lg bg-blue-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
+                  Tối đa 3 ngày trước
+                </span>
+              </div>
+              <div className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600 dark:text-slate-400">
+                Chọn từ {formatDateKey(editRange.min)} đến hôm nay. Ngày tương lai và ngày cũ hơn chỉ được xem.
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
           <input
             type="date"
             min={editRange.min}
             max={editRange.max}
             value={calendarDate}
             onChange={event => setCalendarDate(event.target.value)}
-            className="min-h-12 w-full rounded-2xl border border-blue-300 dark:border-blue-800 bg-white dark:bg-slate-900 px-3 text-sm font-bold text-slate-950 dark:text-slate-100 shadow-sm"
+            className="min-h-12 w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 text-sm font-black text-slate-950 shadow-inner outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-blue-500/10"
             aria-label="Chọn ngày lịch sử ăn uống"
           />
           <button
             type="button"
             onClick={() => openDate(calendarDate)}
-            className="min-h-12 rounded-2xl bg-blue-600 px-4 text-xs font-black text-white shadow-sm active:scale-95"
+            className="min-h-12 rounded-2xl bg-blue-600 px-5 text-xs font-black text-white shadow-md shadow-blue-600/20 transition-all hover:bg-blue-700 active:scale-95"
           >
             Mở ngày
           </button>
+          </div>
         </div>
       </section>
 
@@ -357,10 +374,10 @@ export default function LogsPage() {
               type="button"
               key={day.key}
               onClick={() => openDate(day.key)}
-              className="w-full rounded-[26px] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-left shadow-sm transition-all hover:border-blue-400 dark:hover:border-blue-500 active:scale-[0.99]"
+              className="w-full rounded-[24px] border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700 active:scale-[0.99]"
             >
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
                   <CalendarDays className="h-5 w-5" />
                 </div>
 
@@ -371,7 +388,7 @@ export default function LogsPage() {
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-bold text-slate-600 dark:text-slate-400">
                     <span>{day.logs.length} bữa</span>
                     <span>·</span>
-                    <span className="font-black text-orange-700 dark:text-orange-300">
+                    <span className="rounded-lg bg-orange-50 px-2 py-1 font-black text-orange-700 dark:bg-orange-500/10 dark:text-orange-300">
                       ≈ {day.logs
                         .reduce(
                           (total, log) =>

@@ -41,7 +41,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
     setIsAddingDish(true);
   };
 
-  const handleEditDish = (dish: Dish) => {
+  const handleEditDish = async (dish: Dish) => {
     if (!canManage) {
       window.alert('Vui lòng đăng nhập để chỉnh sửa món.');
       return;
@@ -55,7 +55,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
     const newImage = window.prompt('URL hình ảnh:', dish.imageUrl || '');
     if (newImage !== null && newImage !== (dish.imageUrl || '')) {
       try {
-        mockDb.updateDishImage(dish.id, newImage.trim());
+        await mockDb.updateDishImage(dish.id, newImage.trim());
       } catch (error) {
         window.alert(
           error instanceof Error

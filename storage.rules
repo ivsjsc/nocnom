@@ -1,0 +1,32 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAllowedImageUpload() {
+      return request.resource != null
+        && request.resource.size > 0
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+
+    // User-uploaded food images are private to that Firebase user.
+    match /users/{userId}/foods/{foodId}/{fileName} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isAllowedImageUpload();
+      allow delete: if isOwner(userId);
+    }
+
+    // Deny everything not explicitly modeled above.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
