@@ -9,6 +9,11 @@ import {
   resolveNutrition
 } from '../services/nutrition';
 import type { NutritionSelection } from '../domain/nutrition/nutritionTypes';
+import {
+  MEAL_ADDON_KIND_LABELS,
+  defaultServingUnitForAddonKind,
+  type UserMealAddon
+} from '../domain/meal/addonNormalizer';
 
 export type NutritionConfidence = 'verified' | 'estimated' | 'unknown';
 
@@ -133,4 +138,30 @@ export type { NutritionAddonKind, NutritionAddonOption };
 
 export const loadNutritionAddons = async (): Promise<NutritionAddonOption[]> => {
   return nutritionService.getAddons();
+};
+
+
+export const mergeNutritionAddons = (
+  base: NutritionAddonOption[],
+  custom: UserMealAddon[]
+): NutritionAddonOption[] => {
+  const customOptions: NutritionAddonOption[] = custom.map(item => ({
+    id: item.id,
+    kind: item.kind,
+    name: item.name,
+    category: MEAL_ADDON_KIND_LABELS[item.kind],
+    calories: item.calories,
+    servingAmount: item.servingAmount,
+    servingUnit:
+      item.servingUnit ?? defaultServingUnitForAddonKind(item.kind),
+    source: 'user',
+    confidence: 'Người dùng nhập',
+    isReferenceOnly: true
+  }));
+
+  const customIds = new Set(customOptions.map(item => item.id));
+  return [
+    ...customOptions,
+    ...base.filter(item => !customIds.has(item.id))
+  ];
 };
