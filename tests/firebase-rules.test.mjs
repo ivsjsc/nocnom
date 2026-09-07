@@ -149,6 +149,13 @@ try {
     'state',
     'dishes'
   );
+  const aliceMealAddonsV2 = doc(
+    alice.firestore(),
+    'users',
+    'alice',
+    'state',
+    'mealAddons'
+  );
   const aliceMetaV2 = doc(
     alice.firestore(),
     'users',
@@ -170,6 +177,22 @@ try {
     })
   );
   await assertSucceeds(
+    setDoc(aliceMealAddonsV2, {
+      items: [
+        {
+          id: 'addon-1',
+          kind: 'fruit',
+          name: 'Dưa hấu',
+          calories: 80,
+          servingAmount: 200,
+          servingUnit: 'g',
+          createdAt: 1
+        }
+      ],
+      schemaVersion: 2
+    })
+  );
+  await assertSucceeds(
     setDoc(aliceMetaV2, {
       schemaVersion: 2,
       migrationSource: 'appState-v1',
@@ -187,6 +210,7 @@ try {
 
   await assertSucceeds(getDoc(aliceTimetableV2));
   await assertSucceeds(getDoc(aliceDishesV2));
+  await assertSucceeds(getDoc(aliceMealAddonsV2));
   await assertSucceeds(getDoc(aliceMetaV2));
 
   await assertFails(
@@ -208,6 +232,21 @@ try {
         'alice',
         'state',
         'logs'
+      ),
+      {
+        items: [],
+        schemaVersion: 2
+      }
+    )
+  );
+  await assertFails(
+    setDoc(
+      doc(
+        bob.firestore(),
+        'users',
+        'alice',
+        'state',
+        'mealAddons'
       ),
       {
         items: [],
