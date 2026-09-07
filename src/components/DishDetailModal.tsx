@@ -12,10 +12,8 @@ import { getSafeExternalUrl } from '../lib/url';
 import DishImage from './DishImage';
 import DishPickerModal from './DishPickerModal';
 import MealAddonPicker, { type MealAddonSelection } from './MealAddonPicker';
-import {
-  loadNutritionAddons,
-  type NutritionAddonOption
-} from '../lib/nutritionKnowledge';
+import type { NutritionAddonOption } from '../lib/nutritionKnowledge';
+import { useMealAddonCatalog } from '../hooks/useMealAddonCatalog';
 import {
   nutritionService,
   type NutritionPortion,
@@ -41,15 +39,15 @@ export default function DishDetailModal({
   const [allDishes] = useState<Dish[]>(mockDb.getDishes());
   const [addonSelection, setAddonSelection] = useState<MealAddonSelection>({
     fruitId: '',
-    drinkId: ''
+    drinkId: '',
+    sideId: '',
+    dessertId: ''
   });
-  const [nutritionAddons, setNutritionAddons] = useState<NutritionAddonOption[]>([]);
+  const { items: nutritionAddons } = useMealAddonCatalog();
   const [portions, setPortions] = useState<NutritionPortion[]>([]);
   const [canonicalFood, setCanonicalFood] = useState<NutritionFood | null>(null);
 
   useEffect(() => {
-    void loadNutritionAddons().then(setNutritionAddons);
-
     if (dish.nutritionRecordId) {
       void nutritionService.getFoodById(dish.nutritionRecordId).then(food => {
         if (food) {
@@ -72,7 +70,12 @@ export default function DishDetailModal({
   };
 
   const handleSelectVendor = (vendor: Vendor) => {
-    const selectedIds = [addonSelection.fruitId, addonSelection.drinkId].filter(Boolean);
+    const selectedIds = [
+      addonSelection.fruitId,
+      addonSelection.drinkId,
+      addonSelection.sideId,
+      addonSelection.dessertId
+    ].filter(Boolean);
     const addons: MealAddon[] = selectedIds
       .map(id => nutritionAddons.find(item => item.id === id))
       .filter((item): item is NutritionAddonOption => Boolean(item))
@@ -81,7 +84,7 @@ export default function DishDetailModal({
         kind: item.kind,
         name: item.name,
         calories: item.calories,
-        nutritionRecordId: item.id,
+        nutritionRecordId: item.source === 'user' ? undefined : item.id,
         servingG: item.servingG,
         servingAmount: item.servingAmount ?? item.servingG,
         servingUnit: item.servingUnit ?? (item.kind === 'drink' ? 'ml' : 'g'),
