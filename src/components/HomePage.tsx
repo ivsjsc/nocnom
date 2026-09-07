@@ -173,23 +173,26 @@ export default function HomePage({ currentUser }: Props) {
     dishes,
     dish => estimateDishCalories(dish as Dish)
   );
-  const targetCaloriesRaw = calculateDailyCalorieTargetFromProfile({
-    weightKg: profile?.weightKg,
-    heightCm: profile?.heightCm,
-    dateOfBirth: profile?.dateOfBirth,
-    gender: profile?.gender,
-    activityLevel: profile?.activityLevel,
-    healthGoal: profile?.healthGoal,
-    now: time
-  });
+  const customTarget = Number(profile?.dailyCalorieTarget);
+  const hasCustomTarget =
+    Number.isFinite(customTarget) &&
+    customTarget >= 800 &&
+    customTarget <= 6000;
+  const targetCaloriesRaw = hasCustomTarget
+    ? customTarget
+    : calculateDailyCalorieTargetFromProfile({
+        weightKg: profile?.weightKg,
+        heightCm: profile?.heightCm,
+        dateOfBirth: profile?.dateOfBirth,
+        gender: profile?.gender,
+        activityLevel: profile?.activityLevel,
+        healthGoal: profile?.healthGoal,
+        now: time
+      });
   const targetCalories =
     targetCaloriesRaw === null
       ? null
       : roundEnergyEstimateForDisplay(targetCaloriesRaw);
-  const remainingCalories =
-    targetCalories === null
-      ? null
-      : Math.max(0, targetCalories - consumedCalories);
 
   return (
     <div className="space-y-6 pb-28">
@@ -225,10 +228,6 @@ export default function HomePage({ currentUser }: Props) {
         </div>
 
         <div className="home-calorie-card col-span-2 rounded-[24px] p-4">
-          <div className="mb-3 text-[11px] font-black uppercase tracking-[0.12em] text-white">
-            Calo hôm nay
-          </div>
-
           <div className="grid grid-cols-[1fr_auto_1fr] items-stretch">
             <div className="min-w-0 pr-3">
               <div className="flex items-center gap-2 text-white/90">
@@ -280,11 +279,6 @@ export default function HomePage({ currentUser }: Props) {
             </div>
           </div>
 
-          <div className="mt-3 border-t border-white/15 pt-2 text-[10px] font-bold text-white/90">
-            {targetCalories === null
-              ? 'Hoàn thiện hồ sơ Sức khỏe để tính mục tiêu calo cá nhân.'
-              : `Còn lại ≈ ${remainingCalories?.toLocaleString('vi-VN')} kcal trong mục tiêu hôm nay.`}
-          </div>
         </div>
       </section>
 

@@ -38,6 +38,7 @@ service cloud.firestore {
           'weightKg',
           'activityLevel',
           'healthGoal',
+          'dailyCalorieTarget',
           'email',
           'authProvider',
           'updatedAt'
@@ -57,7 +58,12 @@ service cloud.firestore {
         && (!('activityLevel' in request.resource.data)
           || request.resource.data.activityLevel in ['sedentary', 'light', 'moderate', 'active', ''])
         && (!('healthGoal' in request.resource.data)
-          || request.resource.data.healthGoal in ['maintain', 'lose', 'gain', '']);
+          || request.resource.data.healthGoal in ['maintain', 'lose', 'gain', ''])
+        && (!('dailyCalorieTarget' in request.resource.data)
+          || request.resource.data.dailyCalorieTarget == ''
+          || (request.resource.data.dailyCalorieTarget is number
+            && request.resource.data.dailyCalorieTarget >= 800
+            && request.resource.data.dailyCalorieTarget <= 6000));
       allow delete: if isOwner(userId);
     }
 

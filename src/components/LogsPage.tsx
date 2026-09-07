@@ -403,7 +403,14 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   const tdeeEstimate = calculateTDEEEstimate(bmr, activityLevel);
   const tdee = tdeeEstimate?.value ?? null;
   const calorieGoalPlan = calculateCalorieGoalPlan(tdee, healthGoal);
-  const targetCalories = calorieGoalPlan?.value ?? null;
+  const customTarget = Number(profile?.dailyCalorieTarget);
+  const hasCustomTarget =
+    Number.isFinite(customTarget) &&
+    customTarget >= 800 &&
+    customTarget <= 6000;
+  const targetCalories = hasCustomTarget
+    ? customTarget
+    : calorieGoalPlan?.value ?? null;
   const displayTdee =
     tdee !== null ? roundEnergyEstimateForDisplay(tdee) : null;
   const displayTargetCalories =

@@ -6,6 +6,7 @@ import {
   Image as ImageIcon,
   Save,
   Scale,
+  Target,
   ShieldCheck,
   UserRound,
   X
@@ -48,6 +49,7 @@ type ProfileForm = {
   weightKg: string;
   activityLevel: ActivityLevel;
   healthGoal: HealthGoal;
+  dailyCalorieTarget: string;
 };
 
 const emptyProfile: ProfileForm = {
@@ -62,7 +64,8 @@ const emptyProfile: ProfileForm = {
   heightCm: '',
   weightKg: '',
   activityLevel: '',
-  healthGoal: ''
+  healthGoal: '',
+  dailyCalorieTarget: ''
 };
 
 const toStringValue = (value: unknown) => (typeof value === 'string' ? value : '');
@@ -112,7 +115,10 @@ export default function ProfileModal({
           heightCm: data.heightCm ? String(data.heightCm) : '',
           weightKg: data.weightKg ? String(data.weightKg) : '',
           activityLevel: (data.activityLevel as ActivityLevel) || '',
-          healthGoal: (data.healthGoal as HealthGoal) || ''
+          healthGoal: (data.healthGoal as HealthGoal) || '',
+          dailyCalorieTarget: data.dailyCalorieTarget
+            ? String(data.dailyCalorieTarget)
+            : ''
         });
       } catch (error) {
         if (!active) return;
@@ -222,6 +228,20 @@ export default function ProfileModal({
       return;
     }
 
+    const dailyCalorieTargetValue = Number(form.dailyCalorieTarget);
+    if (
+      form.dailyCalorieTarget.trim() &&
+      (!Number.isFinite(dailyCalorieTargetValue) ||
+        dailyCalorieTargetValue < 800 ||
+        dailyCalorieTargetValue > 6000)
+    ) {
+      setStatus({
+        type: 'error',
+        message: 'Mục tiêu calo tùy chỉnh phải từ 800 đến 6.000 kcal/ngày.'
+      });
+      return;
+    }
+
     setSaving(true);
     setStatus(null);
 
@@ -243,7 +263,11 @@ export default function ProfileModal({
         heightCm: !isNaN(hNum) && hNum > 0 ? hNum : '',
         weightKg: !isNaN(wNum) && wNum > 0 ? wNum : '',
         activityLevel: form.activityLevel,
-        healthGoal: form.healthGoal
+        healthGoal: form.healthGoal,
+        dailyCalorieTarget:
+          form.dailyCalorieTarget.trim()
+            ? Math.round(dailyCalorieTargetValue)
+            : ''
       });
 
       onProfileSaved?.(photoUrl, fullName);
@@ -552,6 +576,31 @@ export default function ProfileModal({
                       <option value="lose">Giảm cân, thon gọn (Thâm hụt nhẹ -300 kcal/ngày)</option>
                       <option value="gain">Tăng cân, tăng cơ (Thặng dư nhẹ +300 kcal/ngày)</option>
                     </select>
+                  </label>
+                </div>
+
+                <div className="mt-3 rounded-2xl border border-blue-200 bg-white p-3.5">
+                  <label className="block">
+                    <span className="mb-1.5 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-slate-600">
+                      <Target className="h-3.5 w-3.5 text-blue-600" />
+                      Mục tiêu calo/ngày tùy chỉnh
+                    </span>
+                    <input
+                      type="number"
+                      min="800"
+                      max="6000"
+                      step="10"
+                      inputMode="numeric"
+                      value={form.dailyCalorieTarget}
+                      onChange={event =>
+                        updateField('dailyCalorieTarget', event.target.value)
+                      }
+                      placeholder="Để trống = tự tính theo hồ sơ"
+                      className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 text-sm font-black text-slate-950 focus:border-blue-500 focus:outline-none"
+                    />
+                    <div className="mt-1.5 text-[10px] font-semibold leading-relaxed text-slate-600">
+                      Nếu nhập giá trị này, nOcnOm sẽ ưu tiên mục tiêu bạn đặt. Để trống để dùng mục tiêu tự động từ BMR/TDEE và mục tiêu dinh dưỡng.
+                    </div>
                   </label>
                 </div>
               </div>

@@ -60,7 +60,8 @@ try {
       heightCm: 165,
       weightKg: 58.5,
       activityLevel: 'moderate',
-      healthGoal: 'maintain'
+      healthGoal: 'maintain',
+      dailyCalorieTarget: 1850
     })
   );
 
@@ -118,6 +119,16 @@ try {
       aliceProfile,
       {
         heightCm: 999
+      },
+      { merge: true }
+    )
+  );
+
+  await assertFails(
+    setDoc(
+      aliceProfile,
+      {
+        dailyCalorieTarget: 200
       },
       { merge: true }
     )

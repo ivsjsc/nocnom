@@ -90,6 +90,14 @@ const homePage = fs.readFileSync(
   'src/components/HomePage.tsx',
   'utf8'
 );
+const profileModal = fs.readFileSync(
+  'src/components/ProfileModal.tsx',
+  'utf8'
+);
+const logsPage = fs.readFileSync(
+  'src/components/LogsPage.tsx',
+  'utf8'
+);
 
 assert(
   addDishModal.includes('Ảnh công khai qua URL') &&
@@ -125,6 +133,21 @@ assert(
     homePage.includes('data-calorie-value="target"') &&
     homePage.includes('Mục tiêu ngày'),
   'Home calorie card separates consumed calories from the daily target'
+);
+assert(
+  !homePage.includes('Calo hôm nay') &&
+    !homePage.includes('Còn lại ≈'),
+  'Home calorie card omits redundant title and remaining-calorie footer'
+);
+assert(
+  homePage.includes('profile?.dailyCalorieTarget'),
+  'Home calorie target supports a user-defined override'
+);
+assert(
+  profileModal.includes('Mục tiêu calo/ngày tùy chỉnh') &&
+    profileModal.includes("updateField('dailyCalorieTarget'") &&
+    logsPage.includes('profile?.dailyCalorieTarget'),
+  'Custom calorie target is editable in profile and reused on the Health screen'
 );
 assert(
   !homePage.includes('≈ {plannedCalories.toLocaleString'),
