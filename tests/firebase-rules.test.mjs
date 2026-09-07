@@ -172,7 +172,16 @@ try {
   await assertSucceeds(
     setDoc(aliceMetaV2, {
       schemaVersion: 2,
-      migrationSource: 'appState-v1'
+      migrationSource: 'appState-v1',
+      mediaPolicy: 'PUBLIC_URL_ONLY'
+    })
+  );
+
+  await assertFails(
+    setDoc(aliceMetaV2, {
+      schemaVersion: 2,
+      migrationSource: 'v2',
+      mediaPolicy: 'FIREBASE_STORAGE'
     })
   );
 

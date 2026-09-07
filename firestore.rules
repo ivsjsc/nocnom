@@ -112,9 +112,12 @@ service cloud.firestore {
             && request.resource.data.keys().hasOnly([
               'schemaVersion',
               'migrationSource',
+              'mediaPolicy',
               'updatedAt'
             ])
             && request.resource.data.migrationSource is string
+            && (!('mediaPolicy' in request.resource.data)
+              || request.resource.data.mediaPolicy == 'PUBLIC_URL_ONLY')
           )
         );
 
