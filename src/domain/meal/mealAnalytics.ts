@@ -92,6 +92,18 @@ export const getLogsForVietnamDate = <T extends AnalyticsLog>(
 ): T[] =>
   logs.filter(log => getVietnamDateKey(log.timestamp) === dateKey);
 
+export const isDishConsumedForMeal = (
+  logs: AnalyticsLog[],
+  mealKey: MealKey,
+  dish: Pick<AnalyticsDish, 'name' | 'legacyNames'>
+): boolean =>
+  logs.some(
+    log =>
+      log.mealKey === mealKey &&
+      (log.dishName === dish.name ||
+        dish.legacyNames?.includes(log.dishName))
+  );
+
 export const calculateConsumedCalories = (
   logs: AnalyticsLog[],
   dishes: AnalyticsDish[],
