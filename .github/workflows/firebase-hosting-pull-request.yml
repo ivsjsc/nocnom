@@ -39,8 +39,16 @@ jobs:
 
       - run: npm run build
 
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      # Dependabot PRs cannot read repository secrets. Keep all verification
+      # gates above, but skip only the Firebase preview deployment for that actor.
+      - name: Deploy Firebase Hosting preview
+        if: ${{ github.actor != 'dependabot[bot]' }}
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_COCOA_35632 }}
           projectId: cocoa-35632
+
+      - name: Dependabot preview policy
+        if: ${{ github.actor == 'dependabot[bot]' }}
+        run: echo "Dependabot verification passed; Firebase preview skipped because repository secrets are intentionally unavailable."
