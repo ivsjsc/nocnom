@@ -1,5 +1,31 @@
-export type MealAddonKind = 'fruit' | 'drink';
+export type MealAddonKind =
+  | 'fruit'
+  | 'drink'
+  | 'side'
+  | 'dessert';
+
 export type ServingUnit = 'g' | 'ml' | 'portion';
+
+export const MEAL_ADDON_KIND_LABELS: Record<MealAddonKind, string> = {
+  fruit: 'Trái cây',
+  drink: 'Đồ uống',
+  side: 'Món phụ',
+  dessert: 'Tráng miệng'
+};
+
+export const defaultServingUnitForAddonKind = (
+  kind: MealAddonKind
+): ServingUnit => (kind === 'drink' ? 'ml' : 'g');
+
+export type UserMealAddon = {
+  id: string;
+  kind: MealAddonKind;
+  name: string;
+  calories: number;
+  servingAmount?: number;
+  servingUnit?: ServingUnit;
+  createdAt: number;
+};
 
 export type MealAddonSnapshot = {
   id: string;
@@ -13,6 +39,13 @@ export type MealAddonSnapshot = {
   kcalMin?: number;
   kcalMax?: number;
 };
+
+const validKinds = new Set<MealAddonKind>([
+  'fruit',
+  'drink',
+  'side',
+  'dessert'
+]);
 
 const validNonNegative = (value: unknown): value is number =>
   typeof value === 'number' &&
@@ -32,7 +65,7 @@ export const normalizeMealAddons = (
   const normalized: MealAddonSnapshot[] = [];
 
   for (const addon of addons) {
-    if (!addon || (addon.kind !== 'fruit' && addon.kind !== 'drink')) {
+    if (!addon || !validKinds.has(addon.kind)) {
       continue;
     }
 
@@ -60,9 +93,7 @@ export const normalizeMealAddons = (
       providedUnit ??
       (servingAmount === undefined
         ? 'portion'
-        : addon.kind === 'drink'
-          ? 'ml'
-          : 'g');
+        : defaultServingUnitForAddonKind(addon.kind));
 
     const rawCalories = optionalNonNegative(addon.calories);
     const kcalMin = optionalNonNegative(addon.kcalMin);
