@@ -246,7 +246,7 @@ export class NutritionService {
     };
   }
 
-  public async getAddons(kind?: 'fruit' | 'drink'): Promise<NutritionAddonOption[]> {
+  public async getAddons(kind?: NutritionAddonOption['kind']): Promise<NutritionAddonOption[]> {
     if (this.addonCatalog) {
       return kind ? this.addonCatalog.filter(a => a.kind === kind) : this.addonCatalog;
     }
