@@ -127,6 +127,15 @@ assert(
   'Home calorie card separates consumed calories from the daily target'
 );
 assert(
+  !homePage.includes('Calo hôm nay') &&
+    !homePage.includes('Còn lại ≈'),
+  'Home calorie card omits redundant title and remaining-calorie footer'
+);
+assert(
+  homePage.includes('profile?.dailyCalorieTarget'),
+  'Home calorie target supports a user-defined override'
+);
+assert(
   !homePage.includes('≈ {plannedCalories.toLocaleString'),
   'Home calorie headline no longer presents planned menu calories as consumed calories'
 );
