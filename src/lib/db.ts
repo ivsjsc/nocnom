@@ -9,6 +9,7 @@ import {
   dishNutritionFieldsToMealSnapshot,
   nutritionSelectionToDishFields
 } from '../domain/nutrition/nutritionPersistence';
+import { normalizeKcalInternal } from '../domain/nutrition/caloriePrecision';
 import { migrateDefaultDishRecords } from '../domain/menu/defaultDishMigration';
 import { normalizePriceVnd } from '../domain/menu/vendorOffer';
 import {
@@ -95,18 +96,27 @@ export type Dish = {
   calorieBasis?: 'portion' | 'grams' | 'category' | 'serving' | '100g';
   portionSize?: 'S' | 'M' | 'L';
   portionGrams?: number;
+  servingAmount?: number;
+  servingUnit?: 'g' | 'ml' | 'portion';
   kcalMin?: number;
   kcalMax?: number;
   nutritionRecordId?: string;
+  nutritionCanonicalName?: string;
   nutritionConfidence?:
     | NutritionConfidenceLevel
     | 'verified'
     | 'estimated'
     | 'unknown';
   nutritionVerificationState?: string;
+  nutritionCalorieStatus?: string;
+  nutritionValidationResult?: string;
+  nutritionTrainingEligibility?: string;
+  nutritionReferenceOnly?: boolean;
   nutritionSource?: string;
+  nutritionSourceId?: string;
   nutritionSourceUrl?: string;
   nutritionMatchType?: string;
+  nutritionMatchScore?: number;
   legacyNames?: string[];
   vendors: Vendor[];
 };
@@ -132,18 +142,27 @@ export type LogEntry = {
   calorieBasis?: 'portion' | 'grams' | 'category' | 'serving' | '100g';
   portionSize?: 'S' | 'M' | 'L';
   portionGrams?: number;
+  servingAmount?: number;
+  servingUnit?: 'g' | 'ml' | 'portion';
   kcalMin?: number;
   kcalMax?: number;
   nutritionRecordId?: string;
+  nutritionCanonicalName?: string;
   nutritionConfidence?:
     | NutritionConfidenceLevel
     | 'verified'
     | 'estimated'
     | 'unknown';
   nutritionVerificationState?: string;
+  nutritionCalorieStatus?: string;
+  nutritionValidationResult?: string;
+  nutritionTrainingEligibility?: string;
+  nutritionReferenceOnly?: boolean;
   nutritionSource?: string;
+  nutritionSourceId?: string;
   nutritionSourceUrl?: string;
   nutritionMatchType?: string;
+  nutritionMatchScore?: number;
   timestamp: number;
 };
 
@@ -210,10 +229,12 @@ const categoryCalorieDefaults: Record<string, number> = {
 export const getDefaultCaloriesForCategory = (categoryId: string) =>
   categoryCalorieDefaults[categoryId] ?? 500;
 
-export const estimateDishCalories = (dish: Pick<Dish, 'calories' | 'categoryId'>) => {
-  const calories = Number(dish.calories);
-  if (Number.isFinite(calories) && calories > 0) {
-    return Math.round(calories);
+export const estimateDishCalories = (
+  dish: Pick<Dish, 'calories' | 'categoryId'>
+) => {
+  const calories = normalizeKcalInternal(dish.calories);
+  if (calories !== null && calories > 0) {
+    return calories;
   }
 
   return getDefaultCaloriesForCategory(dish.categoryId);
@@ -781,15 +802,14 @@ const hydrateDishCaloriesFromKnowledge = async (dishId: string, foodName: string
 
 export const sumMealAddonCalories = (
   log: Pick<LogEntry, 'addons'>
-): number =>
-  (log.addons ?? []).reduce((total, addon) => {
-    const calories = Number(addon.calories);
-    return total + (
-      Number.isFinite(calories) && calories >= 0
-        ? Math.round(calories)
-        : 0
-    );
+): number => {
+  const total = (log.addons ?? []).reduce((sum, addon) => {
+    const calories = normalizeKcalInternal(addon.calories);
+    return sum + (calories ?? 0);
   }, 0);
+
+  return normalizeKcalInternal(total) ?? 0;
+};
 
 const hydrateMissingDishCalories = async () => {
   const candidates = dishesData.filter(dish =>
@@ -981,15 +1001,16 @@ const upsertMealLogData = ({
     getVietnamDateKey(log.timestamp) === dateKey
   );
 
+  const resolvedCalories = nutritionSnapshot
+    ? normalizeKcalInternal(nutritionSnapshot.calories)
+    : normalizeKcalInternal(calories);
+
   const newLog: LogEntry = {
     id: existingIndex >= 0 ? logsData[existingIndex].id : createLocalId('l'),
     dishName: normalizedDishName,
     vendorName: normalizedVendorName,
     price: priceVnd,
-    calories:
-      typeof calories === 'number' && Number.isFinite(calories)
-        ? Math.max(0, Math.round(calories))
-        : undefined,
+    calories: resolvedCalories ?? undefined,
     addons: normalizeMealAddons(addons),
     mealKey,
     ...(nutritionSnapshot
@@ -998,15 +1019,26 @@ const upsertMealLogData = ({
           calorieBasis: nutritionSnapshot.calorieBasis,
           portionSize: nutritionSnapshot.portionSize,
           portionGrams: nutritionSnapshot.portionGrams,
+          servingAmount: nutritionSnapshot.servingAmount,
+          servingUnit: nutritionSnapshot.servingUnit,
           kcalMin: nutritionSnapshot.kcalMin,
           kcalMax: nutritionSnapshot.kcalMax,
           nutritionRecordId: nutritionSnapshot.nutritionRecordId,
+          nutritionCanonicalName: nutritionSnapshot.nutritionCanonicalName,
           nutritionConfidence: nutritionSnapshot.nutritionConfidence,
           nutritionVerificationState:
             nutritionSnapshot.nutritionVerificationState,
+          nutritionCalorieStatus: nutritionSnapshot.nutritionCalorieStatus,
+          nutritionValidationResult:
+            nutritionSnapshot.nutritionValidationResult,
+          nutritionTrainingEligibility:
+            nutritionSnapshot.nutritionTrainingEligibility,
+          nutritionReferenceOnly: nutritionSnapshot.nutritionReferenceOnly,
           nutritionSource: nutritionSnapshot.nutritionSource,
+          nutritionSourceId: nutritionSnapshot.nutritionSourceId,
           nutritionSourceUrl: nutritionSnapshot.nutritionSourceUrl,
-          nutritionMatchType: nutritionSnapshot.nutritionMatchType
+          nutritionMatchType: nutritionSnapshot.nutritionMatchType,
+          nutritionMatchScore: nutritionSnapshot.nutritionMatchScore
         }
       : {}),
     timestamp: timestampForMealDate(dateKey, mealKey)
@@ -1095,7 +1127,7 @@ export const mockDb = {
         dishName,
         vendorName,
         price,
-        calories,
+        calories: normalizeKcalInternal(calories) ?? undefined,
         addons: normalizeMealAddons(addons),
         ...(nutritionSnapshot || {}),
         timestamp: now
@@ -1196,23 +1228,41 @@ export const mockDb = {
     }
   },
   updateDishCalories: (id: string, calories: number) => {
+    const normalizedCalories = normalizeKcalInternal(calories);
+    if (
+      normalizedCalories === null ||
+      normalizedCalories <= 0 ||
+      normalizedCalories > 5000
+    ) {
+      throw new Error('Calo phải là số hợp lệ từ 0 đến 5.000 kcal/phần.');
+    }
+
     dishesData = dishesData.map(d =>
       d.id === id
         ? {
             ...d,
-            calories: Math.round(calories),
+            calories: normalizedCalories,
             calorieSource: 'manual',
             calorieBasis: 'serving',
             portionSize: undefined,
             portionGrams: undefined,
+            servingAmount: undefined,
+            servingUnit: undefined,
             kcalMin: undefined,
             kcalMax: undefined,
             nutritionRecordId: undefined,
+            nutritionCanonicalName: undefined,
             nutritionConfidence: undefined,
             nutritionVerificationState: undefined,
+            nutritionCalorieStatus: undefined,
+            nutritionValidationResult: undefined,
+            nutritionTrainingEligibility: undefined,
+            nutritionReferenceOnly: undefined,
             nutritionSource: undefined,
+            nutritionSourceId: undefined,
             nutritionSourceUrl: undefined,
-            nutritionMatchType: undefined
+            nutritionMatchType: undefined,
+            nutritionMatchScore: undefined
           }
         : d
     );
@@ -1258,8 +1308,7 @@ export const mockDb = {
   updateDishName: (id: string, newName: string) => {
     const current = dishesData.find(dish => dish.id === id);
     const shouldRefreshKnowledge =
-      current?.calorieSource === 'knowledge' ||
-      typeof current?.calories !== 'number';
+      current?.calorieSource !== 'manual';
 
     dishesData = dishesData.map(d =>
       d.id === id
@@ -1277,19 +1326,28 @@ export const mockDb = {
                 : current?.legacyNames,
             ...(shouldRefreshKnowledge
               ? {
-                  calories: undefined,
-                  calorieSource: undefined,
-                  calorieBasis: undefined,
+                  calories: getDefaultCaloriesForCategory(d.categoryId),
+                  calorieSource: 'category-fallback' as const,
+                  calorieBasis: 'category' as const,
                   portionSize: undefined,
                   portionGrams: undefined,
+                  servingAmount: undefined,
+                  servingUnit: undefined,
                   kcalMin: undefined,
                   kcalMax: undefined,
                   nutritionRecordId: undefined,
-                  nutritionConfidence: undefined,
-                  nutritionVerificationState: undefined,
+                  nutritionCanonicalName: undefined,
+                  nutritionConfidence: 'unknown' as const,
+                  nutritionVerificationState: 'UNVERIFIED_FALLBACK',
+                  nutritionCalorieStatus: undefined,
+                  nutritionValidationResult: undefined,
+                  nutritionTrainingEligibility: undefined,
+                  nutritionReferenceOnly: undefined,
                   nutritionSource: undefined,
+                  nutritionSourceId: undefined,
                   nutritionSourceUrl: undefined,
-                  nutritionMatchType: undefined
+                  nutritionMatchType: undefined,
+                  nutritionMatchScore: undefined
                 }
               : {})
           }

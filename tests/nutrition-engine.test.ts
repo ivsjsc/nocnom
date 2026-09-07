@@ -57,10 +57,13 @@ assert(
 
 const selectedL: NutritionSelection = {
   foodId: 'food-x',
+  canonicalName: 'Món X',
   foodName: 'Món X',
   categoryName: 'Món mặn',
   portionSize: 'L',
   portionGrams: 450,
+  servingAmount: 450,
+  servingUnit: 'g',
   kcalTypical: 900,
   kcalMin: 820,
   kcalMax: 980,
@@ -68,14 +71,32 @@ const selectedL: NutritionSelection = {
   confidenceLabel: 'Cao',
   verificationState: 'VERIFIED',
   calorieStatus: 'CALCULATED',
+  validationResult: 'PASS',
+  trainingEligibility: 'TRAINING_CANDIDATE',
+  isReferenceOnly: false,
   source: 'Vietnam Nutrition DB',
+  sourceId: 'nutrition-kb',
   matchType: 'exact_name',
+  matchScore: 100,
   resolutionStatus: 'AUTO_ACCEPT',
   confirmedByUser: false
 };
 const persisted = nutritionSelectionToDishFields(selectedL);
 assert(persisted.calories === 900, 'Selected L=900 kcal is persisted without recalculation');
-assert(persisted.portionSize === 'L' && persisted.portionGrams === 450, 'Selected L portion metadata is persisted');
+assert(
+  persisted.portionSize === 'L' &&
+    persisted.portionGrams === 450 &&
+    persisted.servingAmount === 450 &&
+    persisted.servingUnit === 'g',
+  'Selected L portion and serving metadata are persisted'
+);
+assert(
+  persisted.nutritionCanonicalName === 'Món X' &&
+    persisted.nutritionCalorieStatus === 'CALCULATED' &&
+    persisted.nutritionReferenceOnly === false &&
+    persisted.nutritionMatchScore === 100,
+  'Selection provenance survives persistence'
+);
 
 const reloaded = JSON.parse(JSON.stringify(persisted));
 assert(reloaded.calories === 900 && reloaded.portionSize === 'L', 'Serialized/reloaded dish keeps L=900 kcal');
@@ -83,6 +104,13 @@ assert(reloaded.calories === 900 && reloaded.portionSize === 'L', 'Serialized/re
 const snapshot = dishNutritionFieldsToMealSnapshot(reloaded, reloaded.calories);
 const updatedDbDish = { ...reloaded, calories: 650 };
 assert(snapshot.calories === 900 && updatedDbDish.calories === 650, 'History snapshot remains 900 after Nutrition DB/dish changes');
+assert(
+  snapshot.servingAmount === 450 &&
+    snapshot.servingUnit === 'g' &&
+    snapshot.nutritionCanonicalName === 'Món X' &&
+    snapshot.nutritionMatchScore === 100,
+  'History snapshot keeps serving and match provenance immutable'
+);
 
 const gram100 = calculatePer100gCalories({
   kcalPer100g: 82,
@@ -101,6 +129,15 @@ const gram150 = calculatePer100gCalories({
   servingKcalMax: 380
 });
 assert(gram150?.kcalTypical === 123, '150g calculation uses kcal_per_100g × grams / 100');
+
+const decimalPrecision = calculatePer100gCalories({
+  kcalPer100g: 82.3,
+  grams: 150
+});
+assert(
+  decimalPrecision?.kcalTypical === 123.5,
+  'Internal calorie policy keeps one decimal before display-level rounding'
+);
 
 const gram250 = calculatePer100gCalories({
   kcalPer100g: 82,

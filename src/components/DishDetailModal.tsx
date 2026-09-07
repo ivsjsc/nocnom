@@ -209,8 +209,19 @@ export default function DishDetailModal({
                         ? 'Ước tính theo nhóm món'
                         : 'Dữ liệu cũ'}
                 </span>
-                {dish.portionGrams ? ` · ${dish.portionGrams}g` : ''}
+                {dish.servingAmount
+                  ? ` · ${dish.servingAmount}${dish.servingUnit || 'g'}`
+                  : dish.portionGrams
+                    ? ` · ${dish.portionGrams}g`
+                    : ''}
               </div>
+
+              {dish.nutritionReferenceOnly ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-900">
+                  Dữ liệu tham khảo · {dish.nutritionCalorieStatus || 'REFERENCE_ONLY'} ·
+                  không được coi là số liệu đã xác minh độc lập.
+                </div>
+              ) : null}
 
               {canonicalFood?.energy.kcal_min && canonicalFood.energy.kcal_max && (
                 <div className="text-xs text-slate-600 font-semibold">

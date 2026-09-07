@@ -1,3 +1,5 @@
+import { normalizeKcalInternal } from './caloriePrecision';
+
 export const MAX_GRAM_INPUT = 5000;
 
 export type CalorieRange = {
@@ -31,7 +33,8 @@ export const calculatePer100gCalories = ({
     return null;
   }
 
-  const kcalTypical = Math.round((kcalPer100g * grams) / 100);
+  const kcalTypical =
+    normalizeKcalInternal((kcalPer100g * grams) / 100) ?? 0;
   let kcalMin = kcalTypical;
   let kcalMax = kcalTypical;
 
@@ -45,8 +48,8 @@ export const calculatePer100gCalories = ({
     finiteNonNegative(servingKcalMax)
   ) {
     const ratio = grams / standardServingG;
-    kcalMin = Math.round(servingKcalMin * ratio);
-    kcalMax = Math.round(servingKcalMax * ratio);
+    kcalMin = normalizeKcalInternal(servingKcalMin * ratio) ?? kcalTypical;
+    kcalMax = normalizeKcalInternal(servingKcalMax * ratio) ?? kcalTypical;
   }
 
   return {

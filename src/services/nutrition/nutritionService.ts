@@ -205,8 +205,15 @@ export class NutritionService {
     if (!calculation) return null;
 
     const food = result.food;
+    const servingUnit =
+      food.classification?.domain_id === 'beverage' ||
+      food.classification?.category_id === 'beverages'
+        ? 'ml'
+        : 'g';
+
     return {
       foodId: food.id,
+      canonicalName: food.name,
       foodName: food.name,
       categoryName:
         food.classification?.category_vi ||
@@ -214,6 +221,8 @@ export class NutritionService {
         '',
       portionSize,
       portionGrams: calculation.grams,
+      servingAmount: calculation.grams,
+      servingUnit,
       kcalTypical: calculation.kcalTypical,
       kcalMin: calculation.kcalMin,
       kcalMax: calculation.kcalMax,
@@ -221,12 +230,17 @@ export class NutritionService {
       confidenceLabel: result.confidenceLabel,
       verificationState: calculation.verificationState,
       calorieStatus: calculation.calorieStatus,
+      validationResult: food.validation?.result,
+      trainingEligibility: food.validation?.training_eligibility,
+      isReferenceOnly: result.isReferenceOnly,
       source:
         food.provenance?.legacy_source_description ||
         food.provenance?.source_role ||
         'Nutrition Knowledge Base',
+      sourceId: food.provenance?.source_role || 'nutrition-kb',
       sourceUrl: food.provenance?.source_url || undefined,
       matchType: result.matchType,
+      matchScore: result.score,
       resolutionStatus,
       confirmedByUser
     };
@@ -300,7 +314,10 @@ export class NutritionService {
             source: f.provenance?.source_role || 'canonical',
             sourceUrl: f.provenance?.source_url || '',
             confidence: f.confidence.label_vi,
-            isReferenceOnly: f.validation?.training_eligibility === 'REFERENCE_ONLY'
+            isReferenceOnly:
+              f.validation?.training_eligibility === 'REFERENCE_ONLY' ||
+              f.energy?.calorie_status === 'TABLE_LOOKUP' ||
+              f.validation?.result === 'NEEDS_REVIEW'
           }));
         this.addonCatalog = fallbackAddons;
         return fallbackAddons;

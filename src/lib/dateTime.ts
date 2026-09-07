@@ -59,9 +59,6 @@ export const getVietnamDateTimeParts = (
   };
 };
 
-export const getVietnamNow = (timestamp = Date.now()): Date =>
-  new Date(timestamp);
-
 export const getVietnamDateKey = (timestamp = Date.now()): string => {
   const { year, month, day } = getVietnamDateTimeParts(timestamp);
   return [
@@ -119,6 +116,21 @@ export const getVietnamDayKey = (
   const day = new Date(utcDay * DAY_MS).getUTCDay();
   return DAY_KEYS[day];
 };
+
+export type VietnamNow = VietnamDateTimeParts & {
+  timestamp: number;
+  dateKey: string;
+  dayKey: VietnamDayKey;
+};
+
+export const getVietnamNow = (
+  timestamp = Date.now()
+): VietnamNow => ({
+  timestamp,
+  ...getVietnamDateTimeParts(timestamp),
+  dateKey: getVietnamDateKey(timestamp),
+  dayKey: getVietnamDayKey(timestamp)
+});
 
 export const getVietnamWeekday = (
   timestamp = Date.now(),
