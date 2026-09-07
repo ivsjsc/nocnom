@@ -15,7 +15,9 @@ import { normalizePriceVnd } from '../domain/menu/vendorOffer';
 import {
   normalizeMealAddons,
   type MealAddonKind,
-  type MealAddonSnapshot
+  type MealAddonSnapshot,
+  type ServingUnit,
+  type UserMealAddon
 } from '../domain/meal/addonNormalizer';
 import { normalizeExternalImageUrl } from './url';
 import {
@@ -351,13 +353,19 @@ const createDefaultUserState = () => ({
     'new-user'
   ) as Dish[],
   categories: deepClone(initialCategories),
-  logs: [] as LogEntry[]
+  logs: [] as LogEntry[],
+  mealAddons: [] as UserMealAddon[]
 });
 
 let activeCacheUid: string | null = null;
 
 const cacheKey = (
-  key: 'timetable' | 'dishes' | 'categories' | 'logs',
+  key:
+    | 'timetable'
+    | 'dishes'
+    | 'categories'
+    | 'logs'
+    | 'mealAddons',
   uid: string | null = activeCacheUid
 ) => uid
   ? `nocnom_user_${uid}_${key}`
@@ -377,12 +385,15 @@ const readCachedState = (uid: string | null) => {
     const logsRaw =
       localStorage.getItem(cacheKey('logs', uid)) ??
       (!uid ? localStorage.getItem('unifood_logs') : null);
+    const mealAddonsRaw =
+      localStorage.getItem(cacheKey('mealAddons', uid));
 
     if (
       !timetableRaw &&
       !dishesRaw &&
       !categoriesRaw &&
-      !logsRaw
+      !logsRaw &&
+      !mealAddonsRaw
     ) {
       return null;
     }
@@ -406,7 +417,10 @@ const readCachedState = (uid: string | null) => {
         : fallback.categories,
       logs: logsRaw
         ? JSON.parse(logsRaw) as LogEntry[]
-        : fallback.logs
+        : fallback.logs,
+      mealAddons: mealAddonsRaw
+        ? JSON.parse(mealAddonsRaw) as UserMealAddon[]
+        : fallback.mealAddons
     };
   } catch (error) {
     console.error('[local-cache] Unable to read app state', {
@@ -427,6 +441,7 @@ let dbData = initialCachedState.timetable;
 let dishesData: Dish[] = initialCachedState.dishes;
 let categoriesData: Category[] = initialCachedState.categories;
 let logsData: LogEntry[] = initialCachedState.logs;
+let mealAddonsData: UserMealAddon[] = initialCachedState.mealAddons;
 
 const createLocalId = (prefix: string) => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -453,6 +468,10 @@ const writeLocalCache = () => {
       cacheKey('logs'),
       JSON.stringify(logsData)
     );
+    localStorage.setItem(
+      cacheKey('mealAddons'),
+      JSON.stringify(mealAddonsData)
+    );
   } catch (error) {
     console.error('[local-cache] Unable to persist app state', {
       uid: activeCacheUid,
@@ -468,7 +487,8 @@ const currentUserState = () => ({
   timetable: dbData,
   dishes: dishesData,
   categories: categoriesData,
-  logs: logsData
+  logs: logsData,
+  mealAddons: mealAddonsData
 });
 
 const saveToLocalStorage = (...domains: UserStateDomain[]) => {
@@ -490,6 +510,7 @@ const notifyAllListeners = () => {
   dishListeners.forEach(l => l(dishesData));
   categoryListeners.forEach(l => l(categoriesData));
   logListeners.forEach(l => l(logsData));
+  mealAddonListeners.forEach(l => l(mealAddonsData));
 };
 
 const logFirestoreError = (
@@ -600,6 +621,7 @@ export const syncUserWithFirestore = (uid: string | null) => {
       dishesData = anonymousState.dishes;
       categoriesData = anonymousState.categories;
       logsData = anonymousState.logs;
+      mealAddonsData = anonymousState.mealAddons;
       notifyAllListeners();
     } finally {
       isRemoteUpdating = false;
@@ -617,6 +639,7 @@ export const syncUserWithFirestore = (uid: string | null) => {
     dishesData = fallback.dishes;
     categoriesData = fallback.categories;
     logsData = fallback.logs;
+    mealAddonsData = fallback.mealAddons;
     notifyAllListeners();
   } finally {
     isRemoteUpdating = false;
@@ -656,6 +679,7 @@ export const syncUserWithFirestore = (uid: string | null) => {
         dishesData = normalizedLoadedDishes;
         categoriesData = normalizedLoadedCategories;
         logsData = loaded.state.logs;
+        mealAddonsData = loaded.state.mealAddons;
         writeLocalCache();
         notifyAllListeners();
       } finally {
@@ -707,6 +731,8 @@ export const syncUserWithFirestore = (uid: string | null) => {
                 JSON.stringify(incomingCategories);
             } else if (domain === 'logs') {
               logsData = value as LogEntry[];
+            } else if (domain === 'mealAddons') {
+              mealAddonsData = value as UserMealAddon[];
             }
 
             writeLocalCache();
@@ -752,6 +778,7 @@ const listeners: Record<string, Set<Listener>> = {};
 const dishListeners: Set<Listener> = new Set();
 const categoryListeners: Set<Listener> = new Set();
 const logListeners: Set<Listener> = new Set();
+const mealAddonListeners: Set<Listener> = new Set();
 const nutritionHydrationPending = new Set<string>();
 
 const hydrateDishCaloriesFromKnowledge = async (dishId: string, foodName: string) => {
@@ -1096,6 +1123,72 @@ export const mockDb = {
     logListeners.add(callback);
     callback(logsData);
     return () => logListeners.delete(callback);
+  },
+  getMealAddons: () => mealAddonsData,
+  subscribeMealAddons: (callback: Listener) => {
+    mealAddonListeners.add(callback);
+    callback(mealAddonsData);
+    return () => mealAddonListeners.delete(callback);
+  },
+  addMealAddon: (input: {
+    kind: MealAddonKind;
+    name: string;
+    calories: number;
+    servingAmount?: number;
+    servingUnit?: ServingUnit;
+  }): UserMealAddon => {
+    const name = String(input.name ?? '').trim();
+    const calories = normalizeKcalInternal(input.calories);
+
+    if (!name) {
+      throw new Error('Tên món kèm không được để trống.');
+    }
+    if (
+      calories === null ||
+      calories < 0 ||
+      calories > 2000
+    ) {
+      throw new Error('Calo món kèm phải từ 0 đến 2.000 kcal/phần.');
+    }
+
+    const servingAmount =
+      typeof input.servingAmount === 'number' &&
+      Number.isFinite(input.servingAmount) &&
+      input.servingAmount > 0 &&
+      input.servingAmount <= 5000
+        ? input.servingAmount
+        : undefined;
+
+    const normalizedName = normalizeFoodName(name);
+    const existing = mealAddonsData.find(item =>
+      item.kind === input.kind &&
+      normalizeFoodName(item.name) === normalizedName
+    );
+    if (existing) {
+      return existing;
+    }
+
+    const item: UserMealAddon = {
+      id: createLocalId('addon'),
+      kind: input.kind,
+      name,
+      calories,
+      servingAmount,
+      servingUnit:
+        input.servingUnit === 'g' ||
+        input.servingUnit === 'ml' ||
+        input.servingUnit === 'portion'
+          ? input.servingUnit
+          : input.kind === 'drink'
+            ? 'ml'
+            : 'g',
+      createdAt: Date.now()
+    };
+
+    mealAddonsData = [item, ...mealAddonsData];
+    saveToLocalStorage('mealAddons');
+    mealAddonListeners.forEach(listener => listener(mealAddonsData));
+    return item;
   },
   upsertMealLog: upsertMealLogData,
   deleteMealLog: (logId: string) => {
@@ -1573,18 +1666,32 @@ export const mockDb = {
     saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
-  restoreData: (data: { timetable: Timetable; dishes: Dish[]; categories: Category[] }) => {
+  restoreData: (data: {
+    timetable: Timetable;
+    dishes: Dish[];
+    categories: Category[];
+    mealAddons?: UserMealAddon[];
+  }) => {
     dbData = data.timetable;
     dishesData = migrateDefaultDishRecords(
       data.dishes,
       'persisted'
     ) as Dish[];
     categoriesData = normalizeCachedCategories(data.categories);
-    saveToLocalStorage('timetable', 'dishes', 'categories');
+    if (Array.isArray(data.mealAddons)) {
+      mealAddonsData = data.mealAddons;
+    }
+    saveToLocalStorage(
+      'timetable',
+      'dishes',
+      'categories',
+      ...(Array.isArray(data.mealAddons) ? ['mealAddons' as const] : [])
+    );
     
     Object.values(listeners).flatMap(set => Array.from(set)).forEach(l => l(dbData));
     dishListeners.forEach(l => l(dishesData));
     categoryListeners.forEach(l => l(categoriesData));
+    mealAddonListeners.forEach(l => l(mealAddonsData));
     void hydrateMissingDishCalories();
   }
 };

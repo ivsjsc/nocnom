@@ -41,10 +41,29 @@ const normalized = normalizeMealAddons([
     kind: 'drink',
     name: 'Sữa duplicate',
     calories: 120
+  },
+  {
+    id: 'side-1',
+    kind: 'side',
+    name: 'Salad nhỏ',
+    calories: 60,
+    servingAmount: 100,
+    servingUnit: 'g'
+  },
+  {
+    id: 'dessert-1',
+    kind: 'dessert',
+    name: 'Sữa chua',
+    calories: 90,
+    servingAmount: 1,
+    servingUnit: 'portion'
   }
 ]);
 
-assert(normalized.length === 2, 'Persistence allows at most one fruit and one drink');
+assert(
+  normalized.length === 4,
+  'Persistence allows one selection for each supported addon category'
+);
 assert(
   normalized.filter(item => item.kind === 'fruit').length === 1,
   'Duplicate fruit choice is removed'
@@ -59,8 +78,10 @@ assert(
 );
 assert(
   normalized.find(item => item.kind === 'fruit')?.servingUnit === 'g' &&
-    normalized.find(item => item.kind === 'drink')?.servingUnit === 'ml',
-  'Fruit/drink serving units preserve gram/ml semantics'
+    normalized.find(item => item.kind === 'drink')?.servingUnit === 'ml' &&
+    normalized.find(item => item.kind === 'side')?.servingUnit === 'g' &&
+    normalized.find(item => item.kind === 'dessert')?.servingUnit === 'portion',
+  'Addon categories preserve their serving-unit semantics'
 );
 
 const portionFallback = normalizeMealAddons([

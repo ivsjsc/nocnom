@@ -14,18 +14,21 @@ import type {
   LogEntry,
   Timetable
 } from '../lib/db';
+import type { UserMealAddon } from '../domain/meal/addonNormalizer';
 
 export type UserStateDomain =
   | 'timetable'
   | 'dishes'
   | 'categories'
-  | 'logs';
+  | 'logs'
+  | 'mealAddons';
 
 export type UserStateSnapshot = {
   timetable: Timetable;
   dishes: Dish[];
   categories: Category[];
   logs: LogEntry[];
+  mealAddons: UserMealAddon[];
 };
 
 export const USER_STATE_SCHEMA_VERSION = 2;
@@ -33,7 +36,8 @@ export const USER_STATE_DOMAINS: readonly UserStateDomain[] = [
   'timetable',
   'dishes',
   'categories',
-  'logs'
+  'logs',
+  'mealAddons'
 ] as const;
 
 type MigrationSource = 'appState-v1' | 'new-user' | 'v2';
@@ -80,6 +84,12 @@ const serializeDomain = (
     case 'logs':
       return {
         items: stripUndefinedFields(state.logs),
+        schemaVersion: USER_STATE_SCHEMA_VERSION,
+        updatedAt: serverTimestamp()
+      };
+    case 'mealAddons':
+      return {
+        items: stripUndefinedFields(state.mealAddons),
         schemaVersion: USER_STATE_SCHEMA_VERSION,
         updatedAt: serverTimestamp()
       };
@@ -134,24 +144,28 @@ const readV2Snapshot = async (
     timetableSnapshot,
     dishesSnapshot,
     categoriesSnapshot,
-    logsSnapshot
+    logsSnapshot,
+    mealAddonsSnapshot
   ] = await Promise.all([
     getDoc(stateDoc(uid, 'timetable')),
     getDoc(stateDoc(uid, 'dishes')),
     getDoc(stateDoc(uid, 'categories')),
-    getDoc(stateDoc(uid, 'logs'))
+    getDoc(stateDoc(uid, 'logs')),
+    getDoc(stateDoc(uid, 'mealAddons'))
   ]);
 
   const exists =
     timetableSnapshot.exists() ||
     dishesSnapshot.exists() ||
     categoriesSnapshot.exists() ||
-    logsSnapshot.exists();
+    logsSnapshot.exists() ||
+    mealAddonsSnapshot.exists();
 
   const timetableData = timetableSnapshot.data();
   const dishesData = dishesSnapshot.data();
   const categoriesData = categoriesSnapshot.data();
   const logsData = logsSnapshot.data();
+  const mealAddonsData = mealAddonsSnapshot.data();
 
   return {
     exists,
@@ -169,7 +183,10 @@ const readV2Snapshot = async (
         : fallback.categories,
       logs: Array.isArray(logsData?.items)
         ? (logsData.items as LogEntry[])
-        : fallback.logs
+        : fallback.logs,
+      mealAddons: Array.isArray(mealAddonsData?.items)
+        ? (mealAddonsData.items as UserMealAddon[])
+        : fallback.mealAddons
     }
   };
 };
@@ -198,7 +215,8 @@ const readLegacySnapshot = async (
       : fallback.categories,
     logs: Array.isArray(data.logs)
       ? (data.logs as LogEntry[])
-      : fallback.logs
+      : fallback.logs,
+    mealAddons: fallback.mealAddons
   } satisfies UserStateSnapshot;
 };
 
@@ -258,7 +276,12 @@ export const subscribeUserStateDomains = ({
   uid: string;
   onDomain: (
     domain: UserStateDomain,
-    value: Timetable | Dish[] | Category[] | LogEntry[]
+    value:
+      | Timetable
+      | Dish[]
+      | Category[]
+      | LogEntry[]
+      | UserMealAddon[]
   ) => void;
   onError: (domain: UserStateDomain, error: Error) => void;
 }): Unsubscribe => {
@@ -279,7 +302,11 @@ export const subscribeUserStateDomains = ({
         if (Array.isArray(data.items)) {
           onDomain(
             domain,
-            data.items as Dish[] | Category[] | LogEntry[]
+            data.items as
+              | Dish[]
+              | Category[]
+              | LogEntry[]
+              | UserMealAddon[]
           );
         }
       },
