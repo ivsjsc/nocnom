@@ -27,6 +27,7 @@ for (const domain of [
   'dishes',
   'categories',
   'logs',
+  'mealAddons',
   'meta'
 ]) {
   assert(
@@ -86,6 +87,10 @@ const firebaseClient = fs.readFileSync(
   'src/lib/firebase.ts',
   'utf8'
 );
+const mealAddonPicker = fs.readFileSync(
+  'src/components/MealAddonPicker.tsx',
+  'utf8'
+);
 
 assert(
   addDishModal.includes('Ảnh công khai qua URL') &&
@@ -113,6 +118,19 @@ assert(
   userDataStore.includes('stripUndefinedFields(state.dishes)') &&
     firebaseClient.includes('ignoreUndefinedProperties: true'),
   'Firestore persistence has defense-in-depth protection against undefined fields'
+);
+assert(
+  userDataStore.includes("'mealAddons'") &&
+    userDataStore.includes('stripUndefinedFields(state.mealAddons)') &&
+    smoke.includes("stateDocRef(uid, 'mealAddons')"),
+  'Custom meal addons persist in the owner-scoped schema v2 state'
+);
+assert(
+  mealAddonPicker.includes('Tạo món kèm của tôi') &&
+    mealAddonPicker.includes('Tạo và chọn món kèm') &&
+    mealAddonPicker.includes('Nước ép cam') &&
+    mealAddonPicker.includes('Dưa hấu'),
+  'Meal addon UI supports custom creation for fruit, drink and related categories'
 );
 
 const hostingDeploy = workflow.indexOf(
