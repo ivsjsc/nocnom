@@ -5,6 +5,9 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+
+    # Routine dependency maintenance is limited to compatible minor/patch
+    # upgrades. Major upgrades are treated as explicit migrations.
     groups:
       npm-safe-updates:
         patterns:
@@ -12,19 +15,48 @@ updates:
         update-types:
           - "minor"
           - "patch"
+
     ignore:
-      # Vite major upgrades require compatibility review with @tailwindcss/vite.
+      # Core runtime/framework majors require dedicated migration + regression
+      # evidence instead of unattended Dependabot PRs.
+      - dependency-name: "firebase"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "react"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "react-dom"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "lucide-react"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "motion"
+        update-types:
+          - "version-update:semver-major"
+
+      # Build/compiler majors can change peer constraints or type semantics.
       - dependency-name: "vite"
         update-types:
           - "version-update:semver-major"
-      # Keep the Tailwind/Vite integration on the validated major line.
+      - dependency-name: "@vitejs/plugin-react"
+        update-types:
+          - "version-update:semver-major"
       - dependency-name: "@tailwindcss/vite"
         update-types:
           - "version-update:semver-major"
       - dependency-name: "tailwindcss"
         update-types:
           - "version-update:semver-major"
-      # Test runner upgrades can pull a new esbuild major; review deliberately.
+      - dependency-name: "autoprefixer"
+        update-types:
+          - "version-update:semver-major"
       - dependency-name: "tsx"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@types/node"
         update-types:
           - "version-update:semver-major"
