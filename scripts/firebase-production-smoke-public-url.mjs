@@ -55,6 +55,7 @@ const STATE_DOMAINS = [
   'dishes',
   'categories',
   'logs',
+  'mealAddons',
   'meta'
 ];
 
@@ -117,6 +118,7 @@ try {
   const dishesRef = stateDocRef(uid, 'dishes');
   const categoriesRef = stateDocRef(uid, 'categories');
   const logsRef = stateDocRef(uid, 'logs');
+  const mealAddonsRef = stateDocRef(uid, 'mealAddons');
   const metaRef = stateDocRef(uid, 'meta');
 
   await setDoc(profileRef, {
@@ -142,6 +144,21 @@ try {
     }),
     setDoc(logsRef, {
       items: [],
+      schemaVersion: 2,
+      updatedAt: serverTimestamp()
+    }),
+    setDoc(mealAddonsRef, {
+      items: [
+        {
+          id: 'addon-smoke-' + runId,
+          kind: 'drink',
+          name: 'Nước ép cam',
+          calories: 95,
+          servingAmount: 250,
+          servingUnit: 'ml',
+          createdAt: Date.now()
+        }
+      ],
       schemaVersion: 2,
       updatedAt: serverTimestamp()
     }),
@@ -173,6 +190,7 @@ try {
     assertStateDocumentExists(dishesRef, 'dishes'),
     assertStateDocumentExists(categoriesRef, 'categories'),
     assertStateDocumentExists(logsRef, 'logs'),
+    assertStateDocumentExists(mealAddonsRef, 'mealAddons'),
     assertStateDocumentExists(metaRef, 'meta')
   ]);
 
@@ -195,6 +213,7 @@ try {
     assertStateDocumentExists(dishesRef, 'dishes'),
     assertStateDocumentExists(categoriesRef, 'categories'),
     assertStateDocumentExists(logsRef, 'logs'),
+    assertStateDocumentExists(mealAddonsRef, 'mealAddons'),
     assertStateDocumentExists(metaRef, 'meta')
   ]);
 
