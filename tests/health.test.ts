@@ -90,7 +90,7 @@ assert(
   calculateDailyCalorieTargetFromProfile({
     weightKg: 60,
     heightCm: 165,
-    dateOfBirth: '07/09/2000',
+    dateOfBirth: '08/09/2000',
     gender: 'female',
     activityLevel: 'moderate',
     healthGoal: 'maintain',
