@@ -21,6 +21,9 @@ import {
   calculateBMI,
   getBMICategory,
   getIdealWeightRange,
+  HEALTH_LIMITS,
+  DEFAULT_BMI_REFERENCE_SYSTEM,
+  BMI_REFERENCE_LABELS,
   type ActivityLevel,
   type Gender,
   type HealthGoal
@@ -196,11 +199,12 @@ export default function ProfileModal({
     const heightValue = Number(form.heightCm);
     if (
       form.heightCm.trim() &&
-      (!Number.isFinite(heightValue) || heightValue < 80 || heightValue > 240)
+      (!Number.isFinite(heightValue) || heightValue < HEALTH_LIMITS.heightCm.min ||
+        heightValue > HEALTH_LIMITS.heightCm.max)
     ) {
       setStatus({
         type: 'error',
-        message: 'Chiều cao phải nằm trong khoảng 80–240 cm.'
+        message: `Chiều cao phải nằm trong khoảng ${HEALTH_LIMITS.heightCm.min}–${HEALTH_LIMITS.heightCm.max} cm.`
       });
       return;
     }
@@ -208,11 +212,12 @@ export default function ProfileModal({
     const weightValue = Number(form.weightKg);
     if (
       form.weightKg.trim() &&
-      (!Number.isFinite(weightValue) || weightValue < 25 || weightValue > 220)
+      (!Number.isFinite(weightValue) || weightValue < HEALTH_LIMITS.weightKg.min ||
+        weightValue > HEALTH_LIMITS.weightKg.max)
     ) {
       setStatus({
         type: 'error',
-        message: 'Cân nặng phải nằm trong khoảng 25–220 kg.'
+        message: `Cân nặng phải nằm trong khoảng ${HEALTH_LIMITS.weightKg.min}–${HEALTH_LIMITS.weightKg.max} kg.`
       });
       return;
     }
@@ -451,8 +456,8 @@ export default function ProfileModal({
                     </span>
                     <input
                       type="number"
-                      min="80"
-                      max="240"
+                      min={HEALTH_LIMITS.heightCm.min}
+                      max={HEALTH_LIMITS.heightCm.max}
                       step="0.5"
                       placeholder="VD: 168"
                       value={form.heightCm}
@@ -467,8 +472,8 @@ export default function ProfileModal({
                     </span>
                     <input
                       type="number"
-                      min="25"
-                      max="220"
+                      min={HEALTH_LIMITS.weightKg.min}
+                      max={HEALTH_LIMITS.weightKg.max}
                       step="0.1"
                       placeholder="VD: 58"
                       value={form.weightKg}
@@ -495,6 +500,9 @@ export default function ProfileModal({
 
                     <div className="mt-2 text-[11px] font-medium text-slate-600">
                       {bmiCategory.description}
+                    </div>
+                    <div className="mt-1 text-[10px] font-semibold text-slate-500">
+                      Hệ quy chiếu: {BMI_REFERENCE_LABELS[DEFAULT_BMI_REFERENCE_SYSTEM]}
                     </div>
 
                     {idealWeight && (
@@ -540,7 +548,7 @@ export default function ProfileModal({
                       className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="">Chọn mục tiêu dinh dưỡng</option>
-                      <option value="maintain">Duy trì cân nặng lý tưởng</option>
+                      <option value="maintain">Duy trì theo TDEE ước tính</option>
                       <option value="lose">Giảm cân, thon gọn (Thâm hụt nhẹ -300 kcal/ngày)</option>
                       <option value="gain">Tăng cân, tăng cơ (Thặng dư nhẹ +300 kcal/ngày)</option>
                     </select>

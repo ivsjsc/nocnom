@@ -48,11 +48,15 @@ import {
   calculateAge,
   calculateBMI,
   calculateBMR,
-  calculateCalorieGoal,
-  calculateTDEE,
+  calculateCalorieGoalPlan,
+  calculateTDEEEstimate,
   calculateWaterRequirement,
   getBMICategory,
   getIdealWeightRange,
+  roundEnergyEstimateForDisplay,
+  HEALTH_LIMITS,
+  DEFAULT_BMI_REFERENCE_SYSTEM,
+  BMI_REFERENCE_LABELS,
   ACTIVITY_LABELS,
   GOAL_LABELS
 } from '../lib/healthUtils';
@@ -403,11 +407,13 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   const rawHeight = Number(profile?.heightCm);
   const rawWeight = Number(profile?.weightKg);
   const heightNum =
-    Number.isFinite(rawHeight) && rawHeight >= 80 && rawHeight <= 240
+    Number.isFinite(rawHeight) && rawHeight >= HEALTH_LIMITS.heightCm.min &&
+      rawHeight <= HEALTH_LIMITS.heightCm.max
       ? rawHeight
       : null;
   const weightNum =
-    Number.isFinite(rawWeight) && rawWeight >= 25 && rawWeight <= 220
+    Number.isFinite(rawWeight) && rawWeight >= HEALTH_LIMITS.weightKg.min &&
+      rawWeight <= HEALTH_LIMITS.weightKg.max
       ? rawWeight
       : null;
   const gender = profile?.gender || '';
@@ -415,7 +421,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   const healthGoal = profile?.healthGoal || '';
   const age = profile?.dateOfBirth ? calculateAge(profile.dateOfBirth) : null;
   const hasBmrGender = gender === 'male' || gender === 'female';
-  const hasAdultAge = age !== null && age >= 18;
+  const hasAdultAge = age !== null && age >= HEALTH_LIMITS.age.min;
 
   const missingHealthFields = [
     !heightNum ? 'chiều cao' : '',
@@ -436,8 +442,16 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
     healthProfileComplete && heightNum && weightNum && age !== null
       ? calculateBMR(weightNum, heightNum, age, gender)
       : null;
-  const tdee = calculateTDEE(bmr, activityLevel);
-  const targetCalories = calculateCalorieGoal(tdee, healthGoal);
+  const tdeeEstimate = calculateTDEEEstimate(bmr, activityLevel);
+  const tdee = tdeeEstimate?.value ?? null;
+  const calorieGoalPlan = calculateCalorieGoalPlan(tdee, healthGoal);
+  const targetCalories = calorieGoalPlan?.value ?? null;
+  const displayTdee =
+    tdee !== null ? roundEnergyEstimateForDisplay(tdee) : null;
+  const displayTargetCalories =
+    targetCalories !== null
+      ? roundEnergyEstimateForDisplay(targetCalories)
+      : null;
 
   const waterReq = weightNum ? calculateWaterRequirement(weightNum) : null;
 
@@ -619,7 +633,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                     Chỉ số thể trạng
                   </span>
                   <span className="text-sm font-black text-slate-950 dark:text-white">
-                    BMI · ngưỡng tham khảo châu Á
+                    BMI · {BMI_REFERENCE_LABELS[DEFAULT_BMI_REFERENCE_SYSTEM]}
                   </span>
                 </div>
               </div>
@@ -698,8 +712,8 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               </div>
 
               <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] font-black text-blue-800 dark:border-blue-800 dark:bg-blue-500/15 dark:text-blue-200">
-                {targetCalories !== null
-                  ? `Mục tiêu: ${targetCalories.toLocaleString('vi-VN')} kcal`
+                {displayTargetCalories !== null
+                  ? `Mục tiêu ≈ ${displayTargetCalories.toLocaleString('vi-VN')} kcal`
                   : 'Cần hồ sơ đầy đủ'}
               </span>
             </div>
@@ -711,8 +725,8 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   {todayCalories.toLocaleString('vi-VN')}
                 </span>
                 <span className="health-copy text-sm font-black">
-                  / {targetCalories !== null
-                    ? `${targetCalories.toLocaleString('vi-VN')} kcal`
+                  / {displayTargetCalories !== null
+                    ? `≈ ${displayTargetCalories.toLocaleString('vi-VN')} kcal`
                     : '-- kcal'}
                 </span>
               </div>
@@ -734,19 +748,27 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                 {calorieRemaining === null
                   ? 'Hoàn thiện hồ sơ để tính mục tiêu'
                   : calorieRemaining > 0
-                    ? `Còn ~${calorieRemaining.toLocaleString('vi-VN')} kcal`
+                    ? `Còn khoảng ${roundEnergyEstimateForDisplay(calorieRemaining).toLocaleString('vi-VN')} kcal`
                     : calorieRemaining < 0
-                      ? `Vượt ~${Math.abs(calorieRemaining).toLocaleString('vi-VN')} kcal`
+                      ? `Vượt khoảng ${roundEnergyEstimateForDisplay(Math.abs(calorieRemaining)).toLocaleString('vi-VN')} kcal`
                       : 'Đã đạt đúng mục tiêu'}
               </span>
             </div>
+            {displayTdee !== null && tdee !== null ? (
+              <div className="health-copy mt-2 text-[11px] font-bold">
+                TDEE ước tính ≈ {displayTdee.toLocaleString('vi-VN')} kcal/ngày
+                <span className="font-semibold">
+                  {' '}· giá trị tính toán {tdee.toLocaleString('vi-VN')} kcal
+                </span>
+              </div>
+            ) : null}
           </div>
 
           {/* Gợi ý nước uống */}
           <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-cyan-300 bg-cyan-50 p-3.5 text-xs font-black text-cyan-950 dark:border-cyan-700 dark:bg-cyan-950/70 dark:text-cyan-50">
             <Droplets className="h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-400" />
             <div className="min-w-0 flex-1">
-              <span>Ước tính nước: </span>
+              <span>Ước tính nước tham khảo: </span>
               {waterReq ? (
                 <>
                   <span className="font-extrabold text-cyan-700 dark:text-cyan-300">
