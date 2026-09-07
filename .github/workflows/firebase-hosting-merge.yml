@@ -75,4 +75,4 @@ jobs:
           projectId: cocoa-35632
 
       - name: Production Firebase smoke test
-        run: node scripts/firebase-production-smoke-v2.mjs
+        run: node scripts/firebase-production-smoke-public-url.mjs

@@ -12,7 +12,7 @@ function assert(condition: boolean, message: string) {
 }
 
 const smoke = fs.readFileSync(
-  'scripts/firebase-production-smoke-v2.mjs',
+  'scripts/firebase-production-smoke-public-url.mjs',
   'utf8'
 );
 const workflow = fs.readFileSync(
@@ -53,15 +53,34 @@ assert(
   'Production smoke verifies logout/login persistence'
 );
 assert(
-  smoke.includes('getDownloadURL(firstRef)') &&
-    smoke.includes('getBytes(firstRef)') &&
-    smoke.includes('deleteObject(firstRef)'),
-  'Production smoke verifies Storage URL, read and cleanup'
+  smoke.includes("mediaPolicy: 'PUBLIC_URL_ONLY'") &&
+    smoke.includes("imageSource: 'wikimedia-commons'") &&
+    smoke.includes('publicImageUrl'),
+  'Production smoke verifies public image URL persistence'
 );
 assert(
-  smoke.includes('secondRef') &&
-    smoke.includes('schema v2 image replacement metadata failed'),
-  'Production smoke verifies image replacement against schema v2'
+  !smoke.includes("from 'firebase/storage'") &&
+    !smoke.includes('uploadBytes(') &&
+    !smoke.includes('getBytes(') &&
+    !smoke.includes('deleteObject('),
+  'Production smoke has no Firebase Storage dependency'
+);
+
+const addDishModal = fs.readFileSync(
+  'src/components/AddDishModal.tsx',
+  'utf8'
+);
+
+assert(
+  addDishModal.includes('Ảnh công khai qua URL') &&
+    addDishModal.includes('dán URL ảnh HTTPS ổn định'),
+  'Add Dish UI exposes the public URL media policy'
+);
+assert(
+  !addDishModal.includes('type="file"') &&
+    !addDishModal.includes('uploadUserFoodImage') &&
+    !addDishModal.includes("source: 'firebase-storage'"),
+  'Add Dish UI does not offer Firebase Storage uploads'
 );
 
 const hostingDeploy = workflow.indexOf(
