@@ -43,21 +43,55 @@ const auth = getAuth(app);
 const firestore = getFirestore(app);
 const storage = getStorage(app);
 
+const STATE_DOMAINS = ['timetable', 'dishes', 'categories', 'logs', 'meta'];
+
 let uid = '';
 let firstPath = '';
 let secondPath = '';
 
+const stateDocRef = (userId, domain) =>
+  doc(firestore, 'users', userId, 'state', domain);
+
+const deleteUserDocuments = async userId => {
+  await Promise.all([
+    deleteDoc(doc(firestore, 'users', userId, 'profile', 'main')).catch(() => undefined),
+    ...STATE_DOMAINS.map(domain =>
+      deleteDoc(stateDocRef(userId, domain)).catch(() => undefined)
+    )
+  ]);
+};
+
 const safeCleanup = async () => {
+  if (!auth.currentUser && uid) {
+    await signInWithEmailAndPassword(auth, email, password).catch(() => undefined);
+  }
+
   const user = auth.currentUser;
   if (!user) return;
 
-  const tasks = [];
-  if (firstPath) tasks.push(deleteObject(ref(storage, firstPath)).catch(() => undefined));
-  if (secondPath) tasks.push(deleteObject(ref(storage, secondPath)).catch(() => undefined));
-  tasks.push(deleteDoc(doc(firestore, 'users', user.uid, 'profile', 'main')).catch(() => undefined));
-  tasks.push(deleteDoc(doc(firestore, 'users', user.uid, 'data', 'appState')).catch(() => undefined));
-  await Promise.all(tasks);
+  const storageTasks = [];
+  if (firstPath) {
+    storageTasks.push(
+      deleteObject(ref(storage, firstPath)).catch(() => undefined)
+    );
+  }
+  if (secondPath) {
+    storageTasks.push(
+      deleteObject(ref(storage, secondPath)).catch(() => undefined)
+    );
+  }
+
+  await Promise.all(storageTasks);
+  await deleteUserDocuments(user.uid);
   await deleteUser(user).catch(() => undefined);
+};
+
+const assertStateDocumentExists = async (reference, label) => {
+  const snapshot = await getDoc(reference);
+  if (!snapshot.exists()) {
+    throw new Error(`${label} state document missing`);
+  }
+  return snapshot;
 };
 
 try {
@@ -67,14 +101,51 @@ try {
   secondPath = `users/${uid}/foods/${foodId}/second.png`;
 
   const profileRef = doc(firestore, 'users', uid, 'profile', 'main');
-  const stateRef = doc(firestore, 'users', uid, 'data', 'appState');
+  const timetableRef = stateDocRef(uid, 'timetable');
+  const dishesRef = stateDocRef(uid, 'dishes');
+  const categoriesRef = stateDocRef(uid, 'categories');
+  const logsRef = stateDocRef(uid, 'logs');
+  const metaRef = stateDocRef(uid, 'meta');
 
   await setDoc(profileRef, {
     fullName: 'nOcnOm Production Smoke',
     photoUrl: 'https://example.com/avatar.png',
     updatedAt: serverTimestamp()
   });
-  if (!(await getDoc(profileRef)).exists()) throw new Error('profile create/read failed');
+
+  if (!(await getDoc(profileRef)).exists()) {
+    throw new Error('profile create/read failed');
+  }
+
+  await Promise.all([
+    setDoc(timetableRef, {
+      value: {},
+      schemaVersion: 2,
+      updatedAt: serverTimestamp()
+    }),
+    setDoc(categoriesRef, {
+      items: [],
+      schemaVersion: 2,
+      updatedAt: serverTimestamp()
+    }),
+    setDoc(logsRef, {
+      items: [],
+      schemaVersion: 2,
+      updatedAt: serverTimestamp()
+    }),
+    setDoc(metaRef, {
+      schemaVersion: 2,
+      migrationSource: 'v2',
+      updatedAt: serverTimestamp()
+    })
+  ]);
+
+  await Promise.all([
+    assertStateDocumentExists(timetableRef, 'timetable'),
+    assertStateDocumentExists(categoriesRef, 'categories'),
+    assertStateDocumentExists(logsRef, 'logs'),
+    assertStateDocumentExists(metaRef, 'meta')
+  ]);
 
   const firstRef = ref(storage, firstPath);
   await uploadBytes(firstRef, bytes, {
@@ -84,11 +155,8 @@ try {
   const firstUrl = await getDownloadURL(firstRef);
   await getBytes(firstRef);
 
-  await setDoc(stateRef, {
-    timetable: {},
-    categories: [],
-    logs: [],
-    dishes: [{
+  await setDoc(dishesRef, {
+    items: [{
       id: foodId,
       name: 'Smoke Food',
       categoryId: 'smoke',
@@ -101,21 +169,33 @@ try {
       imageSource: 'firebase-storage',
       imageUpdatedAt: Date.now()
     }],
+    schemaVersion: 2,
     updatedAt: serverTimestamp()
   });
 
-  let state = await getDoc(stateRef);
-  if (state.data()?.dishes?.[0]?.imagePath !== firstPath) {
-    throw new Error('image metadata write failed');
+  let dishesState = await assertStateDocumentExists(dishesRef, 'dishes');
+  if (dishesState.data()?.items?.[0]?.imagePath !== firstPath) {
+    throw new Error('schema v2 image metadata write failed');
   }
 
   await signOut(auth);
   await signInWithEmailAndPassword(auth, email, password);
 
-  if (!(await getDoc(profileRef)).exists()) throw new Error('profile login persistence failed');
-  state = await getDoc(stateRef);
-  if (state.data()?.dishes?.[0]?.imageUrl !== firstUrl) {
-    throw new Error('app state login persistence failed');
+  if (!(await getDoc(profileRef)).exists()) {
+    throw new Error('profile login persistence failed');
+  }
+
+  const persistedState = await Promise.all([
+    assertStateDocumentExists(timetableRef, 'timetable'),
+    assertStateDocumentExists(dishesRef, 'dishes'),
+    assertStateDocumentExists(categoriesRef, 'categories'),
+    assertStateDocumentExists(logsRef, 'logs'),
+    assertStateDocumentExists(metaRef, 'meta')
+  ]);
+
+  dishesState = persistedState[1];
+  if (dishesState.data()?.items?.[0]?.imageUrl !== firstUrl) {
+    throw new Error('schema v2 app state login persistence failed');
   }
   await getBytes(firstRef);
 
@@ -126,44 +206,52 @@ try {
   });
   const secondUrl = await getDownloadURL(secondRef);
 
-  await setDoc(stateRef, {
-    dishes: [{
-      id: foodId,
-      name: 'Smoke Food',
-      categoryId: 'smoke',
-      isFavorite: false,
-      vendors: [],
-      imageUrl: secondUrl,
-      imagePath: secondPath,
-      imageContentType: 'image/png',
-      imageSize: bytes.byteLength,
-      imageSource: 'firebase-storage',
-      imageUpdatedAt: Date.now()
-    }],
-    updatedAt: serverTimestamp()
-  }, { merge: true });
+  await setDoc(
+    dishesRef,
+    {
+      items: [{
+        id: foodId,
+        name: 'Smoke Food',
+        categoryId: 'smoke',
+        isFavorite: false,
+        vendors: [],
+        imageUrl: secondUrl,
+        imagePath: secondPath,
+        imageContentType: 'image/png',
+        imageSize: bytes.byteLength,
+        imageSource: 'firebase-storage',
+        imageUpdatedAt: Date.now()
+      }],
+      schemaVersion: 2,
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
 
-  state = await getDoc(stateRef);
-  if (state.data()?.dishes?.[0]?.imagePath !== secondPath) {
-    throw new Error('image replacement metadata failed');
+  dishesState = await getDoc(dishesRef);
+  if (dishesState.data()?.items?.[0]?.imagePath !== secondPath) {
+    throw new Error('schema v2 image replacement metadata failed');
   }
 
   await deleteObject(firstRef);
   firstPath = '';
   await deleteObject(secondRef);
   secondPath = '';
-  await deleteDoc(profileRef);
-  await deleteDoc(stateRef);
+  await deleteUserDocuments(uid);
   await deleteUser(auth.currentUser);
 
   console.log('nOcnOm production Firebase smoke: PASS', {
     projectId: firebaseConfig.projectId,
     storageBucket: firebaseConfig.storageBucket,
+    stateSchemaVersion: 2,
     uid
   });
 } catch (error) {
   console.error('nOcnOm production Firebase smoke: FAIL', {
-    code: typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : 'unknown',
+    code:
+      typeof error === 'object' && error !== null && 'code' in error
+        ? String(error.code)
+        : 'unknown',
     message: error instanceof Error ? error.message : String(error),
     uid: uid || null
   });
