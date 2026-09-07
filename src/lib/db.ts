@@ -10,6 +10,12 @@ import {
   nutritionSelectionToDishFields
 } from '../domain/nutrition/nutritionPersistence';
 import { migrateDefaultDishRecords } from '../domain/menu/defaultDishMigration';
+import { normalizePriceVnd } from '../domain/menu/vendorOffer';
+import {
+  normalizeMealAddons,
+  type MealAddonKind,
+  type MealAddonSnapshot
+} from '../domain/meal/addonNormalizer';
 import { normalizeExternalImageUrl } from './url';
 import {
   dateKeyFromUtcDay,
@@ -111,20 +117,8 @@ export type Category = {
 };
 
 export type MealKey = 'A' | 'B' | 'C';
-export type MealAddonKind = 'fruit' | 'drink';
-
-export type MealAddon = {
-  id: string;
-  kind: MealAddonKind;
-  name: string;
-  calories: number;
-  nutritionRecordId?: string;
-  servingG?: number;
-  servingAmount?: number;
-  servingUnit?: 'g' | 'ml';
-  kcalMin?: number;
-  kcalMax?: number;
-};
+export type MealAddon = MealAddonSnapshot;
+export type { MealAddonKind };
 
 export type LogEntry = {
   id: string;
@@ -797,56 +791,6 @@ export const sumMealAddonCalories = (
     );
   }, 0);
 
-const normalizeMealAddons = (addons?: MealAddon[]): MealAddon[] => {
-  if (!Array.isArray(addons)) return [];
-
-  const seenKinds = new Set<MealAddonKind>();
-
-  return addons
-    .filter(addon => addon && (addon.kind === 'fruit' || addon.kind === 'drink'))
-    .filter(addon => {
-      if (seenKinds.has(addon.kind)) return false;
-      seenKinds.add(addon.kind);
-      return true;
-    })
-    .map(addon => ({
-      id: String(addon.id).trim(),
-      kind: addon.kind,
-      name: String(addon.name).trim(),
-      calories: Math.max(0, Math.round(Number(addon.calories) || 0)),
-      nutritionRecordId: addon.nutritionRecordId
-        ? String(addon.nutritionRecordId).trim()
-        : undefined,
-      servingG:
-        typeof addon.servingG === 'number' && Number.isFinite(addon.servingG)
-          ? Math.max(0, addon.servingG)
-          : undefined,
-      servingAmount:
-        typeof addon.servingAmount === 'number' &&
-        Number.isFinite(addon.servingAmount)
-          ? Math.max(0, addon.servingAmount)
-          : typeof addon.servingG === 'number' &&
-              Number.isFinite(addon.servingG)
-            ? Math.max(0, addon.servingG)
-            : undefined,
-      servingUnit:
-        addon.servingUnit === 'ml' || addon.servingUnit === 'g'
-          ? addon.servingUnit
-          : addon.kind === 'drink'
-            ? 'ml'
-            : 'g',
-      kcalMin:
-        typeof addon.kcalMin === 'number' && Number.isFinite(addon.kcalMin)
-          ? Math.max(0, Math.round(addon.kcalMin))
-          : undefined,
-      kcalMax:
-        typeof addon.kcalMax === 'number' && Number.isFinite(addon.kcalMax)
-          ? Math.max(0, Math.round(addon.kcalMax))
-          : undefined
-    }))
-    .filter(addon => addon.id && addon.name);
-};
-
 const hydrateMissingDishCalories = async () => {
   const candidates = dishesData.filter(dish =>
     dish.calorieSource === 'knowledge' ||
@@ -916,9 +860,9 @@ const mergeVendorInputs = (
     const address = String(input.address ?? '').trim();
     const phone = String(input.phone ?? '').trim();
     const link = String(input.link ?? '').trim();
-    const price = Number(input.price);
+    const price = normalizePriceVnd(input.price);
 
-    if (!name || !Number.isFinite(price) || price < 0) return;
+    if (!name || price === null) return;
 
     const key = normalizeFoodName(name) + '|' + normalizeFoodName(address);
     const existingIndex = vendors.findIndex(vendor =>
@@ -930,7 +874,7 @@ const mergeVendorInputs = (
       vendors[existingIndex] = {
         ...existing,
         name,
-        price: Math.round(price),
+        price,
         phone: phone || existing.phone,
         address: address || existing.address,
         ...(link ? { link } : {})
@@ -941,7 +885,7 @@ const mergeVendorInputs = (
     vendors.push({
       id: createLocalId('v'),
       name,
-      price: Math.round(price),
+      price,
       phone,
       address,
       ...(link ? { link } : {}),
@@ -1027,7 +971,10 @@ const upsertMealLogData = ({
 
   if (!normalizedDishName) throw new Error('Cần chọn món ăn.');
   if (!normalizedVendorName) throw new Error('Cần chọn quán hoặc nguồn món.');
-  if (!Number.isFinite(price) || price < 0) throw new Error('Giá món không hợp lệ.');
+  const priceVnd = normalizePriceVnd(price);
+  if (priceVnd === null) {
+    throw new Error('Giá món phải là số nguyên VND hợp lệ.');
+  }
 
   const existingIndex = logsData.findIndex(log =>
     log.mealKey === mealKey &&
@@ -1038,7 +985,7 @@ const upsertMealLogData = ({
     id: existingIndex >= 0 ? logsData[existingIndex].id : createLocalId('l'),
     dishName: normalizedDishName,
     vendorName: normalizedVendorName,
-    price: Math.round(price),
+    price: priceVnd,
     calories:
       typeof calories === 'number' && Number.isFinite(calories)
         ? Math.max(0, Math.round(calories))
@@ -1356,11 +1303,20 @@ export const mockDb = {
     }
   },
   updateVendor: (dishId: string, vendorId: string, updates: Partial<Vendor>) => {
+    const safeUpdates = { ...updates };
+    if (updates.price !== undefined) {
+      const normalizedPrice = normalizePriceVnd(updates.price);
+      if (normalizedPrice === null) {
+        throw new Error('Giá quán phải là số nguyên VND hợp lệ.');
+      }
+      safeUpdates.price = normalizedPrice;
+    }
+
     dishesData = dishesData.map(dish => {
       if (dish.id === dishId) {
         return {
           ...dish,
-          vendors: dish.vendors.map(v => v.id === vendorId ? { ...v, ...updates } : v)
+          vendors: dish.vendors.map(v => v.id === vendorId ? { ...v, ...safeUpdates } : v)
         };
       }
       return dish;
@@ -1531,21 +1487,22 @@ export const mockDb = {
     };
   },
   addVendor: (dishId: string, name: string, price: number, phone: string, address: string) => {
+    const normalizedPrice = normalizePriceVnd(price);
+    if (normalizedPrice === null) {
+      throw new Error('Giá quán phải là số nguyên VND hợp lệ.');
+    }
+
     dishesData = dishesData.map(dish => {
-      if (dish.id === dishId) {
-        return {
-          ...dish,
-          vendors: [...dish.vendors, {
-            id: createLocalId('v'),
-            name,
-            price,
-            phone,
-            address,
-            extraInfo: []
-          }]
-        };
-      }
-      return dish;
+      if (dish.id !== dishId) return dish;
+      return {
+        ...dish,
+        vendors: mergeVendorInputs(dish.vendors, [{
+          name,
+          price: normalizedPrice,
+          phone,
+          address
+        }])
+      };
     });
     saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));

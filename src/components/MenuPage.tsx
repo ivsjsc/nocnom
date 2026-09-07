@@ -4,6 +4,7 @@ import { estimateDishCalories, mockDb, type Category, type Dish, type LogEntry }
 import DishDetailModal from './DishDetailModal';
 import AddDishModal from './AddDishModal';
 import DishImage from './DishImage';
+import { normalizePriceVnd } from '../domain/menu/vendorOffer';
 
 const normalizeText = (value: string) =>
   value
@@ -112,8 +113,11 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
       const vendorName = window.prompt('Tên quán:');
       if (!vendorName?.trim()) return;
       const rawPrice = window.prompt('Giá (VND):', '30000');
-      const price = Number(rawPrice);
-      if (!Number.isFinite(price) || price < 0) return;
+      const price = normalizePriceVnd(Number(rawPrice));
+      if (price === null) {
+        window.alert('Giá phải là số nguyên VND hợp lệ.');
+        return;
+      }
       const phone = window.prompt('Số điện thoại:', '') || '';
       const address = window.prompt('Địa chỉ:', '') || '';
       mockDb.addVendor(dish.id, vendorName.trim(), price, phone, address);

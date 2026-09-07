@@ -1,5 +1,6 @@
 import {
-  classifyNutritionCandidate
+  classifyNutritionCandidate,
+  resolveNutritionCandidates
 } from '../src/services/nutrition/nutritionResolver';
 import {
   dishNutritionFieldsToMealSnapshot,
@@ -20,9 +21,11 @@ function assert(condition: boolean, message: string) {
 const fakeResult = (
   matchType: 'exact_name' | 'exact_normalized' | 'exact_alias' | 'prefix' | 'token' | 'partial',
   score: number,
-  isReferenceOnly = false
+  isReferenceOnly = false,
+  id = 'food-x'
 ): any => ({
   food: {
+    id,
     confidence: { quality_band: 'HIGH', label_vi: 'Cao' }
   },
   matchType,
@@ -41,6 +44,16 @@ assert(classifyNutritionCandidate(fakeResult('partial', 50)).status === 'USER_CO
 assert(classifyNutritionCandidate(fakeResult('partial', 40)).status === 'NO_MATCH', 'Weak partial is not accepted');
 assert(classifyNutritionCandidate(fakeResult('exact_name', 100, true)).status === 'USER_CONFIRM', 'Reference-only exact never auto-accepts');
 assert(classifyNutritionCandidate(fakeResult('prefix', 80, true)).status === 'NO_MATCH', 'Reference-only fuzzy result is rejected');
+
+const ambiguousAlias = resolveNutritionCandidates([
+  fakeResult('exact_alias', 90, false, 'food-a'),
+  fakeResult('exact_alias', 90, false, 'food-b')
+]);
+assert(
+  ambiguousAlias.status === 'USER_CONFIRM' &&
+    ambiguousAlias.reason === 'AMBIGUOUS_EXACT_ALIAS',
+  'Ambiguous exact alias requires explicit user confirmation'
+);
 
 const selectedL: NutritionSelection = {
   foodId: 'food-x',
@@ -80,6 +93,15 @@ const gram100 = calculatePer100gCalories({
 });
 assert(gram100?.kcalTypical === 82, '100g calculation uses kcal_per_100g exactly');
 
+const gram150 = calculatePer100gCalories({
+  kcalPer100g: 82,
+  grams: 150,
+  standardServingG: 400,
+  servingKcalMin: 280,
+  servingKcalMax: 380
+});
+assert(gram150?.kcalTypical === 123, '150g calculation uses kcal_per_100g × grams / 100');
+
 const gram250 = calculatePer100gCalories({
   kcalPer100g: 82,
   grams: 250,
@@ -88,10 +110,37 @@ const gram250 = calculatePer100gCalories({
   servingKcalMax: 380
 });
 assert(gram250?.kcalTypical === 205, '250g calculation uses kcal_per_100g × grams / 100');
+
+const gram500 = calculatePer100gCalories({
+  kcalPer100g: 82,
+  grams: 500,
+  standardServingG: 400,
+  servingKcalMin: 280,
+  servingKcalMax: 380
+});
+assert(gram500?.kcalTypical === 410, '500g calculation uses kcal_per_100g × grams / 100');
+assert(
+  Boolean(
+    gram250 &&
+      gram250.kcalMin <= gram250.kcalTypical &&
+      gram250.kcalTypical <= gram250.kcalMax
+  ),
+  'Scaled kcal range preserves min <= typical <= max without double-scaling'
+);
+
 assert(calculatePer100gCalories({ kcalPer100g: 82, grams: 0 }) === null, '0g is rejected');
 assert(calculatePer100gCalories({ kcalPer100g: 82, grams: Number.NaN }) === null, 'NaN grams is rejected');
+assert(calculatePer100gCalories({ kcalPer100g: 82, grams: Number.POSITIVE_INFINITY }) === null, 'Infinity grams is rejected');
 assert(calculatePer100gCalories({ kcalPer100g: 82, grams: -20 }) === null, 'Negative grams are rejected');
 assert(calculatePer100gCalories({ kcalPer100g: 82, grams: 6000 }) === null, 'Extreme gram input is rejected');
+assert(
+  calculatePer100gCalories({ kcalPer100g: 82, grams: undefined as any }) === null,
+  'Undefined grams are rejected'
+);
+assert(
+  calculatePer100gCalories({ kcalPer100g: 82, grams: '250' as any }) === null,
+  'String gram input is rejected instead of implicit coercion'
+);
 
 if (failures > 0) process.exit(1);
 console.log('Nutrition engine integrity tests: PASS');

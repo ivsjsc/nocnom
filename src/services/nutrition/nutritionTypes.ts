@@ -221,7 +221,7 @@ export type NutritionAddonOption = {
   calories: number;
   servingG?: number;
   servingAmount?: number;
-  servingUnit?: 'g' | 'ml';
+  servingUnit?: 'g' | 'ml' | 'portion';
   kcalMin?: number;
   kcalMax?: number;
   source?: string;

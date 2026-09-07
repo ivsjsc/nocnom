@@ -337,7 +337,7 @@ export function calculateWaterRequirement(
     valueMl,
     ml: valueMl,
     glasses: Math.round(valueMl / 250),
-    method: '35ml_per_kg',
+    method: '35_ml_per_kg',
     type: 'estimate'
   };
 }

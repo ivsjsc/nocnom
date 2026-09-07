@@ -71,6 +71,13 @@ import {
   VIETNAM_TIME_ZONE
 } from '../lib/dateTime';
 import { useVietnamBusinessDate } from '../hooks/useVietnamBusinessDate';
+import {
+  buildRecentConsumedSeries,
+  calculateConsumedCalories,
+  calculateMealDistribution,
+  getLogsForVietnamDate,
+  resolveLogMainCalories
+} from '../domain/meal/mealAnalytics';
 
 const mealKeys: MealKey[] = ['A', 'B', 'C'];
 const mealOrder: Record<MealKey, number> = { A: 0, B: 1, C: 2 };
@@ -217,14 +224,12 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
         dish.legacyNames?.includes(name)
     );
 
-  const resolveCalories = (log: LogEntry) => {
-    if (typeof log.calories === 'number' && Number.isFinite(log.calories)) {
-      return Math.max(0, Math.round(log.calories));
-    }
-
-    const dish = findDish(log.dishName);
-    return dish ? estimateDishCalories(dish) : 0;
-  };
+  const resolveCalories = (log: LogEntry) =>
+    resolveLogMainCalories(
+      log,
+      dishes,
+      dish => estimateDishCalories(dish as Dish)
+    );
 
   const groupedDays = useMemo<DayGroup[]>(() => {
     const groups = new Map<string, LogEntry[]>();
@@ -317,91 +322,44 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   // Ngày nghiệp vụ luôn theo Asia/Ho_Chi_Minh và tự rollover lúc 00:00.
   const todayKey = businessDate.dateKey;
 
-  // Danh sách bữa ăn hôm nay
-  const todayLogs = useMemo(() => {
-    return logs.filter(log => getVietnamDateKey(log.timestamp) === todayKey);
-  }, [logs, todayKey]);
+  // Business analytics use one Vietnam-date implementation for Dashboard,
+  // History and weekly summaries.
+  const todayLogs = useMemo(
+    () => getLogsForVietnamDate(logs, todayKey),
+    [logs, todayKey]
+  );
 
-  // Tổng calo hôm nay
-  const todayCalories = useMemo(() => {
-    return todayLogs.reduce(
-      (total, log) => total + resolveCalories(log) + sumMealAddonCalories(log),
-      0
-    );
-  }, [todayLogs, dishes]);
+  const todayCalories = useMemo(
+    () =>
+      calculateConsumedCalories(
+        todayLogs,
+        dishes,
+        dish => estimateDishCalories(dish as Dish)
+      ),
+    [todayLogs, dishes]
+  );
 
-  // Phân bổ calo các bữa ăn hôm nay (Sáng - Trưa - Tối)
-  const mealDistribution = useMemo(() => {
-    let breakfastKcal = 0;
-    let lunchKcal = 0;
-    let dinnerKcal = 0;
+  const mealDistribution = useMemo(
+    () =>
+      calculateMealDistribution(
+        todayLogs,
+        dishes,
+        dish => estimateDishCalories(dish as Dish)
+      ),
+    [todayLogs, dishes]
+  );
 
-    todayLogs.forEach(log => {
-      const kcal = resolveCalories(log) + sumMealAddonCalories(log);
-      if (log.mealKey === 'A') breakfastKcal += kcal;
-      else if (log.mealKey === 'B') lunchKcal += kcal;
-      else if (log.mealKey === 'C') dinnerKcal += kcal;
-    });
-
-    const total = breakfastKcal + lunchKcal + dinnerKcal;
-    return {
-      breakfastKcal,
-      lunchKcal,
-      dinnerKcal,
-      total,
-      breakfastPct: total > 0 ? Math.round((breakfastKcal / total) * 100) : 0,
-      lunchPct: total > 0 ? Math.round((lunchKcal / total) * 100) : 0,
-      dinnerPct: total > 0 ? Math.round((dinnerKcal / total) * 100) : 0
-    };
-  }, [todayLogs, dishes]);
-
-  // Thống kê calo 7 ngày gần nhất
-  const last7DaysData = useMemo(() => {
-    const [tY, tM, tD] = todayKey.split('-').map(Number);
-    const todayUtc = Date.UTC(tY, tM - 1, tD, 12, 0, 0);
-
-    const days: Array<{
-      dateKey: string;
-      shortLabel: string;
-      dayNum: string;
-      calories: number;
-      isToday: boolean;
-      mealCount: number;
-    }> = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(todayUtc - i * 24 * 60 * 60 * 1000);
-      const year = d.getUTCFullYear();
-      const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(d.getUTCDate()).padStart(2, '0');
-      const key = `${year}-${month}-${day}`;
-
-      const dayLogs = logs.filter(log => getVietnamDateKey(log.timestamp) === key);
-      const totalKcal = dayLogs.reduce(
-        (sum, log) => sum + resolveCalories(log) + sumMealAddonCalories(log),
-        0
-      );
-
-      const dayOfWeek = d.getUTCDay();
-      const shortDay = dayOfWeek === 0 ? 'CN' : `T${dayOfWeek + 1}`;
-
-      days.push({
-        dateKey: key,
-        shortLabel: i === 0 ? 'Nay' : shortDay,
-        dayNum: `${day}/${month}`,
-        calories: totalKcal,
-        isToday: i === 0,
-        mealCount: dayLogs.length
-      });
-    }
-
-    const maxKcal = Math.max(1600, ...days.map(d => d.calories));
-    const totalWeekKcal = days.reduce((sum, d) => sum + d.calories, 0);
-    const activeDays = days.filter(d => d.calories > 0).length;
-    const avgKcal = activeDays > 0 ? Math.round(totalWeekKcal / activeDays) : 0;
-
-    return { days, maxKcal, avgKcal, totalWeekKcal, activeDays };
-  }, [logs, dishes, todayKey]);
+  const last7DaysData = useMemo(
+    () =>
+      buildRecentConsumedSeries({
+        logs,
+        dishes,
+        endDateKey: todayKey,
+        days: 7,
+        estimateDish: dish => estimateDishCalories(dish as Dish)
+      }),
+    [logs, dishes, todayKey]
+  );
 
   // Tính toán sức khỏe từ hồ sơ. Không suy đoán dữ liệu nhân khẩu học bị thiếu.
   const rawHeight = Number(profile?.heightCm);
@@ -783,6 +741,9 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   Cập nhật cân nặng để xem ước tính.
                 </span>
               )}
+              <div className="mt-1 text-[10px] font-semibold text-cyan-900/90 dark:text-cyan-100/85">
+                Nhu cầu thực tế có thể thay đổi theo vận động, thời tiết, thực phẩm và tình trạng sức khỏe.
+              </div>
             </div>
           </div>
         </section>
@@ -806,7 +767,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               </div>
 
               <span className="health-copy text-[11px] font-black">
-                TB: <strong className="text-slate-950 dark:text-white">~{last7DaysData.avgKcal.toLocaleString('vi-VN')}</strong> kcal/ngày
+                TB ngày có ghi nhận: <strong className="text-slate-950 dark:text-white">~{last7DaysData.averagePerActiveDay.toLocaleString('vi-VN')}</strong> kcal/ngày
               </span>
             </div>
 

@@ -12,6 +12,7 @@ export type NutritionResolutionReason =
   | 'TRUSTED_EXACT_MATCH'
   | 'FUZZY_MATCH_REQUIRES_CONFIRMATION'
   | 'REFERENCE_DATA_REQUIRES_CONFIRMATION'
+  | 'AMBIGUOUS_EXACT_ALIAS'
   | 'LOW_CONFIDENCE_MATCH'
   | 'NO_CANDIDATE';
 
@@ -83,17 +84,40 @@ export const classifyNutritionCandidate = (
   return { status: 'NO_MATCH', reason: 'LOW_CONFIDENCE_MATCH' };
 };
 
-export const resolveNutrition = async (
-  query: string,
+export const resolveNutritionCandidates = (
+  results: NutritionSearchResult[],
   limit = 5
-): Promise<NutritionResolution> => {
-  const results = await searchNutritionFoods(query, { limit });
+): NutritionResolution => {
   const candidate = results[0] || null;
-  const decision = classifyNutritionCandidate(candidate);
 
+  if (
+    candidate?.matchType === 'exact_alias' &&
+    results.filter(
+      item =>
+        item.matchType === 'exact_alias' &&
+        item.score === candidate.score
+    ).length > 1
+  ) {
+    return {
+      status: 'USER_CONFIRM',
+      candidate,
+      alternatives: results.slice(1, Math.min(limit, 4)),
+      reason: 'AMBIGUOUS_EXACT_ALIAS'
+    };
+  }
+
+  const decision = classifyNutritionCandidate(candidate);
   return {
     ...decision,
     candidate,
     alternatives: results.slice(1, Math.min(limit, 4))
   };
+};
+
+export const resolveNutrition = async (
+  query: string,
+  limit = 5
+): Promise<NutritionResolution> => {
+  const results = await searchNutritionFoods(query, { limit });
+  return resolveNutritionCandidates(results, limit);
 };

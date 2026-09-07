@@ -59,6 +59,9 @@ export const getVietnamDateTimeParts = (
   };
 };
 
+export const getVietnamNow = (timestamp = Date.now()): Date =>
+  new Date(timestamp);
+
 export const getVietnamDateKey = (timestamp = Date.now()): string => {
   const { year, month, day } = getVietnamDateTimeParts(timestamp);
   return [
@@ -117,6 +120,15 @@ export const getVietnamDayKey = (
   return DAY_KEYS[day];
 };
 
+export const getVietnamWeekday = (
+  timestamp = Date.now(),
+  locale = 'vi-VN'
+): string =>
+  new Intl.DateTimeFormat(locale, {
+    timeZone: VIETNAM_TIME_ZONE,
+    weekday: 'long'
+  }).format(new Date(timestamp));
+
 export const isVietnamToday = (
   timestamp: number,
   now = Date.now()
@@ -130,6 +142,14 @@ export const getVietnamStartOfDay = (
   return Date.parse(`${dateKey}T00:00:00${VIETNAM_UTC_OFFSET}`);
 };
 
+export const getVietnamEndOfDay = (
+  timestamp = Date.now()
+): number => {
+  const dateKey = getVietnamDateKey(timestamp);
+  const end = getVietnamTimestampForDateKey(dateKey, '23:59:59');
+  return end === null ? getVietnamStartOfDay(timestamp) + DAY_MS - 1 : end + 999;
+};
+
 export const getVietnamTimestampForDateKey = (
   dateKey: string,
   time = '12:00:00'
@@ -140,6 +160,20 @@ export const getVietnamTimestampForDateKey = (
     `${dateKey}T${time}${VIETNAM_UTC_OFFSET}`
   );
   return Number.isFinite(timestamp) ? timestamp : null;
+};
+
+export const getVietnamDateRange = ({
+  endTimestamp = Date.now(),
+  days
+}: {
+  endTimestamp?: number;
+  days: number;
+}): { startDateKey: string; endDateKey: string } | null => {
+  if (!Number.isInteger(days) || days <= 0 || days > 3660) return null;
+  const endDateKey = getVietnamDateKey(endTimestamp);
+  const startDateKey = getVietnamDateKeyOffset(endDateKey, -(days - 1));
+  if (!startDateKey) return null;
+  return { startDateKey, endDateKey };
 };
 
 export const getMsUntilNextVietnamMidnight = (

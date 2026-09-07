@@ -13,7 +13,6 @@ import {
 import {
   estimateDishCalories,
   mockDb,
-  sumMealAddonCalories,
   type Dish,
   type LogEntry,
   type Timetable
@@ -27,6 +26,11 @@ import {
   getVietnamDateKey,
   getVietnamDayKey
 } from '../lib/dateTime';
+import {
+  calculateConsumedCalories,
+  calculatePlannedCalories,
+  getLogsForVietnamDate
+} from '../domain/meal/mealAnalytics';
 const comboKeys = ['A', 'B', 'C'] as const;
 const mealLabels = ['BỮA SÁNG', 'BỮA TRƯA', 'BỮA TỐI'];
 const dayDisplay: Record<string, string> = {
@@ -89,10 +93,7 @@ export default function HomePage() {
   }, []);
 
   const todayLogs = useMemo(
-    () =>
-      logs.filter(
-        log => getVietnamDateKey(log.timestamp) === todayDateKey
-      ),
+    () => getLogsForVietnamDate(logs, todayDateKey),
     [logs, todayDateKey]
   );
 
@@ -109,26 +110,18 @@ export default function HomePage() {
 
   const todayMenu = timetable[todayKey];
   const findDish = (id: string) => dishes.find(item => item.id === id);
-  const plannedMealKeys = comboKeys.filter(comboKey => !todayMenu.options[comboKey].skipped);
-  const plannedCalories = plannedMealKeys.reduce((total, comboKey) => {
-    const dish = findDish(todayMenu.options[comboKey].dishId);
-    return total + (dish ? estimateDishCalories(dish) : 0);
-  }, 0);
-
-  const consumedCalories = todayLogs.reduce((total, log) => {
-    const addonCalories = sumMealAddonCalories(log);
-
-    if (typeof log.calories === 'number' && Number.isFinite(log.calories)) {
-      return total + Math.max(0, Math.round(log.calories)) + addonCalories;
-    }
-
-    const matchedDish = dishes.find(
-      dish =>
-        dish.name === log.dishName ||
-        dish.legacyNames?.includes(log.dishName)
-    );
-    return total + (matchedDish ? estimateDishCalories(matchedDish) : 0) + addonCalories;
-  }, 0);
+  const planned = calculatePlannedCalories(
+    todayMenu,
+    dishes,
+    dish => estimateDishCalories(dish as Dish)
+  );
+  const plannedMealKeys = planned.activeMealKeys;
+  const plannedCalories = planned.totalCalories;
+  const consumedCalories = calculateConsumedCalories(
+    todayLogs,
+    dishes,
+    dish => estimateDishCalories(dish as Dish)
+  );
 
   return (
     <div className="space-y-6 pb-28">

@@ -26,8 +26,14 @@ function assert(condition: boolean, message: string) {
 console.log('=== HEALTH CALCULATION REGRESSION TESTS ===');
 
 const referenceDate = new Date('2026-09-07T12:00:00Z');
-assert(calculateAge('08/09/2000', referenceDate) === 25, 'Age handles birthday not reached');
+assert(calculateAge('08/09/2000', referenceDate) === 25, 'Age handles birthday tomorrow/not reached');
 assert(calculateAge('07/09/2000', referenceDate) === 26, 'Age handles birthday today');
+assert(calculateAge('29/02/2004', referenceDate) === 22, 'Age accepts valid leap-day birthday');
+assert(calculateAge('29/02/2003', referenceDate) === null, 'Age rejects invalid non-leap Feb 29');
+assert(calculateAge('08/09/2008', referenceDate) === 17, 'Age 17 remains below adult boundary before birthday');
+assert(calculateAge('07/09/2008', referenceDate) === 18, 'Age transitions 17 to 18 on birthday');
+assert(calculateAge('07/09/1906', referenceDate) === 120, 'Age supports configured maximum 120');
+assert(calculateAge('06/09/1905', referenceDate) === null, 'Age rejects values above configured maximum');
 assert(calculateAge('31/02/2000', referenceDate) === null, 'Age rejects impossible dates');
 assert(calculateAge('08/09/2027', referenceDate) === null, 'Age rejects future dates');
 
@@ -85,7 +91,7 @@ assert(
   Boolean(
     water &&
       water.valueMl === 2100 &&
-      water.method === '35ml_per_kg' &&
+      water.method === '35_ml_per_kg' &&
       water.type === 'estimate'
   ),
   'Water requirement exposes method and estimate metadata'

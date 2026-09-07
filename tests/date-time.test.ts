@@ -2,8 +2,11 @@ import {
   getMsUntilNextVietnamMidnight,
   getVietnamDateKey,
   getVietnamDateKeyOffset,
+  getVietnamDateRange,
   getVietnamDayKey,
+  getVietnamEndOfDay,
   getVietnamStartOfDay,
+  getVietnamWeekday,
   isVietnamToday
 } from '../src/lib/dateTime';
 
@@ -19,6 +22,7 @@ function assert(condition: boolean, message: string) {
 console.log('=== VIETNAM BUSINESS TIME TESTS ===');
 
 const beforeMidnight = Date.parse('2026-09-06T16:59:59Z');
+const atMidnight = Date.parse('2026-09-06T17:00:00Z');
 const afterMidnight = Date.parse('2026-09-06T17:00:01Z');
 
 assert(
@@ -26,8 +30,12 @@ assert(
   '23:59:59 Asia/Ho_Chi_Minh stays on Sep 6'
 );
 assert(
+  getVietnamDateKey(atMidnight) === '2026-09-07',
+  '00:00:00 Asia/Ho_Chi_Minh rolls to Sep 7 exactly'
+);
+assert(
   getVietnamDateKey(afterMidnight) === '2026-09-07',
-  '00:00:01 Asia/Ho_Chi_Minh rolls to Sep 7'
+  '00:00:01 Asia/Ho_Chi_Minh stays on Sep 7'
 );
 assert(
   getVietnamDayKey(afterMidnight) === 'mon',
@@ -68,6 +76,20 @@ assert(
   getVietnamStartOfDay(afterMidnight) ===
     Date.parse('2026-09-07T00:00:00+07:00'),
   'Vietnam start-of-day is 00:00 +07:00'
+);
+assert(
+  getVietnamEndOfDay(afterMidnight) ===
+    Date.parse('2026-09-07T23:59:59.999+07:00'),
+  'Vietnam end-of-day is 23:59:59.999 +07:00'
+);
+assert(
+  getVietnamDateRange({ endTimestamp: afterMidnight, days: 7 })?.startDateKey ===
+    '2026-09-01',
+  'Vietnam 7-day date range is calendar-safe'
+);
+assert(
+  getVietnamWeekday(afterMidnight).toLocaleLowerCase('vi-VN').includes('hai'),
+  'Vietnam weekday label follows Asia/Ho_Chi_Minh'
 );
 
 const ms = getMsUntilNextVietnamMidnight(

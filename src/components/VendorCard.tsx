@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Vendor, mockDb } from '../lib/db';
 import { getSafeExternalUrl } from '../lib/url';
+import { normalizePriceVnd } from '../domain/menu/vendorOffer';
 import { Phone, MapPin, Tag, Info, Plus, Store, ChevronUp, ShoppingBag, Pencil } from 'lucide-react';
 
 export default function VendorCard({
@@ -31,7 +32,17 @@ export default function VendorCard({
     const currentValue = vendor[field];
     const newValue = window.prompt(`Nhập ${label} mới:`, String(currentValue));
     if (newValue !== null && newValue !== String(currentValue)) {
-      mockDb.updateVendor(dishId, vendor.id, { [field]: field === 'price' ? Number(newValue) : newValue });
+      if (field === 'price') {
+        const price = normalizePriceVnd(Number(newValue));
+        if (price === null) {
+          window.alert('Giá phải là số nguyên VND hợp lệ.');
+          return;
+        }
+        mockDb.updateVendor(dishId, vendor.id, { price });
+        return;
+      }
+
+      mockDb.updateVendor(dishId, vendor.id, { [field]: newValue });
     }
   };
 
