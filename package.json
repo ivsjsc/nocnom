@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test": "tsx tests/nutrition.test.ts && tsx tests/nutrition-data-validation.test.ts && tsx tests/nutrition-engine.test.ts && tsx tests/default-dish-migration.test.ts && tsx tests/vendor-offer.test.ts && tsx tests/addon-normalization.test.ts && tsx tests/meal-analytics.test.ts && tsx tests/date-time.test.ts && tsx tests/date-time-env.test.ts && tsx tests/timezone-integration.test.ts && tsx tests/business-time-source.test.ts && tsx tests/health.test.ts && tsx tests/health-rules-alignment.test.ts && tsx tests/ui-contrast.test.ts && tsx tests/ui-readability.test.ts && tsx tests/day-phase.test.ts",
+    "test": "tsx tests/nutrition.test.ts && tsx tests/nutrition-data-validation.test.ts && tsx tests/nutrition-engine.test.ts && tsx tests/default-dish-migration.test.ts && tsx tests/vendor-offer.test.ts && tsx tests/addon-normalization.test.ts && tsx tests/meal-analytics.test.ts && tsx tests/date-time.test.ts && tsx tests/date-time-env.test.ts && tsx tests/timezone-integration.test.ts && tsx tests/business-time-source.test.ts && tsx tests/production-smoke-contract.test.ts && tsx tests/health.test.ts && tsx tests/health-rules-alignment.test.ts && tsx tests/ui-contrast.test.ts && tsx tests/ui-readability.test.ts && tsx tests/day-phase.test.ts",
     "deploy": "npm run build && firebase deploy",
     "nutrition:build": "node scripts/build-nutrition-index.mjs",
     "firebase:audit": "node scripts/firebase-config-audit.mjs"
