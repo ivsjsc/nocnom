@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { CheckCircle2, ExternalLink, MapPin, Phone, RefreshCw, X } from 'lucide-react';
 import {
   estimateDishCalories,
+  getDishNutritionSnapshot,
   mockDb,
   type Dish,
   type MealAddon,
@@ -57,12 +58,11 @@ export default function DishDetailModal({
         }
       });
     } else {
-      void nutritionService.searchFoods(dish.name, { limit: 1 }).then(results => {
-        if (results.length > 0) {
-          setCanonicalFood(results[0].food);
-          void nutritionService.getPortions(results[0].food.id).then(setPortions);
-        }
-      });
+      // Never infer canonical nutrition from a fuzzy top result in detail view.
+      // Legacy/fallback dishes remain explicitly unlinked until user confirms
+      // a Nutrition Knowledge Base candidate.
+      setCanonicalFood(null);
+      setPortions([]);
     }
   }, [dish]);
 
@@ -83,6 +83,8 @@ export default function DishDetailModal({
         calories: item.calories,
         nutritionRecordId: item.id,
         servingG: item.servingG,
+        servingAmount: item.servingAmount ?? item.servingG,
+        servingUnit: item.servingUnit ?? (item.kind === 'drink' ? 'ml' : 'g'),
         kcalMin: item.kcalMin,
         kcalMax: item.kcalMax
       }));
@@ -93,7 +95,8 @@ export default function DishDetailModal({
       vendor.price,
       estimateDishCalories(dish),
       comboKey,
-      addons
+      addons,
+      getDishNutritionSnapshot(dish)
     );
     mockDb.selectCombo(day, comboKey);
     const addonText = addons.length > 0
@@ -129,8 +132,12 @@ export default function DishDetailModal({
           </button>
           <div className="absolute inset-x-0 bottom-0 pt-20 pb-5 px-5 bg-gradient-to-t from-slate-950/85 to-transparent">
             <h2 className="text-2xl font-black text-white">{dish.name}</h2>
-            <div className="mt-1 text-xs font-bold text-white/80">
-              ≈ {estimateDishCalories(dish)} kcal / phần
+            <div className="mt-1 text-xs font-bold text-white/90">
+              ≈ {estimateDishCalories(dish)} kcal
+              {dish.portionSize ? ` / phần ${dish.portionSize}` : ' / phần'}
+              {dish.calorieSource === 'category-fallback'
+                ? ' · ước tính theo nhóm món'
+                : ''}
             </div>
           </div>
         </div>
@@ -176,22 +183,51 @@ export default function DishDetailModal({
             </div>
           )}
 
-          {canonicalFood && (
+          {(canonicalFood || dish.calorieSource) && (
             <div className="rounded-[22px] border border-blue-100 bg-white p-4 shadow-sm space-y-3">
               <div className="flex items-center justify-between">
                 <div className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">
                   Nutrition Knowledge Base
                 </div>
                 <div className="text-[10px] font-bold text-slate-500">
-                  {canonicalFood.confidence.label_vi}
+                  {dish.nutritionConfidence === 'high'
+                    ? 'Độ tin cậy cao'
+                    : dish.nutritionConfidence === 'reference'
+                      ? 'Dữ liệu tham khảo'
+                      : canonicalFood?.confidence.label_vi || 'Ước tính'}
                 </div>
               </div>
 
-              {canonicalFood.energy.kcal_min && canonicalFood.energy.kcal_max && (
+              <div className="rounded-xl bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700">
+                Nguồn calo:{' '}
+                <span className="font-black text-slate-950">
+                  {dish.calorieSource === 'nutrition-db'
+                    ? dish.nutritionSource || 'Nutrition Knowledge Base'
+                    : dish.calorieSource === 'manual'
+                      ? 'Nhập thủ công'
+                      : dish.calorieSource === 'category-fallback'
+                        ? 'Ước tính theo nhóm món'
+                        : 'Dữ liệu cũ'}
+                </span>
+                {dish.servingAmount
+                  ? ` · ${dish.servingAmount}${dish.servingUnit || 'g'}`
+                  : dish.portionGrams
+                    ? ` · ${dish.portionGrams}g`
+                    : ''}
+              </div>
+
+              {dish.nutritionReferenceOnly ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-900">
+                  Dữ liệu tham khảo · {dish.nutritionCalorieStatus || 'REFERENCE_ONLY'} ·
+                  không được coi là số liệu đã xác minh độc lập.
+                </div>
+              ) : null}
+
+              {canonicalFood?.energy.kcal_min && canonicalFood.energy.kcal_max && (
                 <div className="text-xs text-slate-600 font-semibold">
                   Mức calo tham chiếu:{' '}
                   <span className="font-black text-slate-950">
-                    {canonicalFood.energy.kcal_min}–{canonicalFood.energy.kcal_max} kcal
+                    {dish.kcalMin ?? canonicalFood.energy.kcal_min}–{dish.kcalMax ?? canonicalFood.energy.kcal_max} kcal
                   </span>
                   {canonicalFood.energy.kcal_per_100g && (
                     <span className="text-slate-500 ml-1.5">
@@ -201,7 +237,7 @@ export default function DishDetailModal({
                 </div>
               )}
 
-              {portions.length > 0 && (
+              {canonicalFood && portions.length > 0 && (
                 <div className="pt-2 border-t border-slate-100">
                   <div className="text-[10px] font-black uppercase tracking-wide text-slate-500 mb-2">
                     Khẩu phần định lượng (S / M / L):

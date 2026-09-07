@@ -19,7 +19,11 @@ type Props = {
 };
 
 const labelFor = (item: NutritionAddonOption) => {
-  const serving = item.servingG ? ` · ${item.servingG}g/ml` : '';
+  const amount = item.servingAmount ?? item.servingG;
+  const unit =
+    item.servingUnit ??
+    (item.kind === 'drink' ? 'ml' : 'g');
+  const serving = amount ? ` · ${amount}${unit}` : '';
   return `${item.name} · ≈ ${item.calories} kcal${serving}`;
 };
 

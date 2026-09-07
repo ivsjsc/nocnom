@@ -9,6 +9,12 @@ import type {
   NutritionSearchResult,
   PortionSize
 } from './nutritionTypes';
+import type {
+  NutritionResolutionStatus,
+  NutritionSelection
+} from '../../domain/nutrition/nutritionTypes';
+import { calculatePer100gCalories } from '../../domain/nutrition/calorieCalculator';
+import { nutritionConfidenceLevel } from './nutritionResolver';
 import {
   getCachedDataset,
   getFoodByCanonicalIdSync,
@@ -114,20 +120,24 @@ export class NutritionService {
       food.energy?.calorie_status === 'TABLE_LOOKUP' ||
       food.validation?.result === 'NEEDS_REVIEW';
 
-    // 1. Gram-based calculation
-    if (typeof options.grams === 'number' && Number.isFinite(options.grams) && options.grams > 0) {
-      const kcalPer100g = food.energy.kcal_per_100g || 0;
-      const kcalTypical = Math.round((kcalPer100g * options.grams) / 100);
-      const ratio = options.grams / (food.serving?.standard_g || 100);
-      const kcalMin = Math.round((food.energy.kcal_min || kcalTypical * 0.85) * ratio);
-      const kcalMax = Math.round((food.energy.kcal_max || kcalTypical * 1.15) * ratio);
+    // 1. Gram-based calculation. The food-level range is on the standard
+    // serving basis, while the typical value comes from kcal/100g.
+    if (typeof options.grams === 'number') {
+      const gramResult = calculatePer100gCalories({
+        kcalPer100g: food.energy.kcal_per_100g,
+        grams: options.grams,
+        standardServingG: food.serving?.standard_g,
+        servingKcalMin: food.energy.kcal_min,
+        servingKcalMax: food.energy.kcal_max
+      });
+      if (!gramResult) return null;
 
       return {
         foodId: food.id,
         foodName: food.name,
-        kcalTypical,
-        kcalMin,
-        kcalMax,
+        kcalTypical: gramResult.kcalTypical,
+        kcalMin: gramResult.kcalMin,
+        kcalMax: gramResult.kcalMax,
         basis: 'grams',
         grams: options.grams,
         confidence: food.confidence.label_vi,
@@ -179,6 +189,63 @@ export class NutritionService {
     };
   }
 
+  public async createSelection(
+    result: NutritionSearchResult,
+    portionSize: PortionSize,
+    resolutionStatus: Exclude<NutritionResolutionStatus, 'NO_MATCH'>,
+    confirmedByUser: boolean
+  ): Promise<NutritionSelection | null> {
+    if (result.isReferenceOnly && resolutionStatus === 'AUTO_ACCEPT') {
+      return null;
+    }
+
+    const calculation = await this.calculateCalories(result.food.id, {
+      portionSize
+    });
+    if (!calculation) return null;
+
+    const food = result.food;
+    const servingUnit =
+      food.classification?.domain_id === 'beverage' ||
+      food.classification?.category_id === 'beverages'
+        ? 'ml'
+        : 'g';
+
+    return {
+      foodId: food.id,
+      canonicalName: food.name,
+      foodName: food.name,
+      categoryName:
+        food.classification?.category_vi ||
+        food.classification?.source_category ||
+        '',
+      portionSize,
+      portionGrams: calculation.grams,
+      servingAmount: calculation.grams,
+      servingUnit,
+      kcalTypical: calculation.kcalTypical,
+      kcalMin: calculation.kcalMin,
+      kcalMax: calculation.kcalMax,
+      confidence: nutritionConfidenceLevel(result),
+      confidenceLabel: result.confidenceLabel,
+      verificationState: calculation.verificationState,
+      calorieStatus: calculation.calorieStatus,
+      validationResult: food.validation?.result,
+      trainingEligibility: food.validation?.training_eligibility,
+      isReferenceOnly: result.isReferenceOnly,
+      source:
+        food.provenance?.legacy_source_description ||
+        food.provenance?.source_role ||
+        'Nutrition Knowledge Base',
+      sourceId: food.provenance?.source_role || 'nutrition-kb',
+      sourceUrl: food.provenance?.source_url || undefined,
+      matchType: result.matchType,
+      matchScore: result.score,
+      resolutionStatus,
+      confirmedByUser
+    };
+  }
+
   public async getAddons(kind?: 'fruit' | 'drink'): Promise<NutritionAddonOption[]> {
     if (this.addonCatalog) {
       return kind ? this.addonCatalog.filter(a => a.kind === kind) : this.addonCatalog;
@@ -198,8 +265,17 @@ export class NutritionService {
           });
           if (response.ok) {
             const rows = (await response.json()) as NutritionAddonOption[];
-            this.addonCatalog = rows;
-            return rows;
+            const normalizedRows = rows.map(item => ({
+              ...item,
+              servingAmount:
+                item.servingAmount ??
+                item.servingG,
+              servingUnit:
+                item.servingUnit ??
+                (item.kind === 'drink' ? 'ml' : 'g')
+            }));
+            this.addonCatalog = normalizedRows;
+            return normalizedRows;
           }
         } catch {
           // Fall through to build from in-memory dataset
@@ -227,12 +303,21 @@ export class NutritionService {
             category: f.classification?.category_vi || f.name,
             calories: Math.round(f.energy.kcal_typical),
             servingG: f.serving?.standard_g,
+            servingAmount: f.serving?.standard_g,
+            servingUnit:
+              f.classification?.domain_id === 'fruit' ||
+              f.classification?.category_id === 'fruits'
+                ? 'g'
+                : 'ml',
             kcalMin: f.energy.kcal_min,
             kcalMax: f.energy.kcal_max,
             source: f.provenance?.source_role || 'canonical',
             sourceUrl: f.provenance?.source_url || '',
             confidence: f.confidence.label_vi,
-            isReferenceOnly: f.validation?.training_eligibility === 'REFERENCE_ONLY'
+            isReferenceOnly:
+              f.validation?.training_eligibility === 'REFERENCE_ONLY' ||
+              f.energy?.calorie_status === 'TABLE_LOOKUP' ||
+              f.validation?.result === 'NEEDS_REVIEW'
           }));
         this.addonCatalog = fallbackAddons;
         return fallbackAddons;

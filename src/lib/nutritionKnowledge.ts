@@ -4,8 +4,11 @@ import {
   type NutritionFood,
   type NutritionPortion,
   type NutritionAddonOption,
-  type NutritionAddonKind
+  type NutritionAddonKind,
+  type NutritionSearchResult,
+  resolveNutrition
 } from '../services/nutrition';
+import type { NutritionSelection } from '../domain/nutrition/nutritionTypes';
 
 export type NutritionConfidence = 'verified' | 'estimated' | 'unknown';
 
@@ -26,6 +29,9 @@ export type NutritionRecord = {
   locale: string;
   canonicalId?: number;
   isReferenceOnly?: boolean;
+  verificationState?: string;
+  calorieStatus?: string;
+  qualityBand?: string;
 };
 
 export type NutritionLookupResult = {
@@ -35,6 +41,7 @@ export type NutritionLookupResult = {
   portions?: NutritionPortion[];
   kcalMin?: number;
   kcalMax?: number;
+  selection?: NutritionSelection;
 };
 
 export const normalizeFoodName = normalizeSearchQuery;
@@ -65,7 +72,37 @@ const mapFoodToRecord = (food: NutritionFood): NutritionRecord => {
     locale: food.locale || 'vi-VN',
     isReferenceOnly:
       food.validation?.training_eligibility === 'REFERENCE_ONLY' ||
-      food.energy?.calorie_status === 'TABLE_LOOKUP'
+      food.energy?.calorie_status === 'TABLE_LOOKUP' ||
+      food.validation?.result === 'NEEDS_REVIEW',
+    verificationState: food.energy?.verification_state,
+    calorieStatus: food.energy?.calorie_status,
+    qualityBand: food.confidence?.quality_band
+  };
+};
+
+export const createNutritionLookupResult = async (
+  result: NutritionSearchResult,
+  portionSize: 'S' | 'M' | 'L' = 'M',
+  resolutionStatus: 'AUTO_ACCEPT' | 'USER_CONFIRM' = 'USER_CONFIRM',
+  confirmedByUser = resolutionStatus === 'USER_CONFIRM'
+): Promise<NutritionLookupResult | null> => {
+  const portions = await nutritionService.getPortions(result.food.id);
+  const selection = await nutritionService.createSelection(
+    result,
+    portionSize,
+    resolutionStatus,
+    confirmedByUser
+  );
+  if (!selection) return null;
+
+  return {
+    calories: selection.kcalTypical,
+    record: mapFoodToRecord(result.food),
+    basis: 'serving',
+    portions,
+    kcalMin: selection.kcalMin,
+    kcalMax: selection.kcalMax,
+    selection
   };
 };
 
@@ -75,23 +112,17 @@ export const lookupNutrition = async (
   const query = foodName.trim();
   if (!query) return null;
 
-  const results = await nutritionService.searchFoods(query, { limit: 5 });
-  if (results.length === 0) return null;
+  const resolution = await resolveNutrition(query, 5);
+  if (resolution.status !== 'AUTO_ACCEPT' || !resolution.candidate) {
+    return null;
+  }
 
-  // Prioritize top matched food
-  const topResult = results[0];
-  const food = topResult.food;
-  const portions = await nutritionService.getPortions(food.id);
-  const record = mapFoodToRecord(food);
-
-  return {
-    calories: Math.round(food.energy?.kcal_typical ?? 0),
-    record,
-    basis: 'serving',
-    portions,
-    kcalMin: food.energy?.kcal_min,
-    kcalMax: food.energy?.kcal_max
-  };
+  return createNutritionLookupResult(
+    resolution.candidate,
+    'M',
+    'AUTO_ACCEPT',
+    false
+  );
 };
 
 export const clearNutritionCache = () => {

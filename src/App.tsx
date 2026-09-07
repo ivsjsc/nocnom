@@ -89,7 +89,7 @@ export default function App() {
 
   if (!authChecked) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6 text-sm font-semibold text-slate-500">
+      <div className="theme-loading min-h-screen flex items-center justify-center px-6 text-sm font-semibold">
         Đang tải nOcnOm...
       </div>
     );
@@ -102,7 +102,7 @@ export default function App() {
   ];
 
   return (
-    <div className={'app-shell min-h-screen transition-colors ' + (darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-950')}>
+    <div className="app-shell min-h-screen">
       {hasNewVersion && (
         <div className="sticky top-0 z-50 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2.5 shadow-lg flex items-center justify-between text-xs sm:text-sm font-medium animate-pulse">
           <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export default function App() {
         </div>
       )}
 
-      <header className={'app-header sticky top-0 z-40 border-b backdrop-blur-xl ' + (darkMode ? 'bg-slate-950/92 border-slate-800' : 'bg-white/96 border-slate-200')}>
+      <header className="app-header app-header-surface sticky top-0 z-40 border-b backdrop-blur-xl">
         <div className="app-container h-[78px] flex items-center justify-between">
           <button
             type="button"
@@ -128,7 +128,7 @@ export default function App() {
             aria-label="Về Trang chủ nOcnOm"
             className="min-w-0 flex items-center gap-2.5 text-left rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
-            <span className={'w-11 h-11 shrink-0 overflow-hidden rounded-2xl border shadow-sm ' + (darkMode ? 'border-slate-700 bg-slate-900' : 'border-blue-200 bg-blue-50')}>
+            <span className="brand-mark w-11 h-11 shrink-0 overflow-hidden rounded-2xl border shadow-sm">
               <img
                 src="/brand/logo.svg"
                 alt=""
@@ -137,10 +137,10 @@ export default function App() {
             </span>
 
             <span className="min-w-0">
-              <span className="block text-[23px] leading-none font-black tracking-[-0.045em] text-blue-600">
+              <span className="app-brand-title block text-[23px] leading-none font-black tracking-[-0.045em]">
                 nOcnOm
               </span>
-              <span className="mt-2 block truncate text-[9px] font-extrabold uppercase tracking-[0.14em] text-slate-500">
+              <span className="app-brand-subtitle mt-1.5 block truncate font-extrabold uppercase">
                 KTX Sinh Viên Đại Học Quốc Gia
               </span>
             </span>
@@ -150,7 +150,7 @@ export default function App() {
             <button
               type="button"
               onClick={handleManualRefresh}
-              className={'touch-target rounded-2xl border flex items-center justify-center transition-all active:scale-95 ' + (darkMode ? 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100')}
+              className="theme-icon-button touch-target rounded-2xl border flex items-center justify-center transition-all active:scale-95"
               aria-label="Làm mới trang"
               title="Làm mới dữ liệu & tải lại ứng dụng"
             >
@@ -159,7 +159,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setDarkMode(value => !value)}
-              className={'touch-target rounded-2xl border flex items-center justify-center transition-all active:scale-95 ' + (darkMode ? 'bg-slate-900 border-slate-700 text-yellow-300' : 'bg-blue-50 border-blue-200 text-blue-700')}
+              className="theme-icon-button theme-toggle-button touch-target rounded-2xl border flex items-center justify-center transition-all active:scale-95"
               aria-label={darkMode ? 'Bật giao diện sáng' : 'Bật giao diện tối'}
             >
               {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -187,7 +187,7 @@ export default function App() {
 
       <nav
         aria-label="Điều hướng chính"
-        className={'app-bottom-nav ' + (darkMode ? 'bg-slate-900/96 border-slate-700' : 'bg-white/96 border-slate-200')}
+        className="app-bottom-nav"
       >
         {navItems.map(item => {
           const Icon = item.icon;
@@ -202,12 +202,7 @@ export default function App() {
               aria-label={requiresLogin ? item.label + ' - yêu cầu đăng nhập' : item.label}
               aria-current={active ? 'page' : undefined}
               title={requiresLogin ? 'Đăng nhập để quản lý kho món' : undefined}
-              className={
-                'app-nav-item ' +
-                (active
-                  ? (darkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700')
-                  : (darkMode ? 'text-slate-400' : 'text-slate-600'))
-              }
+              className={'app-nav-item' + (active ? ' is-active' : '')}
             >
               <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 2} />
               <span>{item.label}</span>

@@ -1,5 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import {
+  assertNutritionDatasetValid
+} from './nutrition-validation.mjs';
 
 const root = process.cwd();
 const sourceDir = path.join(root, 'data', 'nutrition', 'source');
@@ -14,6 +17,11 @@ const main = async () => {
   if (dataset.schema !== 'nocnom.nutrition.knowledge' || !Array.isArray(dataset.foods)) {
     throw new Error('Invalid master dataset schema in ' + masterSourceFile);
   }
+
+  const validation = assertNutritionDatasetValid(dataset);
+  validation.warnings.forEach(warning =>
+    console.warn('[nutrition:build] WARNING:', warning)
+  );
 
   const foods = dataset.foods;
   const portions = dataset.portions || [];
@@ -54,7 +62,8 @@ const main = async () => {
 
       const isReferenceOnly =
         food.validation?.training_eligibility === 'REFERENCE_ONLY' ||
-        food.energy?.calorie_status === 'TABLE_LOOKUP';
+        food.energy?.calorie_status === 'TABLE_LOOKUP' ||
+        food.validation?.result === 'NEEDS_REVIEW';
 
       return {
         id: food.id,
@@ -63,6 +72,8 @@ const main = async () => {
         category: food.classification?.category_vi || food.classification?.source_category || food.name,
         calories: Math.round(food.energy?.kcal_typical ?? 0),
         servingG: food.serving?.standard_g,
+        servingAmount: food.serving?.standard_g,
+        servingUnit: kind === 'drink' ? 'ml' : 'g',
         kcalMin: food.energy?.kcal_min,
         kcalMax: food.energy?.kcal_max,
         source: food.provenance?.legacy_source_description || food.provenance?.source_role || 'canonical',
@@ -118,6 +129,11 @@ const main = async () => {
     addonCount: addons.length,
     domainCount: taxonomy.domains?.length || 0,
     categoryCount: taxonomy.categories?.length || 0,
+    normalizedNameCollisionCount:
+      validation.stats.normalizedNameCollisionCount,
+    aliasCollisionCount: validation.stats.aliasCollisionCount,
+    missingProvenanceCount: validation.stats.missingProvenanceCount,
+    warningCount: validation.warnings.length,
     status: 'PASS'
   };
 

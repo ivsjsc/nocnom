@@ -11,7 +11,9 @@ function assert(condition: boolean, message: string) {
 }
 
 function at(hour: number, minute = 0) {
-  return new Date(2026, 8, 7, hour, minute, 0, 0);
+  const hh = String(hour).padStart(2, '0');
+  const mm = String(minute).padStart(2, '0');
+  return new Date(`2026-09-07T${hh}:${mm}:00+07:00`);
 }
 
 console.log('=== HOME DAY PHASE TESTS ===');

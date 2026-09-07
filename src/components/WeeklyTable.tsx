@@ -19,6 +19,7 @@ import {
 import DishDetailModal from './DishDetailModal';
 import DishImage from './DishImage';
 import DishPickerModal from './DishPickerModal';
+import { useVietnamBusinessDate } from '../hooks/useVietnamBusinessDate';
 
 const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const comboKeys = ['A', 'B', 'C'] as const;
@@ -57,14 +58,21 @@ export default function WeeklyTable({
   const [selected, setSelected] = useState<SelectedDish | null>(null);
   const [swapTarget, setSwapTarget] = useState<MealTarget | null>(null);
   const [actionTarget, setActionTarget] = useState<SelectedDish | null>(null);
-
-  const todayKey = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][
-    new Date().getDay()
-  ];
+  const { dayKey: todayKey } = useVietnamBusinessDate();
 
   const [expandedDays, setExpandedDays] = useState<Set<string>>(
     () => new Set(excludeToday ? [] : [todayKey])
   );
+
+  useEffect(() => {
+    if (excludeToday) return;
+    setExpandedDays(current => {
+      if (current.has(todayKey)) return current;
+      const next = new Set(current);
+      next.add(todayKey);
+      return next;
+    });
+  }, [excludeToday, todayKey]);
 
   useEffect(() => {
     const unsubTable = mockDb.subscribe('all', setTimetable);
@@ -157,10 +165,8 @@ export default function WeeklyTable({
               layout
               key={day}
               className={
-                'overflow-hidden rounded-[22px] border bg-white dark:bg-slate-900 shadow-sm ' +
-                (isToday
-                  ? 'border-blue-300 dark:border-blue-800'
-                  : 'border-slate-200 dark:border-slate-800')
+                'weekly-day-card rounded-[22px] border ' +
+                (isToday ? 'is-today' : '')
               }
             >
               <button
@@ -175,7 +181,7 @@ export default function WeeklyTable({
                     'flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-xs font-black ' +
                     (isToday
                       ? 'bg-blue-600 text-white'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300')
+                      : 'weekly-day-icon')
                   }
                 >
                   {dayDisplay[day].replace('Thứ ', 'T').replace('Chủ Nhật', 'CN')}
@@ -183,7 +189,7 @@ export default function WeeklyTable({
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="truncate text-sm font-black text-slate-950 dark:text-slate-100">
+                    <h3 className="weekly-title truncate text-sm font-black">
                       {dayDisplay[day]}
                     </h3>
                     {isToday && (
@@ -192,7 +198,7 @@ export default function WeeklyTable({
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 flex items-center gap-2 text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                  <div className="weekly-meta mt-1 flex items-center gap-2 text-[11px] font-bold">
                     <span>{activeMeals.length} bữa</span>
                     <span>·</span>
                     <span>≈ {totalCalories.toLocaleString('vi-VN')} kcal</span>
@@ -202,7 +208,7 @@ export default function WeeklyTable({
                 <motion.span
                   animate={{ rotate: isExpanded ? 180 : 0 }}
                   transition={{ duration: 0.18, ease: 'easeOut' }}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-600 dark:text-slate-400"
+                  className="weekly-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
                 >
                   <ChevronDown className="h-5 w-5" />
                 </motion.span>
@@ -267,7 +273,7 @@ export default function WeeklyTable({
                           <motion.article
                             layout
                             key={comboKey}
-                            className="flex min-h-[72px] items-center gap-2 rounded-[16px] border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-2.5"
+                            className="weekly-meal-card flex min-h-[72px] items-center gap-2 rounded-[16px] border p-2.5"
                           >
                             <button
                               type="button"
@@ -287,10 +293,10 @@ export default function WeeklyTable({
                                 <div className="text-[9px] font-black uppercase tracking-[0.14em] text-blue-700 dark:text-blue-300">
                                   {mealLabel}
                                 </div>
-                                <div className="mt-0.5 truncate text-sm font-black text-slate-950 dark:text-slate-100">
+                                <div className="weekly-title mt-0.5 truncate text-sm font-black">
                                   {dish.name}
                                 </div>
-                                <div className="mt-0.5 truncate text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                                <div className="weekly-meta mt-0.5 truncate text-[11px] font-bold">
                                   {categoryName(dish)} · ≈ {estimateDishCalories(dish)} kcal
                                 </div>
                               </div>
@@ -392,7 +398,7 @@ export default function WeeklyTable({
                   <div className="text-[9px] font-black uppercase tracking-[0.14em] text-blue-700 dark:text-blue-300">
                     {mealLabels[comboKeys.indexOf(actionTarget.comboKey)]}
                   </div>
-                  <div className="truncate text-sm font-black text-slate-950 dark:text-slate-100">
+                  <div className="weekly-title truncate text-sm font-black">
                     {actionTarget.dish.name}
                   </div>
                 </div>

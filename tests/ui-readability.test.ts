@@ -16,7 +16,11 @@ const menu = fs.readFileSync('src/components/MenuPage.tsx', 'utf8');
 const css = fs.readFileSync('src/index.css', 'utf8');
 
 assert(home.includes('data-ui="weekly-schedule-intro"'), 'Weekly schedule intro has a dedicated readable surface');
-assert(home.includes('text-xs font-semibold leading-relaxed text-slate-700'), 'Weekly schedule description uses readable mobile copy');
+assert(
+  home.includes('theme-text-secondary mt-1 text-xs font-semibold leading-relaxed') &&
+    css.includes('.theme-text-secondary'),
+  'Weekly schedule description uses semantic readable mobile copy'
+);
 assert(health.includes('data-ui="health-profile-warning"'), 'Health completion warning has a dedicated readable surface');
 assert(health.includes('warning-title text-sm font-black') && css.includes('.warning-title'), 'Health warning heading uses semantic strong foreground contrast');
 assert(health.includes("Chưa có số đo") && health.includes('health-chip-muted'), 'Missing BMI measurement is rendered as a clear semantic chip');

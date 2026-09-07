@@ -28,8 +28,8 @@ import {
 import type { User } from 'firebase/auth';
 import {
   estimateDishCalories,
+  getDishNutritionSnapshot,
   getEditableMealDateRange,
-  getVietnamDateKey,
   isMealDateEditable,
   mockDb,
   sumMealAddonCalories,
@@ -48,11 +48,15 @@ import {
   calculateAge,
   calculateBMI,
   calculateBMR,
-  calculateCalorieGoal,
-  calculateTDEE,
+  calculateCalorieGoalPlan,
+  calculateTDEEEstimate,
   calculateWaterRequirement,
   getBMICategory,
   getIdealWeightRange,
+  roundEnergyEstimateForDisplay,
+  HEALTH_LIMITS,
+  DEFAULT_BMI_REFERENCE_SYSTEM,
+  BMI_REFERENCE_LABELS,
   ACTIVITY_LABELS,
   GOAL_LABELS
 } from '../lib/healthUtils';
@@ -61,6 +65,19 @@ import {
   loadUserProfile,
   type UserProfileData
 } from '../services/userProfile';
+import {
+  getVietnamDateKey,
+  getVietnamTimestampForDateKey,
+  VIETNAM_TIME_ZONE
+} from '../lib/dateTime';
+import { useVietnamBusinessDate } from '../hooks/useVietnamBusinessDate';
+import {
+  buildRecentConsumedSeries,
+  calculateConsumedCalories,
+  calculateMealDistribution,
+  getLogsForVietnamDate,
+  resolveLogMainCalories
+} from '../domain/meal/mealAnalytics';
 
 const mealKeys: MealKey[] = ['A', 'B', 'C'];
 const mealOrder: Record<MealKey, number> = { A: 0, B: 1, C: 2 };
@@ -84,11 +101,11 @@ const emptyDrafts = (): Record<MealKey, MealDraft> => ({
 });
 
 const timestampForDateKey = (dateKey: string) =>
-  Date.parse(dateKey + 'T12:00:00+07:00');
+  getVietnamTimestampForDateKey(dateKey, '12:00:00') ?? 0;
 
 const formatDay = (timestamp: number) =>
   new Intl.DateTimeFormat('vi-VN', {
-    timeZone: 'Asia/Ho_Chi_Minh',
+    timeZone: VIETNAM_TIME_ZONE,
     weekday: 'long',
     day: '2-digit',
     month: '2-digit',
@@ -97,7 +114,7 @@ const formatDay = (timestamp: number) =>
 
 const formatDateKey = (dateKey: string) =>
   new Intl.DateTimeFormat('vi-VN', {
-    timeZone: 'Asia/Ho_Chi_Minh',
+    timeZone: VIETNAM_TIME_ZONE,
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
@@ -118,12 +135,25 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
-  const editRange = useMemo(() => getEditableMealDateRange(), []);
+  const businessDate = useVietnamBusinessDate();
+  const editRange = useMemo(
+    () => getEditableMealDateRange(businessDate.now),
+    [businessDate.dateKey]
+  );
   const [calendarDate, setCalendarDate] = useState(editRange.max);
   const [mealDrafts, setMealDrafts] = useState<Record<MealKey, MealDraft>>(emptyDrafts);
   const [nutritionAddons, setNutritionAddons] = useState<NutritionAddonOption[]>([]);
   const [editorError, setEditorError] = useState('');
   const [dayMode, setDayMode] = useState<'DETAIL' | 'EDIT'>('DETAIL');
+
+  useEffect(() => {
+    setCalendarDate(current =>
+      current > editRange.max ? editRange.max : current
+    );
+    setSelectedDayKey(current =>
+      current && current > editRange.max ? editRange.max : current
+    );
+  }, [editRange.max]);
 
   // Hồ sơ sức khỏe người dùng
   const [profile, setProfile] = useState<Partial<UserProfileData> | null>(() => {
@@ -187,16 +217,19 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
     };
   }, [selectedDayKey]);
 
-  const findDish = (name: string) => dishes.find(dish => dish.name === name);
+  const findDish = (name: string) =>
+    dishes.find(
+      dish =>
+        dish.name === name ||
+        dish.legacyNames?.includes(name)
+    );
 
-  const resolveCalories = (log: LogEntry) => {
-    if (typeof log.calories === 'number' && Number.isFinite(log.calories)) {
-      return Math.max(0, Math.round(log.calories));
-    }
-
-    const dish = findDish(log.dishName);
-    return dish ? estimateDishCalories(dish) : 0;
-  };
+  const resolveCalories = (log: LogEntry) =>
+    resolveLogMainCalories(
+      log,
+      dishes,
+      dish => estimateDishCalories(dish as Dish)
+    );
 
   const groupedDays = useMemo<DayGroup[]>(() => {
     const groups = new Map<string, LogEntry[]>();
@@ -241,7 +274,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   }, [logs, selectedDayKey]);
 
   const selectedDayEditable = selectedDayKey
-    ? isMealDateEditable(selectedDayKey)
+    ? isMealDateEditable(selectedDayKey, businessDate.now)
     : false;
 
   useEffect(() => {
@@ -253,7 +286,11 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
       const log = selectedDay.logs.find(item => item.mealKey === mealKey);
       if (!log) return;
 
-      const dish = dishes.find(item => item.name === log.dishName);
+      const dish = dishes.find(
+        item =>
+          item.name === log.dishName ||
+          item.legacyNames?.includes(log.dishName)
+      );
       if (!dish) return;
 
       const vendor = dish.vendors.find(item => item.name === log.vendorName);
@@ -282,104 +319,59 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
       )
     : 0;
 
-  // Ngày hôm nay theo giờ Việt Nam
-  const todayKey = useMemo(() => getVietnamDateKey(Date.now()), []);
+  // Ngày nghiệp vụ luôn theo Asia/Ho_Chi_Minh và tự rollover lúc 00:00.
+  const todayKey = businessDate.dateKey;
 
-  // Danh sách bữa ăn hôm nay
-  const todayLogs = useMemo(() => {
-    return logs.filter(log => getVietnamDateKey(log.timestamp) === todayKey);
-  }, [logs, todayKey]);
+  // Business analytics use one Vietnam-date implementation for Dashboard,
+  // History and weekly summaries.
+  const todayLogs = useMemo(
+    () => getLogsForVietnamDate(logs, todayKey),
+    [logs, todayKey]
+  );
 
-  // Tổng calo hôm nay
-  const todayCalories = useMemo(() => {
-    return todayLogs.reduce(
-      (total, log) => total + resolveCalories(log) + sumMealAddonCalories(log),
-      0
-    );
-  }, [todayLogs, dishes]);
+  const todayCalories = useMemo(
+    () =>
+      calculateConsumedCalories(
+        todayLogs,
+        dishes,
+        dish => estimateDishCalories(dish as Dish)
+      ),
+    [todayLogs, dishes]
+  );
 
-  // Phân bổ calo các bữa ăn hôm nay (Sáng - Trưa - Tối)
-  const mealDistribution = useMemo(() => {
-    let breakfastKcal = 0;
-    let lunchKcal = 0;
-    let dinnerKcal = 0;
+  const mealDistribution = useMemo(
+    () =>
+      calculateMealDistribution(
+        todayLogs,
+        dishes,
+        dish => estimateDishCalories(dish as Dish)
+      ),
+    [todayLogs, dishes]
+  );
 
-    todayLogs.forEach(log => {
-      const kcal = resolveCalories(log) + sumMealAddonCalories(log);
-      if (log.mealKey === 'A') breakfastKcal += kcal;
-      else if (log.mealKey === 'B') lunchKcal += kcal;
-      else if (log.mealKey === 'C') dinnerKcal += kcal;
-    });
-
-    const total = breakfastKcal + lunchKcal + dinnerKcal;
-    return {
-      breakfastKcal,
-      lunchKcal,
-      dinnerKcal,
-      total,
-      breakfastPct: total > 0 ? Math.round((breakfastKcal / total) * 100) : 0,
-      lunchPct: total > 0 ? Math.round((lunchKcal / total) * 100) : 0,
-      dinnerPct: total > 0 ? Math.round((dinnerKcal / total) * 100) : 0
-    };
-  }, [todayLogs, dishes]);
-
-  // Thống kê calo 7 ngày gần nhất
-  const last7DaysData = useMemo(() => {
-    const [tY, tM, tD] = todayKey.split('-').map(Number);
-    const todayUtc = Date.UTC(tY, tM - 1, tD, 12, 0, 0);
-
-    const days: Array<{
-      dateKey: string;
-      shortLabel: string;
-      dayNum: string;
-      calories: number;
-      isToday: boolean;
-      mealCount: number;
-    }> = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(todayUtc - i * 24 * 60 * 60 * 1000);
-      const year = d.getUTCFullYear();
-      const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(d.getUTCDate()).padStart(2, '0');
-      const key = `${year}-${month}-${day}`;
-
-      const dayLogs = logs.filter(log => getVietnamDateKey(log.timestamp) === key);
-      const totalKcal = dayLogs.reduce(
-        (sum, log) => sum + resolveCalories(log) + sumMealAddonCalories(log),
-        0
-      );
-
-      const dayOfWeek = d.getUTCDay();
-      const shortDay = dayOfWeek === 0 ? 'CN' : `T${dayOfWeek + 1}`;
-
-      days.push({
-        dateKey: key,
-        shortLabel: i === 0 ? 'Nay' : shortDay,
-        dayNum: `${day}/${month}`,
-        calories: totalKcal,
-        isToday: i === 0,
-        mealCount: dayLogs.length
-      });
-    }
-
-    const maxKcal = Math.max(1600, ...days.map(d => d.calories));
-    const totalWeekKcal = days.reduce((sum, d) => sum + d.calories, 0);
-    const activeDays = days.filter(d => d.calories > 0).length;
-    const avgKcal = activeDays > 0 ? Math.round(totalWeekKcal / activeDays) : 0;
-
-    return { days, maxKcal, avgKcal, totalWeekKcal, activeDays };
-  }, [logs, dishes, todayKey]);
+  const last7DaysData = useMemo(
+    () =>
+      buildRecentConsumedSeries({
+        logs,
+        dishes,
+        endDateKey: todayKey,
+        days: 7,
+        estimateDish: dish => estimateDishCalories(dish as Dish)
+      }),
+    [logs, dishes, todayKey]
+  );
 
   // Tính toán sức khỏe từ hồ sơ. Không suy đoán dữ liệu nhân khẩu học bị thiếu.
   const rawHeight = Number(profile?.heightCm);
   const rawWeight = Number(profile?.weightKg);
   const heightNum =
-    Number.isFinite(rawHeight) && rawHeight >= 80 && rawHeight <= 240
+    Number.isFinite(rawHeight) && rawHeight >= HEALTH_LIMITS.heightCm.min &&
+      rawHeight <= HEALTH_LIMITS.heightCm.max
       ? rawHeight
       : null;
   const weightNum =
-    Number.isFinite(rawWeight) && rawWeight >= 25 && rawWeight <= 220
+    Number.isFinite(rawWeight) && rawWeight >= HEALTH_LIMITS.weightKg.min &&
+      rawWeight <= HEALTH_LIMITS.weightKg.max
       ? rawWeight
       : null;
   const gender = profile?.gender || '';
@@ -387,7 +379,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   const healthGoal = profile?.healthGoal || '';
   const age = profile?.dateOfBirth ? calculateAge(profile.dateOfBirth) : null;
   const hasBmrGender = gender === 'male' || gender === 'female';
-  const hasAdultAge = age !== null && age >= 18;
+  const hasAdultAge = age !== null && age >= HEALTH_LIMITS.age.min;
 
   const missingHealthFields = [
     !heightNum ? 'chiều cao' : '',
@@ -408,8 +400,16 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
     healthProfileComplete && heightNum && weightNum && age !== null
       ? calculateBMR(weightNum, heightNum, age, gender)
       : null;
-  const tdee = calculateTDEE(bmr, activityLevel);
-  const targetCalories = calculateCalorieGoal(tdee, healthGoal);
+  const tdeeEstimate = calculateTDEEEstimate(bmr, activityLevel);
+  const tdee = tdeeEstimate?.value ?? null;
+  const calorieGoalPlan = calculateCalorieGoalPlan(tdee, healthGoal);
+  const targetCalories = calorieGoalPlan?.value ?? null;
+  const displayTdee =
+    tdee !== null ? roundEnergyEstimateForDisplay(tdee) : null;
+  const displayTargetCalories =
+    targetCalories !== null
+      ? roundEnergyEstimateForDisplay(targetCalories)
+      : null;
 
   const waterReq = weightNum ? calculateWaterRequirement(weightNum) : null;
 
@@ -465,6 +465,8 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
         calories: item.calories,
         nutritionRecordId: item.id,
         servingG: item.servingG,
+        servingAmount: item.servingAmount ?? item.servingG,
+        servingUnit: item.servingUnit ?? (item.kind === 'drink' ? 'ml' : 'g'),
         kcalMin: item.kcalMin,
         kcalMax: item.kcalMax
       }));
@@ -477,7 +479,8 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
         vendorName: vendor?.name || 'Không ghi quán',
         price: vendor?.price || 0,
         calories: estimateDishCalories(dish),
-        addons
+        addons,
+        nutritionSnapshot: getDishNutritionSnapshot(dish)
       });
       setEditorError('');
     } catch (error) {
@@ -588,7 +591,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                     Chỉ số thể trạng
                   </span>
                   <span className="text-sm font-black text-slate-950 dark:text-white">
-                    BMI · ngưỡng tham khảo châu Á
+                    BMI · {BMI_REFERENCE_LABELS[DEFAULT_BMI_REFERENCE_SYSTEM]}
                   </span>
                 </div>
               </div>
@@ -615,7 +618,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div className="grid h-full w-full grid-cols-4">
                   <div className="bg-amber-400" title="Gầy (< 18.5)" />
-                  <div className="bg-emerald-500" title="Lý tưởng (18.5 - 22.9)" />
+                  <div className="bg-emerald-500" title="Khoảng tham khảo (18.5 - 22.9)" />
                   <div className="bg-orange-500" title="Thừa cân (23 - 24.9)" />
                   <div className="bg-rose-500" title="Béo phì (>= 25)" />
                 </div>
@@ -667,8 +670,8 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               </div>
 
               <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] font-black text-blue-800 dark:border-blue-800 dark:bg-blue-500/15 dark:text-blue-200">
-                {targetCalories !== null
-                  ? `Mục tiêu: ${targetCalories.toLocaleString('vi-VN')} kcal`
+                {displayTargetCalories !== null
+                  ? `Mục tiêu ≈ ${displayTargetCalories.toLocaleString('vi-VN')} kcal`
                   : 'Cần hồ sơ đầy đủ'}
               </span>
             </div>
@@ -680,8 +683,8 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   {todayCalories.toLocaleString('vi-VN')}
                 </span>
                 <span className="health-copy text-sm font-black">
-                  / {targetCalories !== null
-                    ? `${targetCalories.toLocaleString('vi-VN')} kcal`
+                  / {displayTargetCalories !== null
+                    ? `≈ ${displayTargetCalories.toLocaleString('vi-VN')} kcal`
                     : '-- kcal'}
                 </span>
               </div>
@@ -703,19 +706,27 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                 {calorieRemaining === null
                   ? 'Hoàn thiện hồ sơ để tính mục tiêu'
                   : calorieRemaining > 0
-                    ? `Còn ~${calorieRemaining.toLocaleString('vi-VN')} kcal`
+                    ? `Còn khoảng ${roundEnergyEstimateForDisplay(calorieRemaining).toLocaleString('vi-VN')} kcal`
                     : calorieRemaining < 0
-                      ? `Vượt ~${Math.abs(calorieRemaining).toLocaleString('vi-VN')} kcal`
+                      ? `Vượt khoảng ${roundEnergyEstimateForDisplay(Math.abs(calorieRemaining)).toLocaleString('vi-VN')} kcal`
                       : 'Đã đạt đúng mục tiêu'}
               </span>
             </div>
+            {displayTdee !== null && tdee !== null ? (
+              <div className="health-copy mt-2 text-[11px] font-bold">
+                TDEE ước tính ≈ {displayTdee.toLocaleString('vi-VN')} kcal/ngày
+                <span className="font-semibold">
+                  {' '}· giá trị tính toán {tdee.toLocaleString('vi-VN')} kcal
+                </span>
+              </div>
+            ) : null}
           </div>
 
           {/* Gợi ý nước uống */}
           <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-cyan-300 bg-cyan-50 p-3.5 text-xs font-black text-cyan-950 dark:border-cyan-700 dark:bg-cyan-950/70 dark:text-cyan-50">
             <Droplets className="h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-400" />
             <div className="min-w-0 flex-1">
-              <span>Ước tính nước: </span>
+              <span>Ước tính nước tham khảo: </span>
               {waterReq ? (
                 <>
                   <span className="font-extrabold text-cyan-700 dark:text-cyan-300">
@@ -730,6 +741,9 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   Cập nhật cân nặng để xem ước tính.
                 </span>
               )}
+              <div className="mt-1 text-[10px] font-semibold text-cyan-900/90 dark:text-cyan-100/85">
+                Nhu cầu thực tế có thể thay đổi theo vận động, thời tiết, thực phẩm và tình trạng sức khỏe.
+              </div>
             </div>
           </div>
         </section>
@@ -753,7 +767,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               </div>
 
               <span className="health-copy text-[11px] font-black">
-                TB: <strong className="text-slate-950 dark:text-white">~{last7DaysData.avgKcal.toLocaleString('vi-VN')}</strong> kcal/ngày
+                TB ngày có ghi nhận: <strong className="text-slate-950 dark:text-white">~{last7DaysData.averagePerActiveDay.toLocaleString('vi-VN')}</strong> kcal/ngày
               </span>
             </div>
 
@@ -904,7 +918,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
           </div>
 
           <p className="health-copy mt-3 text-[11px] font-bold leading-relaxed">
-            💡 Tỷ lệ năng lượng lý tưởng sinh viên: Sáng 30% · Trưa 40% · Tối 30%. Hạn chế ăn đêm nhiều calo sau 21h.
+            Phân bổ 30% · 40% · 30% chỉ là mốc tham khảo để quan sát ba bữa; nhu cầu thực tế có thể khác theo lịch học, vận động và sức khỏe.
           </p>
         </section>
       </div>

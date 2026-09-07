@@ -4,6 +4,7 @@ import { estimateDishCalories, mockDb, type Category, type Dish, type LogEntry }
 import DishDetailModal from './DishDetailModal';
 import AddDishModal from './AddDishModal';
 import DishImage from './DishImage';
+import { normalizePriceVnd } from '../domain/menu/vendorOffer';
 
 const normalizeText = (value: string) =>
   value
@@ -112,8 +113,11 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
       const vendorName = window.prompt('Tên quán:');
       if (!vendorName?.trim()) return;
       const rawPrice = window.prompt('Giá (VND):', '30000');
-      const price = Number(rawPrice);
-      if (!Number.isFinite(price) || price < 0) return;
+      const price = normalizePriceVnd(Number(rawPrice));
+      if (price === null) {
+        window.alert('Giá phải là số nguyên VND hợp lệ.');
+        return;
+      }
       const phone = window.prompt('Số điện thoại:', '') || '';
       const address = window.prompt('Địa chỉ:', '') || '';
       mockDb.addVendor(dish.id, vendorName.trim(), price, phone, address);
@@ -183,14 +187,14 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <div className="text-[10px] font-black uppercase tracking-wide text-slate-700 dark:text-slate-300">
+          <div className="theme-card rounded-2xl border p-3.5">
+            <div className="theme-text-secondary text-[11px] font-black uppercase tracking-wide">
               Tổng số món
             </div>
-            <div className="mt-1 text-xl font-black text-slate-950 dark:text-white">{dishes.length}</div>
+            <div className="theme-text-primary mt-1 text-xl font-black">{dishes.length}</div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-            <div className="text-[10px] font-black uppercase tracking-wide text-slate-700 dark:text-slate-300">
+          <div className="theme-card rounded-2xl border p-3.5">
+            <div className="theme-text-secondary text-[11px] font-black uppercase tracking-wide">
               Lượt phục vụ
             </div>
             <div className="mt-1 text-xl font-black text-amber-700 dark:text-amber-300">{logs.length}</div>
@@ -231,7 +235,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
             'shrink-0 min-w-14 px-4 min-h-11 rounded-xl text-[11px] font-black uppercase transition-colors ' +
             (activeCategory === 'all'
               ? 'bg-blue-600 dark:bg-blue-500 text-white'
-              : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700')
+              : 'theme-card theme-text-secondary border')
           }
         >
           Tất cả
@@ -245,7 +249,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
               'shrink-0 max-w-32 px-4 min-h-11 rounded-xl text-[11px] leading-tight font-black uppercase transition-colors ' +
               (activeCategory === category.id
                 ? 'bg-blue-600 dark:bg-blue-500 text-white'
-                : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700')
+                : 'theme-card theme-text-secondary border')
             }
           >
             {category.name}
@@ -272,14 +276,14 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
           visibleDishes.map(dish => (
             <article
               key={dish.id}
-              className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm p-4 flex items-center gap-4 transition-all hover:border-slate-300 dark:hover:border-slate-700"
+              className="theme-card rounded-[24px] border p-4 flex items-center gap-4 transition-all"
             >
               <DishImage src={dish.imageUrl} alt={dish.name} className="w-16 h-16 rounded-2xl shrink-0 border border-slate-100 dark:border-slate-800" />
 
               <div className="min-w-0 flex-1">
                 <div className="text-[11px] font-black uppercase text-blue-600 dark:text-blue-400">{categoryName(dish.categoryId)}</div>
-                <h3 className="mt-1 font-black text-sm text-slate-900 dark:text-slate-100 leading-snug">{dish.name}</h3>
-                <div className="mt-1 text-[11px] font-extrabold text-slate-700 dark:text-slate-300">
+                <h3 className="theme-text-primary mt-1 font-black text-sm leading-snug">{dish.name}</h3>
+                <div className="theme-text-secondary mt-1 text-[11px] font-extrabold">
                   {dish.vendors.length} quán bán · ≈ {estimateDishCalories(dish)} kcal
                 </div>
               </div>

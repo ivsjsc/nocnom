@@ -1,5 +1,30 @@
 import { lookupNutrition, normalizeFoodName } from './nutritionKnowledge';
+import type {
+  CalorieSource,
+  MealNutritionSnapshot,
+  NutritionConfidenceLevel,
+  NutritionSelection
+} from '../domain/nutrition/nutritionTypes';
+import {
+  dishNutritionFieldsToMealSnapshot,
+  nutritionSelectionToDishFields
+} from '../domain/nutrition/nutritionPersistence';
+import { normalizeKcalInternal } from '../domain/nutrition/caloriePrecision';
+import { migrateDefaultDishRecords } from '../domain/menu/defaultDishMigration';
+import { normalizePriceVnd } from '../domain/menu/vendorOffer';
+import {
+  normalizeMealAddons,
+  type MealAddonKind,
+  type MealAddonSnapshot
+} from '../domain/meal/addonNormalizer';
 import { normalizeExternalImageUrl } from './url';
+import {
+  dateKeyFromUtcDay,
+  getVietnamDateKey,
+  getVietnamTimestampForDateKey,
+  parseDateKeyToUtcDay
+} from './dateTime';
+export { getVietnamDateKey } from './dateTime';
 import { deleteUserImageByPath } from '../services/imageStorage';
 import {
   loadOrMigrateUserState,
@@ -49,6 +74,7 @@ export type AddDishOptions = {
   image?: DishImageReference;
   vendors?: NewVendorInput[];
   dishId?: string;
+  nutritionSelection?: NutritionSelection;
 };
 
 export type Dish = {
@@ -66,11 +92,32 @@ export type Dish = {
   imageSize?: number;
   imageUpdatedAt?: number;
   calories?: number;
-  calorieSource?: 'manual' | 'knowledge';
-  calorieBasis?: 'serving' | '100g';
+  calorieSource?: CalorieSource | 'knowledge';
+  calorieBasis?: 'portion' | 'grams' | 'category' | 'serving' | '100g';
+  portionSize?: 'S' | 'M' | 'L';
+  portionGrams?: number;
+  servingAmount?: number;
+  servingUnit?: 'g' | 'ml' | 'portion';
+  kcalMin?: number;
+  kcalMax?: number;
   nutritionRecordId?: string;
-  nutritionConfidence?: 'verified' | 'estimated' | 'unknown';
+  nutritionCanonicalName?: string;
+  nutritionConfidence?:
+    | NutritionConfidenceLevel
+    | 'verified'
+    | 'estimated'
+    | 'unknown';
+  nutritionVerificationState?: string;
+  nutritionCalorieStatus?: string;
+  nutritionValidationResult?: string;
+  nutritionTrainingEligibility?: string;
+  nutritionReferenceOnly?: boolean;
   nutritionSource?: string;
+  nutritionSourceId?: string;
+  nutritionSourceUrl?: string;
+  nutritionMatchType?: string;
+  nutritionMatchScore?: number;
+  legacyNames?: string[];
   vendors: Vendor[];
 };
 
@@ -80,18 +127,8 @@ export type Category = {
 };
 
 export type MealKey = 'A' | 'B' | 'C';
-export type MealAddonKind = 'fruit' | 'drink';
-
-export type MealAddon = {
-  id: string;
-  kind: MealAddonKind;
-  name: string;
-  calories: number;
-  nutritionRecordId?: string;
-  servingG?: number;
-  kcalMin?: number;
-  kcalMax?: number;
-};
+export type MealAddon = MealAddonSnapshot;
+export type { MealAddonKind };
 
 export type LogEntry = {
   id: string;
@@ -101,88 +138,69 @@ export type LogEntry = {
   calories?: number;
   addons?: MealAddon[];
   mealKey?: MealKey;
+  calorieSource?: CalorieSource | 'knowledge';
+  calorieBasis?: 'portion' | 'grams' | 'category' | 'serving' | '100g';
+  portionSize?: 'S' | 'M' | 'L';
+  portionGrams?: number;
+  servingAmount?: number;
+  servingUnit?: 'g' | 'ml' | 'portion';
+  kcalMin?: number;
+  kcalMax?: number;
+  nutritionRecordId?: string;
+  nutritionCanonicalName?: string;
+  nutritionConfidence?:
+    | NutritionConfidenceLevel
+    | 'verified'
+    | 'estimated'
+    | 'unknown';
+  nutritionVerificationState?: string;
+  nutritionCalorieStatus?: string;
+  nutritionValidationResult?: string;
+  nutritionTrainingEligibility?: string;
+  nutritionReferenceOnly?: boolean;
+  nutritionSource?: string;
+  nutritionSourceId?: string;
+  nutritionSourceUrl?: string;
+  nutritionMatchType?: string;
+  nutritionMatchScore?: number;
   timestamp: number;
 };
 
-const VIETNAM_TIME_ZONE = 'Asia/Ho_Chi_Minh';
-const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_HISTORY_EDIT_DAYS = 3;
-
-function datePartsInVietnam(timestamp: number) {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: VIETNAM_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).formatToParts(new Date(timestamp));
-
-  const lookup = Object.fromEntries(parts.map(part => [part.type, part.value]));
-  return {
-    year: Number(lookup.year),
-    month: Number(lookup.month),
-    day: Number(lookup.day)
-  };
-}
-
-export const getVietnamDateKey = (timestamp = Date.now()) => {
-  const { year, month, day } = datePartsInVietnam(timestamp);
-  return [
-    String(year).padStart(4, '0'),
-    String(month).padStart(2, '0'),
-    String(day).padStart(2, '0')
-  ].join('-');
-};
-
-function dateKeyToUtcDay(dateKey: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
-  if (!match) return null;
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const utc = Date.UTC(year, month - 1, day);
-  const check = new Date(utc);
-
-  if (
-    check.getUTCFullYear() !== year ||
-    check.getUTCMonth() !== month - 1 ||
-    check.getUTCDate() !== day
-  ) {
-    return null;
-  }
-
-  return Math.floor(utc / DAY_MS);
-}
 
 export const getEditableMealDateRange = (now = Date.now()) => {
   const todayKey = getVietnamDateKey(now);
-  const todayDay = dateKeyToUtcDay(todayKey)!;
-  const minDay = todayDay - MAX_HISTORY_EDIT_DAYS;
-  const minDate = new Date(minDay * DAY_MS);
+  const todayDay = parseDateKeyToUtcDay(todayKey);
+  if (todayDay === null) {
+    throw new Error('Không thể xác định ngày Việt Nam hiện tại.');
+  }
 
   return {
-    min: [
-      minDate.getUTCFullYear(),
-      String(minDate.getUTCMonth() + 1).padStart(2, '0'),
-      String(minDate.getUTCDate()).padStart(2, '0')
-    ].join('-'),
+    min: dateKeyFromUtcDay(todayDay - MAX_HISTORY_EDIT_DAYS),
     max: todayKey
   };
 };
 
 export const isMealDateEditable = (dateKey: string, now = Date.now()) => {
-  const candidate = dateKeyToUtcDay(dateKey);
-  if (candidate === null) return false;
+  const candidate = parseDateKeyToUtcDay(dateKey);
+  const today = parseDateKeyToUtcDay(getVietnamDateKey(now));
+  if (candidate === null || today === null) return false;
 
-  const today = dateKeyToUtcDay(getVietnamDateKey(now))!;
   const age = today - candidate;
   return age >= 0 && age <= MAX_HISTORY_EDIT_DAYS;
 };
 
 function timestampForMealDate(dateKey: string, mealKey: MealKey) {
-  const hour: Record<MealKey, string> = { A: '08:00:00', B: '12:00:00', C: '18:00:00' };
-  const timestamp = Date.parse(`${dateKey}T${hour[mealKey]}+07:00`);
-  if (!Number.isFinite(timestamp)) {
+  const hour: Record<MealKey, string> = {
+    A: '08:00:00',
+    B: '12:00:00',
+    C: '18:00:00'
+  };
+  const timestamp = getVietnamTimestampForDateKey(
+    dateKey,
+    hour[mealKey]
+  );
+  if (timestamp === null) {
     throw new Error('Ngày lịch sử không hợp lệ.');
   }
   return timestamp;
@@ -211,14 +229,28 @@ const categoryCalorieDefaults: Record<string, number> = {
 export const getDefaultCaloriesForCategory = (categoryId: string) =>
   categoryCalorieDefaults[categoryId] ?? 500;
 
-export const estimateDishCalories = (dish: Pick<Dish, 'calories' | 'categoryId'>) => {
-  const calories = Number(dish.calories);
-  if (Number.isFinite(calories) && calories > 0) {
-    return Math.round(calories);
+export const estimateDishCalories = (
+  dish: Pick<Dish, 'calories' | 'categoryId'>
+) => {
+  const calories = normalizeKcalInternal(dish.calories);
+  if (calories !== null && calories > 0) {
+    return calories;
   }
 
   return getDefaultCaloriesForCategory(dish.categoryId);
 };
+
+export const getDishNutritionSnapshot = (dish: Dish): MealNutritionSnapshot =>
+  dishNutritionFieldsToMealSnapshot(
+    {
+      ...dish,
+      calorieSource:
+        dish.calorieSource === 'knowledge'
+          ? 'nutrition-db'
+          : dish.calorieSource
+    },
+    estimateDishCalories(dish)
+  );
 
 const initialDishes: Dish[] = [
   {
@@ -314,7 +346,10 @@ const normalizeCachedCategories = (categories: Category[]) =>
 
 const createDefaultUserState = () => ({
   timetable: deepClone(defaultTimetable),
-  dishes: deepClone(initialDishes),
+  dishes: migrateDefaultDishRecords(
+    deepClone(initialDishes),
+    'new-user'
+  ) as Dish[],
   categories: deepClone(initialCategories),
   logs: [] as LogEntry[]
 });
@@ -359,7 +394,10 @@ const readCachedState = (uid: string | null) => {
         ? JSON.parse(timetableRaw) as Timetable
         : fallback.timetable,
       dishes: dishesRaw
-        ? JSON.parse(dishesRaw) as Dish[]
+        ? migrateDefaultDishRecords(
+            JSON.parse(dishesRaw) as Dish[],
+            'persisted'
+          ) as Dish[]
         : fallback.dishes,
       categories: categoriesRaw
         ? normalizeCachedCategories(
@@ -601,14 +639,21 @@ export const syncUserWithFirestore = (uid: string | null) => {
       const normalizedLoadedCategories = normalizeCachedCategories(
         loaded.state.categories
       );
+      const normalizedLoadedDishes = migrateDefaultDishRecords(
+        loaded.state.dishes,
+        'persisted'
+      ) as Dish[];
       const shouldPersistNormalizedCategories =
         JSON.stringify(normalizedLoadedCategories) !==
         JSON.stringify(loaded.state.categories);
+      const shouldPersistNormalizedDishes =
+        JSON.stringify(normalizedLoadedDishes) !==
+        JSON.stringify(loaded.state.dishes);
 
       isRemoteUpdating = true;
       try {
         dbData = loaded.state.timetable;
-        dishesData = loaded.state.dishes;
+        dishesData = normalizedLoadedDishes;
         categoriesData = normalizedLoadedCategories;
         logsData = loaded.state.logs;
         writeLocalCache();
@@ -619,6 +664,9 @@ export const syncUserWithFirestore = (uid: string | null) => {
 
       if (shouldPersistNormalizedCategories) {
         scheduleCloudSync(['categories']);
+      }
+      if (shouldPersistNormalizedDishes) {
+        scheduleCloudSync(['dishes']);
       }
 
       firestoreUnsubscribe = subscribeUserStateDomains({
@@ -632,13 +680,22 @@ export const syncUserWithFirestore = (uid: string | null) => {
           }
 
           let shouldPersistNormalizedCategories = false;
+          let shouldPersistNormalizedDishes = false;
 
           isRemoteUpdating = true;
           try {
             if (domain === 'timetable') {
               dbData = value as Timetable;
             } else if (domain === 'dishes') {
-              dishesData = value as Dish[];
+              const incomingDishes = value as Dish[];
+              const normalizedDishes = migrateDefaultDishRecords(
+                incomingDishes,
+                'persisted'
+              ) as Dish[];
+              dishesData = normalizedDishes;
+              shouldPersistNormalizedDishes =
+                JSON.stringify(normalizedDishes) !==
+                JSON.stringify(incomingDishes);
             } else if (domain === 'categories') {
               const incomingCategories = value as Category[];
               const normalizedCategories =
@@ -660,6 +717,9 @@ export const syncUserWithFirestore = (uid: string | null) => {
 
           if (shouldPersistNormalizedCategories) {
             scheduleCloudSync(['categories']);
+          }
+          if (shouldPersistNormalizedDishes) {
+            scheduleCloudSync(['dishes']);
           }
         },
         onError: (domain, error) => {
@@ -717,12 +777,18 @@ const hydrateDishCaloriesFromKnowledge = async (dishId: string, foodName: string
       dish.id === dishId
         ? {
             ...dish,
-            calories: result.calories,
-            calorieSource: 'knowledge',
-            calorieBasis: result.basis,
-            nutritionRecordId: result.record.id,
-            nutritionConfidence: result.record.confidence,
-            nutritionSource: result.record.source
+            ...(result.selection
+              ? nutritionSelectionToDishFields(result.selection)
+              : {
+                  calories: result.calories,
+                  calorieSource: 'nutrition-db' as const,
+                  calorieBasis: 'serving' as const,
+                  nutritionRecordId: result.record.id,
+                  nutritionConfidence: result.record.confidence,
+                  nutritionVerificationState: result.record.verificationState,
+                  nutritionSource: result.record.source,
+                  nutritionSourceUrl: result.record.sourceUrl
+                })
           }
         : dish
     );
@@ -736,55 +802,19 @@ const hydrateDishCaloriesFromKnowledge = async (dishId: string, foodName: string
 
 export const sumMealAddonCalories = (
   log: Pick<LogEntry, 'addons'>
-): number =>
-  (log.addons ?? []).reduce((total, addon) => {
-    const calories = Number(addon.calories);
-    return total + (
-      Number.isFinite(calories) && calories >= 0
-        ? Math.round(calories)
-        : 0
-    );
+): number => {
+  const total = (log.addons ?? []).reduce((sum, addon) => {
+    const calories = normalizeKcalInternal(addon.calories);
+    return sum + (calories ?? 0);
   }, 0);
 
-const normalizeMealAddons = (addons?: MealAddon[]): MealAddon[] => {
-  if (!Array.isArray(addons)) return [];
-
-  const seenKinds = new Set<MealAddonKind>();
-
-  return addons
-    .filter(addon => addon && (addon.kind === 'fruit' || addon.kind === 'drink'))
-    .filter(addon => {
-      if (seenKinds.has(addon.kind)) return false;
-      seenKinds.add(addon.kind);
-      return true;
-    })
-    .map(addon => ({
-      id: String(addon.id).trim(),
-      kind: addon.kind,
-      name: String(addon.name).trim(),
-      calories: Math.max(0, Math.round(Number(addon.calories) || 0)),
-      nutritionRecordId: addon.nutritionRecordId
-        ? String(addon.nutritionRecordId).trim()
-        : undefined,
-      servingG:
-        typeof addon.servingG === 'number' && Number.isFinite(addon.servingG)
-          ? Math.max(0, addon.servingG)
-          : undefined,
-      kcalMin:
-        typeof addon.kcalMin === 'number' && Number.isFinite(addon.kcalMin)
-          ? Math.max(0, Math.round(addon.kcalMin))
-          : undefined,
-      kcalMax:
-        typeof addon.kcalMax === 'number' && Number.isFinite(addon.kcalMax)
-          ? Math.max(0, Math.round(addon.kcalMax))
-          : undefined
-    }))
-    .filter(addon => addon.id && addon.name);
+  return normalizeKcalInternal(total) ?? 0;
 };
 
 const hydrateMissingDishCalories = async () => {
   const candidates = dishesData.filter(dish =>
     dish.calorieSource === 'knowledge' ||
+    dish.calorieSource === 'category-fallback' ||
     typeof dish.calories !== 'number' ||
     !Number.isFinite(dish.calories) ||
     dish.calories <= 0
@@ -850,9 +880,9 @@ const mergeVendorInputs = (
     const address = String(input.address ?? '').trim();
     const phone = String(input.phone ?? '').trim();
     const link = String(input.link ?? '').trim();
-    const price = Number(input.price);
+    const price = normalizePriceVnd(input.price);
 
-    if (!name || !Number.isFinite(price) || price < 0) return;
+    if (!name || price === null) return;
 
     const key = normalizeFoodName(name) + '|' + normalizeFoodName(address);
     const existingIndex = vendors.findIndex(vendor =>
@@ -864,7 +894,7 @@ const mergeVendorInputs = (
       vendors[existingIndex] = {
         ...existing,
         name,
-        price: Math.round(price),
+        price,
         phone: phone || existing.phone,
         address: address || existing.address,
         ...(link ? { link } : {})
@@ -875,7 +905,7 @@ const mergeVendorInputs = (
     vendors.push({
       id: createLocalId('v'),
       name,
-      price: Math.round(price),
+      price,
       phone,
       address,
       ...(link ? { link } : {}),
@@ -940,7 +970,8 @@ const upsertMealLogData = ({
   vendorName,
   price,
   calories,
-  addons
+  addons,
+  nutritionSnapshot
 }: {
   dateKey: string;
   mealKey: MealKey;
@@ -949,6 +980,7 @@ const upsertMealLogData = ({
   price: number;
   calories?: number;
   addons?: MealAddon[];
+  nutritionSnapshot?: MealNutritionSnapshot;
 }) => {
   if (!isMealDateEditable(dateKey)) {
     throw new Error('Chỉ được thêm hoặc chỉnh sửa lịch sử của hôm nay và tối đa 3 ngày trước.');
@@ -959,24 +991,56 @@ const upsertMealLogData = ({
 
   if (!normalizedDishName) throw new Error('Cần chọn món ăn.');
   if (!normalizedVendorName) throw new Error('Cần chọn quán hoặc nguồn món.');
-  if (!Number.isFinite(price) || price < 0) throw new Error('Giá món không hợp lệ.');
+  const priceVnd = normalizePriceVnd(price);
+  if (priceVnd === null) {
+    throw new Error('Giá món phải là số nguyên VND hợp lệ.');
+  }
 
   const existingIndex = logsData.findIndex(log =>
     log.mealKey === mealKey &&
     getVietnamDateKey(log.timestamp) === dateKey
   );
 
+  const resolvedCalories = nutritionSnapshot
+    ? normalizeKcalInternal(nutritionSnapshot.calories)
+    : normalizeKcalInternal(calories);
+
   const newLog: LogEntry = {
     id: existingIndex >= 0 ? logsData[existingIndex].id : createLocalId('l'),
     dishName: normalizedDishName,
     vendorName: normalizedVendorName,
-    price: Math.round(price),
-    calories:
-      typeof calories === 'number' && Number.isFinite(calories)
-        ? Math.max(0, Math.round(calories))
-        : undefined,
+    price: priceVnd,
+    calories: resolvedCalories ?? undefined,
     addons: normalizeMealAddons(addons),
     mealKey,
+    ...(nutritionSnapshot
+      ? {
+          calorieSource: nutritionSnapshot.calorieSource,
+          calorieBasis: nutritionSnapshot.calorieBasis,
+          portionSize: nutritionSnapshot.portionSize,
+          portionGrams: nutritionSnapshot.portionGrams,
+          servingAmount: nutritionSnapshot.servingAmount,
+          servingUnit: nutritionSnapshot.servingUnit,
+          kcalMin: nutritionSnapshot.kcalMin,
+          kcalMax: nutritionSnapshot.kcalMax,
+          nutritionRecordId: nutritionSnapshot.nutritionRecordId,
+          nutritionCanonicalName: nutritionSnapshot.nutritionCanonicalName,
+          nutritionConfidence: nutritionSnapshot.nutritionConfidence,
+          nutritionVerificationState:
+            nutritionSnapshot.nutritionVerificationState,
+          nutritionCalorieStatus: nutritionSnapshot.nutritionCalorieStatus,
+          nutritionValidationResult:
+            nutritionSnapshot.nutritionValidationResult,
+          nutritionTrainingEligibility:
+            nutritionSnapshot.nutritionTrainingEligibility,
+          nutritionReferenceOnly: nutritionSnapshot.nutritionReferenceOnly,
+          nutritionSource: nutritionSnapshot.nutritionSource,
+          nutritionSourceId: nutritionSnapshot.nutritionSourceId,
+          nutritionSourceUrl: nutritionSnapshot.nutritionSourceUrl,
+          nutritionMatchType: nutritionSnapshot.nutritionMatchType,
+          nutritionMatchScore: nutritionSnapshot.nutritionMatchScore
+        }
+      : {}),
     timestamp: timestampForMealDate(dateKey, mealKey)
   };
 
@@ -1053,7 +1117,8 @@ export const mockDb = {
     price: number,
     calories?: number,
     mealKey?: MealKey,
-    addons?: MealAddon[]
+    addons?: MealAddon[],
+    nutritionSnapshot?: MealNutritionSnapshot
   ) => {
     if (!mealKey) {
       const now = Date.now();
@@ -1062,8 +1127,9 @@ export const mockDb = {
         dishName,
         vendorName,
         price,
-        calories,
+        calories: normalizeKcalInternal(calories) ?? undefined,
         addons: normalizeMealAddons(addons),
+        ...(nutritionSnapshot || {}),
         timestamp: now
       };
       logsData = [newLog, ...logsData];
@@ -1079,7 +1145,8 @@ export const mockDb = {
       vendorName,
       price,
       calories,
-      addons
+      addons,
+      nutritionSnapshot
     });
   },
   selectCombo: (day: string, comboKey: 'A' | 'B' | 'C' | null) => {
@@ -1161,16 +1228,41 @@ export const mockDb = {
     }
   },
   updateDishCalories: (id: string, calories: number) => {
+    const normalizedCalories = normalizeKcalInternal(calories);
+    if (
+      normalizedCalories === null ||
+      normalizedCalories <= 0 ||
+      normalizedCalories > 5000
+    ) {
+      throw new Error('Calo phải là số hợp lệ từ 0 đến 5.000 kcal/phần.');
+    }
+
     dishesData = dishesData.map(d =>
       d.id === id
         ? {
             ...d,
-            calories: Math.round(calories),
+            calories: normalizedCalories,
             calorieSource: 'manual',
             calorieBasis: 'serving',
+            portionSize: undefined,
+            portionGrams: undefined,
+            servingAmount: undefined,
+            servingUnit: undefined,
+            kcalMin: undefined,
+            kcalMax: undefined,
             nutritionRecordId: undefined,
+            nutritionCanonicalName: undefined,
             nutritionConfidence: undefined,
-            nutritionSource: undefined
+            nutritionVerificationState: undefined,
+            nutritionCalorieStatus: undefined,
+            nutritionValidationResult: undefined,
+            nutritionTrainingEligibility: undefined,
+            nutritionReferenceOnly: undefined,
+            nutritionSource: undefined,
+            nutritionSourceId: undefined,
+            nutritionSourceUrl: undefined,
+            nutritionMatchType: undefined,
+            nutritionMatchScore: undefined
           }
         : d
     );
@@ -1216,22 +1308,46 @@ export const mockDb = {
   updateDishName: (id: string, newName: string) => {
     const current = dishesData.find(dish => dish.id === id);
     const shouldRefreshKnowledge =
-      current?.calorieSource === 'knowledge' ||
-      typeof current?.calories !== 'number';
+      current?.calorieSource !== 'manual';
 
     dishesData = dishesData.map(d =>
       d.id === id
         ? {
             ...d,
             name: newName,
+            legacyNames:
+              current && current.name !== newName
+                ? [
+                    ...new Set([
+                      ...(current.legacyNames || []),
+                      current.name
+                    ])
+                  ]
+                : current?.legacyNames,
             ...(shouldRefreshKnowledge
               ? {
-                  calories: undefined,
-                  calorieSource: undefined,
-                  calorieBasis: undefined,
+                  calories: getDefaultCaloriesForCategory(d.categoryId),
+                  calorieSource: 'category-fallback' as const,
+                  calorieBasis: 'category' as const,
+                  portionSize: undefined,
+                  portionGrams: undefined,
+                  servingAmount: undefined,
+                  servingUnit: undefined,
+                  kcalMin: undefined,
+                  kcalMax: undefined,
                   nutritionRecordId: undefined,
-                  nutritionConfidence: undefined,
-                  nutritionSource: undefined
+                  nutritionCanonicalName: undefined,
+                  nutritionConfidence: 'unknown' as const,
+                  nutritionVerificationState: 'UNVERIFIED_FALLBACK',
+                  nutritionCalorieStatus: undefined,
+                  nutritionValidationResult: undefined,
+                  nutritionTrainingEligibility: undefined,
+                  nutritionReferenceOnly: undefined,
+                  nutritionSource: undefined,
+                  nutritionSourceId: undefined,
+                  nutritionSourceUrl: undefined,
+                  nutritionMatchType: undefined,
+                  nutritionMatchScore: undefined
                 }
               : {})
           }
@@ -1245,11 +1361,20 @@ export const mockDb = {
     }
   },
   updateVendor: (dishId: string, vendorId: string, updates: Partial<Vendor>) => {
+    const safeUpdates = { ...updates };
+    if (updates.price !== undefined) {
+      const normalizedPrice = normalizePriceVnd(updates.price);
+      if (normalizedPrice === null) {
+        throw new Error('Giá quán phải là số nguyên VND hợp lệ.');
+      }
+      safeUpdates.price = normalizedPrice;
+    }
+
     dishesData = dishesData.map(dish => {
       if (dish.id === dishId) {
         return {
           ...dish,
-          vendors: dish.vendors.map(v => v.id === vendorId ? { ...v, ...updates } : v)
+          vendors: dish.vendors.map(v => v.id === vendorId ? { ...v, ...safeUpdates } : v)
         };
       }
       return dish;
@@ -1310,9 +1435,9 @@ export const mockDb = {
       throw new Error('Tên món không được để trống.');
     }
 
-    const nutrition = await lookupNutrition(cleanName);
-    const resolvedCategoryId = nutrition?.record.category
-      ? ensureNutritionCategory(nutrition.record.category, categoryId)
+    const nutritionSelection = options.nutritionSelection;
+    const resolvedCategoryId = nutritionSelection?.categoryName
+      ? ensureNutritionCategory(nutritionSelection.categoryName, categoryId)
       : categoryId;
 
     const normalizedName = normalizeFoodName(cleanName);
@@ -1322,23 +1447,16 @@ export const mockDb = {
 
     if (existingIndex >= 0) {
       const current = dishesData[existingIndex];
-      const shouldUseKnowledge =
-        Boolean(nutrition) &&
+      const shouldUseNutrition =
+        Boolean(nutritionSelection) &&
         current.calorieSource !== 'manual';
 
       let updated: Dish = {
         ...current,
-        categoryId: nutrition ? resolvedCategoryId : current.categoryId,
+        categoryId: nutritionSelection ? resolvedCategoryId : current.categoryId,
         vendors: mergeVendorInputs(current.vendors, options.vendors),
-        ...(shouldUseKnowledge && nutrition
-          ? {
-              calories: nutrition.calories,
-              calorieSource: 'knowledge',
-              calorieBasis: nutrition.basis,
-              nutritionRecordId: nutrition.record.id,
-              nutritionConfidence: nutrition.record.confidence,
-              nutritionSource: nutrition.record.source
-            }
+        ...(shouldUseNutrition && nutritionSelection
+          ? nutritionSelectionToDishFields(nutritionSelection)
           : {})
       };
 
@@ -1381,7 +1499,7 @@ export const mockDb = {
 
       return {
         dish: updated,
-        nutritionMatched: Boolean(nutrition),
+        nutritionMatched: Boolean(nutritionSelection),
         created: false
       };
     }
@@ -1391,16 +1509,15 @@ export const mockDb = {
       name: cleanName,
       categoryId: resolvedCategoryId,
       isFavorite: false,
-      ...(nutrition
-        ? {
-            calories: nutrition.calories,
-            calorieSource: 'knowledge',
-            calorieBasis: nutrition.basis,
-            nutritionRecordId: nutrition.record.id,
-            nutritionConfidence: nutrition.record.confidence,
-            nutritionSource: nutrition.record.source
-          }
-        : {}),
+      ...(nutritionSelection
+        ? nutritionSelectionToDishFields(nutritionSelection)
+        : {
+            calories: getDefaultCaloriesForCategory(resolvedCategoryId),
+            calorieSource: 'category-fallback' as const,
+            calorieBasis: 'category' as const,
+            nutritionConfidence: 'unknown' as const,
+            nutritionVerificationState: 'UNVERIFIED_FALLBACK'
+          }),
       vendors: mergeVendorInputs([], options.vendors)
     };
 
@@ -1423,34 +1540,38 @@ export const mockDb = {
 
     return {
       dish: newDish,
-      nutritionMatched: Boolean(nutrition),
+      nutritionMatched: Boolean(nutritionSelection),
       created: true
     };
   },
   addVendor: (dishId: string, name: string, price: number, phone: string, address: string) => {
+    const normalizedPrice = normalizePriceVnd(price);
+    if (normalizedPrice === null) {
+      throw new Error('Giá quán phải là số nguyên VND hợp lệ.');
+    }
+
     dishesData = dishesData.map(dish => {
-      if (dish.id === dishId) {
-        return {
-          ...dish,
-          vendors: [...dish.vendors, {
-            id: createLocalId('v'),
-            name,
-            price,
-            phone,
-            address,
-            extraInfo: []
-          }]
-        };
-      }
-      return dish;
+      if (dish.id !== dishId) return dish;
+      return {
+        ...dish,
+        vendors: mergeVendorInputs(dish.vendors, [{
+          name,
+          price: normalizedPrice,
+          phone,
+          address
+        }])
+      };
     });
     saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
   },
   restoreData: (data: { timetable: Timetable; dishes: Dish[]; categories: Category[] }) => {
     dbData = data.timetable;
-    dishesData = data.dishes;
-    categoriesData = data.categories;
+    dishesData = migrateDefaultDishRecords(
+      data.dishes,
+      'persisted'
+    ) as Dish[];
+    categoriesData = normalizeCachedCategories(data.categories);
     saveToLocalStorage('timetable', 'dishes', 'categories');
     
     Object.values(listeners).flatMap(set => Array.from(set)).forEach(l => l(dbData));
