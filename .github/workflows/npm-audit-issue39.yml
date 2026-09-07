@@ -38,6 +38,14 @@ jobs:
           echo "===== NPM AUDIT ALL AFTER FIX ====="
           npm audit --json || true
 
+      - name: Audit temporary Firebase test tooling
+        run: |
+          npm install --no-save @firebase/rules-unit-testing firebase-tools
+          echo "===== FIREBASE TEST TOOLING VERSIONS ====="
+          npm ls @firebase/rules-unit-testing firebase-tools --depth=0 || true
+          echo "===== NPM AUDIT AFTER FIREBASE TEST TOOLING ====="
+          npm audit --json || true
+
       - name: Commit generated lockfile remediation
         run: |
           if git diff --quiet -- package-lock.json; then
