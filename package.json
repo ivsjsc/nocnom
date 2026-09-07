@@ -16,19 +16,19 @@
     "audit:prod": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
-    "firebase": "^12.10.0",
+    "firebase": "^12.18.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.2.1",
+    "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^5.1.4",
     "@types/node": "^22.14.0",
-    "autoprefixer": "^10.4.21",
+    "autoprefixer": "^10.5.4",
     "tailwindcss": "^4.2.1",
-    "tsx": "^4.21.0",
+    "tsx": "^4.23.13",
     "typescript": "~5.8.2",
     "vite": "^6.4.3"
   }
