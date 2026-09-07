@@ -1,3 +1,4 @@
+import type { MealAddonKind } from './addonNormalizer';
 import {
   getVietnamDateKey,
   getVietnamDateKeyOffset,
@@ -8,7 +9,7 @@ import {
 export type MealKey = 'A' | 'B' | 'C';
 
 export type AnalyticsAddon = {
-  kind?: 'fruit' | 'drink';
+  kind?: MealAddonKind;
   calories?: number;
 };
 
