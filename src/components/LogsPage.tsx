@@ -40,10 +40,8 @@ import {
 } from '../lib/db';
 import DishImage from './DishImage';
 import MealAddonPicker, { type MealAddonSelection } from './MealAddonPicker';
-import {
-  loadNutritionAddons,
-  type NutritionAddonOption
-} from '../lib/nutritionKnowledge';
+import type { NutritionAddonOption } from '../lib/nutritionKnowledge';
+import { useMealAddonCatalog } from '../hooks/useMealAddonCatalog';
 import {
   calculateAge,
   calculateBMI,
@@ -92,12 +90,23 @@ type MealDraft = {
   vendorId: string;
   fruitId: string;
   drinkId: string;
+  sideId: string;
+  dessertId: string;
 };
 
+const emptyMealDraft = (): MealDraft => ({
+  dishId: '',
+  vendorId: '',
+  fruitId: '',
+  drinkId: '',
+  sideId: '',
+  dessertId: ''
+});
+
 const emptyDrafts = (): Record<MealKey, MealDraft> => ({
-  A: { dishId: '', vendorId: '', fruitId: '', drinkId: '' },
-  B: { dishId: '', vendorId: '', fruitId: '', drinkId: '' },
-  C: { dishId: '', vendorId: '', fruitId: '', drinkId: '' }
+  A: emptyMealDraft(),
+  B: emptyMealDraft(),
+  C: emptyMealDraft()
 });
 
 const timestampForDateKey = (dateKey: string) =>
@@ -142,7 +151,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   );
   const [calendarDate, setCalendarDate] = useState(editRange.max);
   const [mealDrafts, setMealDrafts] = useState<Record<MealKey, MealDraft>>(emptyDrafts);
-  const [nutritionAddons, setNutritionAddons] = useState<NutritionAddonOption[]>([]);
+  const { items: nutritionAddons } = useMealAddonCatalog();
   const [editorError, setEditorError] = useState('');
   const [dayMode, setDayMode] = useState<'DETAIL' | 'EDIT'>('DETAIL');
 
@@ -192,7 +201,6 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   useEffect(() => {
     const unsubLogs = mockDb.subscribeLogs(setLogs);
     const unsubDishes = mockDb.subscribeDishes(setDishes);
-    void loadNutritionAddons().then(setNutritionAddons);
     return () => {
       unsubLogs();
       unsubDishes();
@@ -304,6 +312,14 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
         drinkId:
           log.addons?.find(addon => addon.kind === 'drink')?.nutritionRecordId ||
           log.addons?.find(addon => addon.kind === 'drink')?.id ||
+          '',
+        sideId:
+          log.addons?.find(addon => addon.kind === 'side')?.nutritionRecordId ||
+          log.addons?.find(addon => addon.kind === 'side')?.id ||
+          '',
+        dessertId:
+          log.addons?.find(addon => addon.kind === 'dessert')?.nutritionRecordId ||
+          log.addons?.find(addon => addon.kind === 'dessert')?.id ||
           ''
       };
     });
@@ -454,7 +470,12 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
       return;
     }
 
-    const selectedAddonIds = [draft.fruitId, draft.drinkId].filter(Boolean);
+    const selectedAddonIds = [
+      draft.fruitId,
+      draft.drinkId,
+      draft.sideId,
+      draft.dessertId
+    ].filter(Boolean);
     const addons: MealAddon[] = selectedAddonIds
       .map(id => nutritionAddons.find(item => item.id === id))
       .filter((item): item is NutritionAddonOption => Boolean(item))
@@ -463,7 +484,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
         kind: item.kind,
         name: item.name,
         calories: item.calories,
-        nutritionRecordId: item.id,
+        nutritionRecordId: item.source === 'user' ? undefined : item.id,
         servingG: item.servingG,
         servingAmount: item.servingAmount ?? item.servingG,
         servingUnit: item.servingUnit ?? (item.kind === 'drink' ? 'ml' : 'g'),
