@@ -25,13 +25,14 @@ jobs:
           java-version: "21"
 
       - run: npm ci
+      - run: npm run audit:prod
       - run: npm run lint
       - run: npm run firebase:audit
       - run: node --check scripts/deploy-firebase-rules.mjs
       - run: npm test
 
       - name: Install Firebase rules test tooling
-        run: npm install --no-save @firebase/rules-unit-testing firebase-tools
+        run: npm install --no-save @firebase/rules-unit-testing@5.0.2 firebase-tools@15.29.0
 
       - name: Firestore + Storage security rules tests
         run: npx firebase emulators:exec --only firestore,storage "node tests/firebase-rules.test.mjs" --project cocoa-35632
