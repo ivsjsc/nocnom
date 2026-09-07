@@ -1,0 +1,30 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      npm-safe-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Vite major upgrades require compatibility review with @tailwindcss/vite.
+      - dependency-name: "vite"
+        update-types:
+          - "version-update:semver-major"
+      # Keep the Tailwind/Vite integration on the validated major line.
+      - dependency-name: "@tailwindcss/vite"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "tailwindcss"
+        update-types:
+          - "version-update:semver-major"
+      # Test runner upgrades can pull a new esbuild major; review deliberately.
+      - dependency-name: "tsx"
+        update-types:
+          - "version-update:semver-major"
