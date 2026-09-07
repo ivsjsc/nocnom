@@ -174,8 +174,6 @@ export const migrateDefaultDishRecords = <T extends MigratableDish>(
       legacyNames: undefined,
       nutritionRecordId: undefined,
       nutritionCanonicalName: undefined,
-      nutritionConfidence: 'unknown',
-      nutritionVerificationState: 'UNVERIFIED_FALLBACK',
       nutritionCalorieStatus: undefined,
       nutritionValidationResult: undefined,
       nutritionTrainingEligibility: undefined,
