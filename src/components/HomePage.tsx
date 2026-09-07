@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Ban, CalendarDays, Clock, Flame, Sparkles, UtensilsCrossed } from 'lucide-react';
+import {
+  Ban,
+  CalendarDays,
+  Clock,
+  Flame,
+  Moon,
+  Sun,
+  Sunrise,
+  Sunset,
+  UtensilsCrossed
+} from 'lucide-react';
 import {
   estimateDishCalories,
   mockDb,
@@ -11,6 +21,7 @@ import {
 import DishDetailModal from './DishDetailModal';
 import DishImage from './DishImage';
 import WeeklyTable from './WeeklyTable';
+import { getDayPhase } from '../lib/dayPhase';
 
 const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const comboKeys = ['A', 'B', 'C'] as const;
@@ -35,7 +46,26 @@ export default function HomePage() {
     day: string;
     comboKey: 'A' | 'B' | 'C';
   } | null>(null);
-  const todayKey = dayKeys[new Date().getDay()];
+  const todayKey = dayKeys[time.getDay()];
+  const dayPhase = getDayPhase(time);
+
+  const DayPhaseIcon =
+    dayPhase.phase === 'sunrise'
+      ? Sunrise
+      : dayPhase.phase === 'day'
+        ? Sun
+        : dayPhase.phase === 'sunset'
+          ? Sunset
+          : Moon;
+
+  const dayPhaseIconClass =
+    dayPhase.phase === 'sunrise'
+      ? 'bg-gradient-to-br from-orange-100 to-amber-100 text-orange-700 dark:from-orange-500/20 dark:to-amber-500/10 dark:text-orange-300'
+      : dayPhase.phase === 'day'
+        ? 'bg-gradient-to-br from-yellow-100 to-amber-50 text-amber-700 dark:from-yellow-500/20 dark:to-amber-500/10 dark:text-yellow-300'
+        : dayPhase.phase === 'sunset'
+          ? 'bg-gradient-to-br from-orange-100 to-rose-100 text-rose-700 dark:from-orange-500/20 dark:to-rose-500/10 dark:text-orange-300'
+          : 'bg-gradient-to-br from-indigo-100 to-blue-100 text-indigo-700 dark:from-indigo-500/20 dark:to-blue-500/10 dark:text-indigo-300';
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -94,16 +124,18 @@ export default function HomePage() {
         <div className="bg-gradient-to-br from-white to-slate-50/80 dark:from-slate-800 dark:to-slate-900/90 rounded-[24px] border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:shadow-md transition-all duration-300 p-4.5 flex flex-col justify-center relative overflow-hidden group">
           <div className="absolute -right-2 -bottom-2 w-16 h-16 bg-blue-500/5 rounded-full blur-xl group-hover:bg-blue-500/10 transition-all" />
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-inner">
-              <Sparkles className="w-4 h-4" />
+            <div
+              className={
+                'w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-inner transition-colors duration-500 ' +
+                dayPhaseIconClass
+              }
+              title={dayPhase.label}
+              aria-label={dayPhase.label}
+            >
+              <DayPhaseIcon className="w-4.5 h-4.5" aria-hidden="true" />
             </div>
             <div className="text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight leading-tight">
-              {(() => {
-                const hour = time.getHours();
-                if (hour >= 4 && hour < 11) return 'Chào buổi sáng';
-                if (hour >= 11 && hour < 18) return 'Chào buổi trưa';
-                return 'Chào buổi tối';
-              })()}
+              {dayPhase.greeting}
             </div>
           </div>
         </div>
