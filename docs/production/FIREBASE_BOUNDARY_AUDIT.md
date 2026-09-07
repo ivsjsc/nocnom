@@ -162,6 +162,20 @@ Required sequence:
 
 The production smoke creates only temporary test-owned data and cleans it up.
 
+The smoke test must exercise the active schema-v2 runtime boundary, not only the legacy compatibility document. It verifies:
+
+- `users/{uid}/profile/main`;
+- `users/{uid}/state/timetable`;
+- `users/{uid}/state/dishes`;
+- `users/{uid}/state/categories`;
+- `users/{uid}/state/logs`;
+- `users/{uid}/state/meta`;
+- logout/login persistence;
+- Storage upload/read/download URL;
+- image replacement and old-object cleanup.
+
+CI includes a source-level contract test that fails if the production smoke regresses to treating `users/{uid}/data/appState` as the active state path.
+
 ## 10. Current external blocker
 
 The live production smoke has reached real Firebase Storage and returned:
