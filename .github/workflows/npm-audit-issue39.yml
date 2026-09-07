@@ -1,0 +1,36 @@
+name: Issue 39 npm dependency audit
+
+on:
+  push:
+    branches:
+      - security/npm-audit-39
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Audit production dependencies
+        run: |
+          echo "===== NPM AUDIT PRODUCTION ONLY ====="
+          npm audit --omit=dev --json || true
+
+      - name: Audit all locked dependencies
+        run: |
+          echo "===== NPM AUDIT ALL LOCKED DEPENDENCIES ====="
+          npm audit --json || true
+
+      - name: Dependency tree for direct packages
+        run: npm ls --depth=0 || true
