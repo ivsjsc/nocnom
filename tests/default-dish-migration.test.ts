@@ -1,5 +1,6 @@
 import {
-  migrateDefaultDishRecords
+  migrateDefaultDishRecords,
+  type MigratableDish
 } from '../src/domain/menu/defaultDishMigration';
 
 let failures = 0;
@@ -11,7 +12,7 @@ function assert(condition: boolean, message: string) {
   }
 }
 
-const legacy = [
+const legacy: MigratableDish[] = [
   {
     id: 'd2',
     name: 'Phở bò / Phở gà',
