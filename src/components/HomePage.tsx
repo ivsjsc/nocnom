@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { User } from 'firebase/auth';
 import {
   Ban,
   CalendarDays,
@@ -6,6 +7,7 @@ import {
   Clock,
   Flame,
   Moon,
+  Target,
   Sun,
   Sunrise,
   Sunset,
@@ -33,6 +35,16 @@ import {
   getLogsForVietnamDate,
   isDishConsumedForMeal
 } from '../domain/meal/mealAnalytics';
+import {
+  calculateDailyCalorieTargetFromProfile,
+  roundEnergyEstimateForDisplay
+} from '../lib/healthUtils';
+import {
+  getCachedUserProfile,
+  loadUserProfile,
+  type UserProfileData
+} from '../services/userProfile';
+
 const comboKeys = ['A', 'B', 'C'] as const;
 const mealLabels = ['BỮA SÁNG', 'BỮA TRƯA', 'BỮA TỐI'];
 const dayDisplay: Record<string, string> = {
@@ -45,10 +57,17 @@ const dayDisplay: Record<string, string> = {
   sun: 'Chủ Nhật'
 };
 
-export default function HomePage() {
+type Props = {
+  currentUser?: User | null;
+};
+
+export default function HomePage({ currentUser }: Props) {
   const [timetable, setTimetable] = useState<Timetable | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [profile, setProfile] = useState<Partial<UserProfileData> | null>(() =>
+    currentUser ? getCachedUserProfile(currentUser.uid) : null
+  );
   const [time, setTime] = useState<Date>(new Date());
   const [selected, setSelected] = useState<{
     dish: Dish;
@@ -94,6 +113,37 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!currentUser) {
+      setProfile(null);
+      return;
+    }
+
+    let active = true;
+    setProfile(getCachedUserProfile(currentUser.uid));
+
+    void loadUserProfile(currentUser.uid)
+      .then(next => {
+        if (active) setProfile(next);
+      })
+      .catch(error => {
+        console.warn('[home] Unable to load calorie target profile', error);
+      });
+
+    const handleProfileUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<UserProfileData>;
+      if (customEvent.detail && active) {
+        setProfile(customEvent.detail);
+      }
+    };
+
+    window.addEventListener('nocnom:profile-updated', handleProfileUpdate);
+    return () => {
+      active = false;
+      window.removeEventListener('nocnom:profile-updated', handleProfileUpdate);
+    };
+  }, [currentUser]);
+
   const todayLogs = useMemo(
     () => getLogsForVietnamDate(logs, todayDateKey),
     [logs, todayDateKey]
@@ -118,12 +168,28 @@ export default function HomePage() {
     dish => estimateDishCalories(dish as Dish)
   );
   const plannedMealKeys = planned.activeMealKeys;
-  const plannedCalories = planned.totalCalories;
   const consumedCalories = calculateConsumedCalories(
     todayLogs,
     dishes,
     dish => estimateDishCalories(dish as Dish)
   );
+  const targetCaloriesRaw = calculateDailyCalorieTargetFromProfile({
+    weightKg: profile?.weightKg,
+    heightCm: profile?.heightCm,
+    dateOfBirth: profile?.dateOfBirth,
+    gender: profile?.gender,
+    activityLevel: profile?.activityLevel,
+    healthGoal: profile?.healthGoal,
+    now: time
+  });
+  const targetCalories =
+    targetCaloriesRaw === null
+      ? null
+      : roundEnergyEstimateForDisplay(targetCaloriesRaw);
+  const remainingCalories =
+    targetCalories === null
+      ? null
+      : Math.max(0, targetCalories - consumedCalories);
 
   return (
     <div className="space-y-6 pb-28">
@@ -159,17 +225,65 @@ export default function HomePage() {
         </div>
 
         <div className="home-calorie-card col-span-2 rounded-[24px] p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 shrink-0 rounded-2xl bg-white/15 flex items-center justify-center">
-              <Flame className="w-5 h-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-black uppercase tracking-[0.12em] text-white">Calo hôm nay · ước tính</div>
-              <div className="mt-0.5 text-2xl font-black leading-none">≈ {plannedCalories.toLocaleString('vi-VN')} kcal</div>
-              <div className="mt-1 text-[11px] font-bold text-white/95">
-                Kế hoạch {plannedMealKeys.length} bữa · đã ghi nhận ≈ {consumedCalories.toLocaleString('vi-VN')} kcal
+          <div className="mb-3 text-[11px] font-black uppercase tracking-[0.12em] text-white">
+            Calo hôm nay
+          </div>
+
+          <div className="grid grid-cols-[1fr_auto_1fr] items-stretch">
+            <div className="min-w-0 pr-3">
+              <div className="flex items-center gap-2 text-white/90">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                  <Flame className="h-4 w-4" />
+                </div>
+                <div className="text-[10px] font-black uppercase tracking-[0.1em]">
+                  Đã tiêu thụ
+                </div>
+              </div>
+              <div
+                className="mt-2 text-2xl font-black leading-none"
+                data-calorie-value="consumed"
+              >
+                {consumedCalories.toLocaleString('vi-VN')}
+                <span className="ml-1 text-sm font-extrabold text-white/90">
+                  kcal
+                </span>
               </div>
             </div>
+
+            <div
+              className="w-px bg-white/25"
+              aria-hidden="true"
+            />
+
+            <div className="min-w-0 pl-3 text-right">
+              <div className="flex items-center justify-end gap-2 text-white/90">
+                <div className="text-[10px] font-black uppercase tracking-[0.1em]">
+                  Mục tiêu ngày
+                </div>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                  <Target className="h-4 w-4" />
+                </div>
+              </div>
+              <div
+                className="mt-2 text-2xl font-black leading-none"
+                data-calorie-value="target"
+              >
+                {targetCalories === null
+                  ? '—'
+                  : targetCalories.toLocaleString('vi-VN')}
+                {targetCalories !== null && (
+                  <span className="ml-1 text-sm font-extrabold text-white/90">
+                    kcal
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 border-t border-white/15 pt-2 text-[10px] font-bold text-white/90">
+            {targetCalories === null
+              ? 'Hoàn thiện hồ sơ Sức khỏe để tính mục tiêu calo cá nhân.'
+              : `Còn lại ≈ ${remainingCalories?.toLocaleString('vi-VN')} kcal trong mục tiêu hôm nay.`}
           </div>
         </div>
       </section>

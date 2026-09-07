@@ -321,6 +321,41 @@ export function calculateCalorieGoal(
   return calculateCalorieGoalPlan(tdee, goal)?.value ?? null;
 }
 
+export function calculateDailyCalorieTargetFromProfile({
+  weightKg,
+  heightCm,
+  dateOfBirth,
+  gender = '',
+  activityLevel = '',
+  healthGoal = '',
+  now = new Date()
+}: {
+  weightKg?: number | string;
+  heightCm?: number | string;
+  dateOfBirth?: string;
+  gender?: Gender;
+  activityLevel?: ActivityLevel;
+  healthGoal?: HealthGoal;
+  now?: Date;
+}): number | null {
+  const weight = Number(weightKg);
+  const height = Number(heightCm);
+  const age = calculateAge(dateOfBirth || '', now);
+
+  if (
+    !Number.isFinite(weight) ||
+    !Number.isFinite(height) ||
+    age === null ||
+    age < HEALTH_LIMITS.age.min
+  ) {
+    return null;
+  }
+
+  const bmr = calculateBMR(weight, height, age, gender);
+  const tdee = calculateTDEE(bmr, activityLevel);
+  return calculateCalorieGoal(tdee, healthGoal);
+}
+
 export function calculateWaterRequirement(
   weightKg: number
 ): WaterEstimate | null {

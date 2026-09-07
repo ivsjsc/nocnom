@@ -86,6 +86,10 @@ const firebaseClient = fs.readFileSync(
   'src/lib/firebase.ts',
   'utf8'
 );
+const homePage = fs.readFileSync(
+  'src/components/HomePage.tsx',
+  'utf8'
+);
 
 assert(
   addDishModal.includes('Ảnh công khai qua URL') &&
@@ -113,6 +117,18 @@ assert(
   userDataStore.includes('stripUndefinedFields(state.dishes)') &&
     firebaseClient.includes('ignoreUndefinedProperties: true'),
   'Firestore persistence has defense-in-depth protection against undefined fields'
+);
+
+assert(
+  homePage.includes('data-calorie-value="consumed"') &&
+    homePage.includes('Đã tiêu thụ') &&
+    homePage.includes('data-calorie-value="target"') &&
+    homePage.includes('Mục tiêu ngày'),
+  'Home calorie card separates consumed calories from the daily target'
+);
+assert(
+  !homePage.includes('≈ {plannedCalories.toLocaleString'),
+  'Home calorie headline no longer presents planned menu calories as consumed calories'
 );
 
 const hostingDeploy = workflow.indexOf(
