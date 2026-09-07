@@ -174,7 +174,7 @@ export default function App() {
       </header>
 
       <main className="app-container app-main">
-        {activeTab === 'home' && <HomePage />}
+        {activeTab === 'home' && <HomePage currentUser={currentUser} />}
         {activeTab === 'logs' && (
           <LogsPage
             currentUser={currentUser}
