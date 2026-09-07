@@ -1230,7 +1230,9 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                           <MealAddonPicker
                             value={{
                               fruitId: draft.fruitId,
-                              drinkId: draft.drinkId
+                              drinkId: draft.drinkId,
+                              sideId: draft.sideId,
+                              dessertId: draft.dessertId
                             }}
                             onChange={(selection: MealAddonSelection) =>
                               patchDraft(mealKey, selection)
