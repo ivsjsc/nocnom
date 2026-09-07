@@ -18,7 +18,8 @@ function assert(condition: boolean, message: string) {
 const dishes = [
   { id: 'breakfast', name: 'Breakfast', calories: 500 },
   { id: 'lunch', name: 'Lunch', calories: 700 },
-  { id: 'dinner', name: 'Dinner', calories: 650 }
+  { id: 'dinner', name: 'Dinner', calories: 650 },
+  { id: 'lunch-alt', name: 'Lunch Alt', calories: 600 }
 ];
 
 const estimate = (dish: { calories?: number }) => dish.calories || 0;
@@ -55,6 +56,39 @@ assert(
   plannedSkipLunch.totalCalories === 1150 &&
     plannedSkipLunch.activeMealCount === 2,
   'Skipped meal is excluded from planned calories'
+);
+
+const plannedBreakfastOnly = calculatePlannedCalories(
+  {
+    options: {
+      A: { dishId: 'breakfast', skipped: false },
+      B: { dishId: 'lunch', skipped: true },
+      C: { dishId: 'dinner', skipped: true }
+    }
+  },
+  dishes,
+  estimate
+);
+assert(
+  plannedBreakfastOnly.totalCalories === 500 &&
+    plannedBreakfastOnly.activeMealCount === 1,
+  'A day with breakfast only has exactly one planned meal'
+);
+
+const plannedReplacement = calculatePlannedCalories(
+  {
+    options: {
+      A: { dishId: 'breakfast', skipped: false },
+      B: { dishId: 'lunch-alt', skipped: false },
+      C: { dishId: 'dinner', skipped: false }
+    }
+  },
+  dishes,
+  estimate
+);
+assert(
+  plannedReplacement.totalCalories === 1750,
+  'Meal replacement recalculates planned total from the replacement dish'
 );
 
 const vietnamDay = '2026-09-07';

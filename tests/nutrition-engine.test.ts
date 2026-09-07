@@ -81,7 +81,37 @@ const selectedL: NutritionSelection = {
   resolutionStatus: 'AUTO_ACCEPT',
   confirmedByUser: false
 };
+const selectedS: NutritionSelection = {
+  ...selectedL,
+  portionSize: 'S',
+  portionGrams: 250,
+  servingAmount: 250,
+  kcalTypical: 500,
+  kcalMin: 450,
+  kcalMax: 550
+};
+const selectedM: NutritionSelection = {
+  ...selectedL,
+  portionSize: 'M',
+  portionGrams: 350,
+  servingAmount: 350,
+  kcalTypical: 700,
+  kcalMin: 640,
+  kcalMax: 760
+};
+
+const persistedS = nutritionSelectionToDishFields(selectedS);
+const persistedM = nutritionSelectionToDishFields(selectedM);
 const persisted = nutritionSelectionToDishFields(selectedL);
+
+assert(
+  persistedS.calories === 500 && persistedS.portionSize === 'S',
+  'Selected S=500 kcal persists exactly'
+);
+assert(
+  persistedM.calories === 700 && persistedM.portionSize === 'M',
+  'Selected M=700 kcal persists exactly'
+);
 assert(persisted.calories === 900, 'Selected L=900 kcal is persisted without recalculation');
 assert(
   persisted.portionSize === 'L' &&
