@@ -6,7 +6,7 @@ on:
       - security/npm-audit-39
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   audit:
@@ -22,15 +22,27 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Audit production dependencies
+      - name: Apply compatible npm audit fixes to lockfile
+        run: npm audit fix --package-lock-only
+
+      - name: Audit production dependencies after compatible fixes
         run: |
-          echo "===== NPM AUDIT PRODUCTION ONLY ====="
+          echo "===== NPM AUDIT PRODUCTION ONLY AFTER FIX ====="
           npm audit --omit=dev --json || true
 
-      - name: Audit all locked dependencies
+      - name: Audit all locked dependencies after compatible fixes
         run: |
-          echo "===== NPM AUDIT ALL LOCKED DEPENDENCIES ====="
+          echo "===== NPM AUDIT ALL AFTER FIX ====="
           npm audit --json || true
 
-      - name: Dependency tree for direct packages
-        run: npm ls --depth=0 || true
+      - name: Commit generated lockfile remediation
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "No package-lock changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "fix(deps): apply compatible npm audit lockfile updates"
+          git push
