@@ -5,6 +5,7 @@ import {
   calculateBMREstimate,
   calculateCalorieGoal,
   calculateCalorieGoalPlan,
+  calculateDailyCalorieTargetFromProfile,
   calculateTDEE,
   calculateTDEEEstimate,
   calculateWaterRequirement,
@@ -84,6 +85,31 @@ assert(
   'Calorie goal exposes fixed_300 strategy metadata'
 );
 assert(calculateCalorieGoal(tdee, '') === null, 'Calorie goal does not assume a user goal');
+
+assert(
+  calculateDailyCalorieTargetFromProfile({
+    weightKg: 60,
+    heightCm: 165,
+    dateOfBirth: '07/09/2000',
+    gender: 'female',
+    activityLevel: 'moderate',
+    healthGoal: 'maintain',
+    now: referenceDate
+  }) === 2085,
+  'Daily calorie target derives from the complete health profile'
+);
+assert(
+  calculateDailyCalorieTargetFromProfile({
+    weightKg: 60,
+    heightCm: 165,
+    dateOfBirth: '07/09/2000',
+    gender: 'female',
+    activityLevel: '',
+    healthGoal: 'maintain',
+    now: referenceDate
+  }) === null,
+  'Daily calorie target does not invent a goal when profile data is incomplete'
+);
 
 const water = calculateWaterRequirement(60);
 assert(Boolean(water && water.ml === 2100 && water.glasses === 8), 'Water estimate uses 35 ml/kg');
