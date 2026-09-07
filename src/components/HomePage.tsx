@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Ban,
   CalendarDays,
+  Check,
   Clock,
   Flame,
   Moon,
@@ -29,7 +30,8 @@ import {
 import {
   calculateConsumedCalories,
   calculatePlannedCalories,
-  getLogsForVietnamDate
+  getLogsForVietnamDate,
+  isDishConsumedForMeal
 } from '../domain/meal/mealAnalytics';
 const comboKeys = ['A', 'B', 'C'] as const;
 const mealLabels = ['BỮA SÁNG', 'BỮA TRƯA', 'BỮA TỐI'];
@@ -206,6 +208,11 @@ export default function HomePage() {
             const dish = findDish(menuItem.dishId);
             if (!dish) return null;
             const price = dish.vendors[0]?.price;
+            const isEaten = isDishConsumedForMeal(
+              todayLogs,
+              comboKey,
+              dish
+            );
 
             return (
               <div
@@ -231,15 +238,39 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelected({ dish, day: todayKey, comboKey })
-                  }
-                  className="shrink-0 min-w-[64px] min-h-11 px-4 py-2 rounded-xl bg-white text-blue-700 text-xs font-extrabold uppercase tracking-wide shadow-sm active:scale-95 transition-transform"
-                >
-                  Xem
-                </button>
+                {isEaten ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelected({ dish, day: todayKey, comboKey })
+                    }
+                    className="group relative h-[68px] w-[68px] shrink-0 -rotate-6 rounded-full border-2 border-white/90 text-white shadow-[0_0_0_2px_rgba(255,255,255,0.18)] transition-transform hover:rotate-0 active:scale-95"
+                    aria-label={mealLabels[index] + ' đã ăn - xem chi tiết ' + dish.name}
+                    title="Đã ăn · Chạm để xem chi tiết"
+                    data-meal-status="eaten"
+                  >
+                    <span
+                      className="pointer-events-none absolute inset-[5px] rounded-full border border-dashed border-white/70"
+                      aria-hidden="true"
+                    />
+                    <span className="relative flex h-full w-full flex-col items-center justify-center gap-0.5">
+                      <Check className="h-4 w-4 stroke-[3]" aria-hidden="true" />
+                      <span className="text-[10px] font-black leading-none tracking-[0.08em]">
+                        ĐÃ ĂN
+                      </span>
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelected({ dish, day: todayKey, comboKey })
+                    }
+                    className="shrink-0 min-w-[64px] min-h-11 px-4 py-2 rounded-xl bg-white text-blue-700 text-xs font-extrabold uppercase tracking-wide shadow-sm active:scale-95 transition-transform"
+                  >
+                    Xem
+                  </button>
+                )}
               </div>
             );
           })}

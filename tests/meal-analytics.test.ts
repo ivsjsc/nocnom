@@ -3,7 +3,8 @@ import {
   calculateConsumedCalories,
   calculateMealDistribution,
   calculatePlannedCalories,
-  getLogsForVietnamDate
+  getLogsForVietnamDate,
+  isDishConsumedForMeal
 } from '../src/domain/meal/mealAnalytics';
 
 let failures = 0;
@@ -114,6 +115,46 @@ const logs = [
 
 const todayLogs = getLogsForVietnamDate(logs, vietnamDay);
 assert(todayLogs.length === 2, 'Vietnam date selector returns only logs in the business day');
+
+assert(
+  isDishConsumedForMeal(todayLogs, 'A', dishes[0]),
+  'Home meal status marks the planned breakfast dish as eaten'
+);
+assert(
+  !isDishConsumedForMeal(todayLogs, 'B', dishes[1]),
+  'Home meal status stays unmarked when the meal has no log'
+);
+assert(
+  !isDishConsumedForMeal(
+    [
+      {
+        timestamp: Date.parse('2026-09-07T12:00:00+07:00'),
+        mealKey: 'B',
+        dishName: 'Lunch Alt'
+      }
+    ],
+    'B',
+    dishes[1]
+  ),
+  'A log for another dish must not stamp the displayed planned dish as eaten'
+);
+assert(
+  isDishConsumedForMeal(
+    [
+      {
+        timestamp: Date.parse('2026-09-07T12:00:00+07:00'),
+        mealKey: 'B',
+        dishName: 'Old Lunch Name'
+      }
+    ],
+    'B',
+    {
+      name: 'Lunch',
+      legacyNames: ['Old Lunch Name']
+    }
+  ),
+  'Renamed dishes still inherit eaten state through legacy names'
+);
 
 const consumed = calculateConsumedCalories(todayLogs, dishes, estimate);
 assert(
