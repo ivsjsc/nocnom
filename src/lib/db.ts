@@ -9,6 +9,7 @@ import {
   dishNutritionFieldsToMealSnapshot,
   nutritionSelectionToDishFields
 } from '../domain/nutrition/nutritionPersistence';
+import { migrateDefaultDishRecords } from '../domain/menu/defaultDishMigration';
 import { normalizeExternalImageUrl } from './url';
 import {
   dateKeyFromUtcDay,
@@ -100,6 +101,7 @@ export type Dish = {
   nutritionSource?: string;
   nutritionSourceUrl?: string;
   nutritionMatchType?: string;
+  legacyNames?: string[];
   vendors: Vendor[];
 };
 
@@ -329,7 +331,10 @@ const normalizeCachedCategories = (categories: Category[]) =>
 
 const createDefaultUserState = () => ({
   timetable: deepClone(defaultTimetable),
-  dishes: deepClone(initialDishes),
+  dishes: migrateDefaultDishRecords(
+    deepClone(initialDishes),
+    'new-user'
+  ) as Dish[],
   categories: deepClone(initialCategories),
   logs: [] as LogEntry[]
 });
@@ -374,7 +379,10 @@ const readCachedState = (uid: string | null) => {
         ? JSON.parse(timetableRaw) as Timetable
         : fallback.timetable,
       dishes: dishesRaw
-        ? JSON.parse(dishesRaw) as Dish[]
+        ? migrateDefaultDishRecords(
+            JSON.parse(dishesRaw) as Dish[],
+            'persisted'
+          ) as Dish[]
         : fallback.dishes,
       categories: categoriesRaw
         ? normalizeCachedCategories(
@@ -616,14 +624,21 @@ export const syncUserWithFirestore = (uid: string | null) => {
       const normalizedLoadedCategories = normalizeCachedCategories(
         loaded.state.categories
       );
+      const normalizedLoadedDishes = migrateDefaultDishRecords(
+        loaded.state.dishes,
+        'persisted'
+      ) as Dish[];
       const shouldPersistNormalizedCategories =
         JSON.stringify(normalizedLoadedCategories) !==
         JSON.stringify(loaded.state.categories);
+      const shouldPersistNormalizedDishes =
+        JSON.stringify(normalizedLoadedDishes) !==
+        JSON.stringify(loaded.state.dishes);
 
       isRemoteUpdating = true;
       try {
         dbData = loaded.state.timetable;
-        dishesData = loaded.state.dishes;
+        dishesData = normalizedLoadedDishes;
         categoriesData = normalizedLoadedCategories;
         logsData = loaded.state.logs;
         writeLocalCache();
@@ -634,6 +649,9 @@ export const syncUserWithFirestore = (uid: string | null) => {
 
       if (shouldPersistNormalizedCategories) {
         scheduleCloudSync(['categories']);
+      }
+      if (shouldPersistNormalizedDishes) {
+        scheduleCloudSync(['dishes']);
       }
 
       firestoreUnsubscribe = subscribeUserStateDomains({
@@ -647,13 +665,22 @@ export const syncUserWithFirestore = (uid: string | null) => {
           }
 
           let shouldPersistNormalizedCategories = false;
+          let shouldPersistNormalizedDishes = false;
 
           isRemoteUpdating = true;
           try {
             if (domain === 'timetable') {
               dbData = value as Timetable;
             } else if (domain === 'dishes') {
-              dishesData = value as Dish[];
+              const incomingDishes = value as Dish[];
+              const normalizedDishes = migrateDefaultDishRecords(
+                incomingDishes,
+                'persisted'
+              ) as Dish[];
+              dishesData = normalizedDishes;
+              shouldPersistNormalizedDishes =
+                JSON.stringify(normalizedDishes) !==
+                JSON.stringify(incomingDishes);
             } else if (domain === 'categories') {
               const incomingCategories = value as Category[];
               const normalizedCategories =
@@ -675,6 +702,9 @@ export const syncUserWithFirestore = (uid: string | null) => {
 
           if (shouldPersistNormalizedCategories) {
             scheduleCloudSync(['categories']);
+          }
+          if (shouldPersistNormalizedDishes) {
+            scheduleCloudSync(['dishes']);
           }
         },
         onError: (domain, error) => {
@@ -1289,6 +1319,15 @@ export const mockDb = {
         ? {
             ...d,
             name: newName,
+            legacyNames:
+              current && current.name !== newName
+                ? [
+                    ...new Set([
+                      ...(current.legacyNames || []),
+                      current.name
+                    ])
+                  ]
+                : current?.legacyNames,
             ...(shouldRefreshKnowledge
               ? {
                   calories: undefined,
@@ -1513,8 +1552,11 @@ export const mockDb = {
   },
   restoreData: (data: { timetable: Timetable; dishes: Dish[]; categories: Category[] }) => {
     dbData = data.timetable;
-    dishesData = data.dishes;
-    categoriesData = data.categories;
+    dishesData = migrateDefaultDishRecords(
+      data.dishes,
+      'persisted'
+    ) as Dish[];
+    categoriesData = normalizeCachedCategories(data.categories);
     saveToLocalStorage('timetable', 'dishes', 'categories');
     
     Object.values(listeners).flatMap(set => Array.from(set)).forEach(l => l(dbData));

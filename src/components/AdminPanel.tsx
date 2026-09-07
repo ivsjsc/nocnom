@@ -86,7 +86,7 @@ export default function AdminPanel() {
   };
 
   const downloadCsvTemplate = () => {
-    const templateContent = 'Ngày,Combo,Món ăn,Số lượng\nThứ 2,Combo A,Cơm gà xối mỡ,50\nThứ 2,Combo B,Phở bò / Phở gà,30\nThứ 2,Combo C,Wrap gà + Trái cây,20\nThứ 3,Combo A,Cơm sườn + Salad,50\nThứ 3,Combo B,Bún riêu / Chả,30\nThứ 3,Combo C,Cơm chay,20\nThứ 4,Combo A,Cơm thịt kho,50\nThứ 4,Combo B,Mì xào hải sản,30\nThứ 4,Combo C,Salad gạo lứt,20\nThứ 5,Combo A,Cơm cá kho,50\nThứ 5,Combo B,Bún mắm / cá,30\nThứ 5,Combo C,Sandwich + Sữa chua,20\nThứ 6,Combo A,Cơm bò xào,50\nThứ 6,Combo B,Mì Quảng / Hủ tiếu,30\nThứ 6,Combo C,Cơm ngũ cốc,20\nThứ 7,Combo A,Cơm tấm,50\nThứ 7,Combo B,Bún / Miến xào,30\nThứ 7,Combo C,Snack box,20\nChủ Nhật,Combo A,Cơm thịt nướng,50\nChủ Nhật,Combo B,Lẩu mini / Mì ống,30\nChủ Nhật,Combo C,Bánh mì + Sữa,20';
+    const templateContent = 'Ngày,Combo,Món ăn,Số lượng\nThứ 2,Combo A,Cơm gà xối mỡ,50\nThứ 2,Combo B,Phở bò,30\nThứ 2,Combo C,Wrap gà + Trái cây,20\nThứ 3,Combo A,Cơm sườn + Salad,50\nThứ 3,Combo B,Bún riêu chả,30\nThứ 3,Combo C,Cơm chay,20\nThứ 4,Combo A,Cơm thịt kho,50\nThứ 4,Combo B,Mì xào hải sản,30\nThứ 4,Combo C,Salad gạo lứt,20\nThứ 5,Combo A,Cơm cá kho,50\nThứ 5,Combo B,Bún mắm cá,30\nThứ 5,Combo C,Sandwich + Sữa chua,20\nThứ 6,Combo A,Cơm bò xào,50\nThứ 6,Combo B,Mì Quảng,30\nThứ 6,Combo C,Cơm ngũ cốc,20\nThứ 7,Combo A,Cơm tấm,50\nThứ 7,Combo B,Bún xào,30\nThứ 7,Combo C,Snack box,20\nChủ Nhật,Combo A,Cơm thịt nướng,50\nChủ Nhật,Combo B,Lẩu mini,30\nChủ Nhật,Combo C,Bánh mì + Sữa,20';
     downloadTextFile('\uFEFF' + templateContent, 'mau_thuc_don_tuan.csv', 'text/csv;charset=utf-8;');
   };
 

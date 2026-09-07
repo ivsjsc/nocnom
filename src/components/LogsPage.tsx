@@ -206,7 +206,12 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
     };
   }, [selectedDayKey]);
 
-  const findDish = (name: string) => dishes.find(dish => dish.name === name);
+  const findDish = (name: string) =>
+    dishes.find(
+      dish =>
+        dish.name === name ||
+        dish.legacyNames?.includes(name)
+    );
 
   const resolveCalories = (log: LogEntry) => {
     if (typeof log.calories === 'number' && Number.isFinite(log.calories)) {
@@ -272,7 +277,11 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
       const log = selectedDay.logs.find(item => item.mealKey === mealKey);
       if (!log) return;
 
-      const dish = dishes.find(item => item.name === log.dishName);
+      const dish = dishes.find(
+        item =>
+          item.name === log.dishName ||
+          item.legacyNames?.includes(log.dishName)
+      );
       if (!dish) return;
 
       const vendor = dish.vendors.find(item => item.name === log.vendorName);

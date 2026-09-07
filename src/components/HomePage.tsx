@@ -122,7 +122,11 @@ export default function HomePage() {
       return total + Math.max(0, Math.round(log.calories)) + addonCalories;
     }
 
-    const matchedDish = dishes.find(dish => dish.name === log.dishName);
+    const matchedDish = dishes.find(
+      dish =>
+        dish.name === log.dishName ||
+        dish.legacyNames?.includes(log.dishName)
+    );
     return total + (matchedDish ? estimateDishCalories(matchedDish) : 0) + addonCalories;
   }, 0);
 

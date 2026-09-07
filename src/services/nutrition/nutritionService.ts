@@ -251,8 +251,17 @@ export class NutritionService {
           });
           if (response.ok) {
             const rows = (await response.json()) as NutritionAddonOption[];
-            this.addonCatalog = rows;
-            return rows;
+            const normalizedRows = rows.map(item => ({
+              ...item,
+              servingAmount:
+                item.servingAmount ??
+                item.servingG,
+              servingUnit:
+                item.servingUnit ??
+                (item.kind === 'drink' ? 'ml' : 'g')
+            }));
+            this.addonCatalog = normalizedRows;
+            return normalizedRows;
           }
         } catch {
           // Fall through to build from in-memory dataset
@@ -280,6 +289,12 @@ export class NutritionService {
             category: f.classification?.category_vi || f.name,
             calories: Math.round(f.energy.kcal_typical),
             servingG: f.serving?.standard_g,
+            servingAmount: f.serving?.standard_g,
+            servingUnit:
+              f.classification?.domain_id === 'fruit' ||
+              f.classification?.category_id === 'fruits'
+                ? 'g'
+                : 'ml',
             kcalMin: f.energy.kcal_min,
             kcalMax: f.energy.kcal_max,
             source: f.provenance?.source_role || 'canonical',
