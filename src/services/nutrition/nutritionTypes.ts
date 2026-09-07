@@ -211,7 +211,7 @@ export type CalorieCalculationResult = {
   verificationState: VerificationState;
 };
 
-export type NutritionAddonKind = 'fruit' | 'drink';
+export type NutritionAddonKind = 'fruit' | 'drink' | 'side' | 'dessert';
 
 export type NutritionAddonOption = {
   id: string;
