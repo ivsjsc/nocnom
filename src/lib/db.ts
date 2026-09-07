@@ -1185,7 +1185,11 @@ export const mockDb = {
     dishesData = dishesData.map(dish => {
       if (dish.id !== id) return dish;
 
+      // Public-URL-only edit path: remove all previous image metadata first.
+      // Never place `undefined` into the object that will be persisted to Firestore.
       const {
+        imageUrl: _imageUrl,
+        imageSource: _imageSource,
         imageSourceUrl: _imageSourceUrl,
         imageLicense: _imageLicense,
         imageAttribution: _imageAttribution,
@@ -1196,9 +1200,13 @@ export const mockDb = {
         ...rest
       } = dish;
 
+      if (!normalized) {
+        return rest;
+      }
+
       return {
         ...rest,
-        imageUrl: normalized || undefined,
+        imageUrl: normalized,
         imageSource: 'manual'
       };
     });

@@ -4,7 +4,7 @@ import { estimateDishCalories, mockDb, type Category, type Dish, type LogEntry }
 import DishDetailModal from './DishDetailModal';
 import AddDishModal from './AddDishModal';
 import DishImage from './DishImage';
-import { normalizePriceVnd } from '../domain/menu/vendorOffer';
+import EditDishModal from './EditDishModal';
 
 const normalizeText = (value: string) =>
   value
@@ -22,6 +22,7 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [editingDish, setEditingDish] = useState<Dish | null>(null);
   const [isAddingDish, setIsAddingDish] = useState(false);
 
   useEffect(() => {
@@ -72,56 +73,13 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
     setIsAddingDish(true);
   };
 
-  const handleEditDish = async (dish: Dish) => {
+  const handleEditDish = (dish: Dish) => {
     if (!canManage) {
       window.alert('Vui lòng đăng nhập để chỉnh sửa món.');
       return;
     }
 
-    const newName = window.prompt('Tên món:', dish.name);
-    if (newName?.trim() && newName.trim() !== dish.name) {
-      mockDb.updateDishName(dish.id, newName.trim());
-    }
-
-    const newImage = window.prompt('URL hình ảnh:', dish.imageUrl || '');
-    if (newImage !== null && newImage !== (dish.imageUrl || '')) {
-      try {
-        await mockDb.updateDishImage(dish.id, newImage.trim());
-      } catch (error) {
-        window.alert(
-          error instanceof Error
-            ? error.message
-            : 'URL hình ảnh không hợp lệ.'
-        );
-      }
-    }
-
-    const rawCalories = window.prompt(
-      'Năng lượng ước tính (kcal/phần):',
-      String(estimateDishCalories(dish))
-    );
-    if (rawCalories !== null) {
-      const calories = Number(rawCalories);
-      if (Number.isFinite(calories) && calories > 0 && calories <= 5000) {
-        mockDb.updateDishCalories(dish.id, calories);
-      } else if (rawCalories.trim()) {
-        window.alert('Calo phải là số từ 1 đến 5000 kcal/phần.');
-      }
-    }
-
-    if (window.confirm('Bạn có muốn thêm một quán phục vụ cho món này?')) {
-      const vendorName = window.prompt('Tên quán:');
-      if (!vendorName?.trim()) return;
-      const rawPrice = window.prompt('Giá (VND):', '30000');
-      const price = normalizePriceVnd(Number(rawPrice));
-      if (price === null) {
-        window.alert('Giá phải là số nguyên VND hợp lệ.');
-        return;
-      }
-      const phone = window.prompt('Số điện thoại:', '') || '';
-      const address = window.prompt('Địa chỉ:', '') || '';
-      mockDb.addVendor(dish.id, vendorName.trim(), price, phone, address);
-    }
+    setEditingDish(dish);
   };
 
   const handleCopy = async () => {
@@ -332,6 +290,14 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
           comboKey="A"
           isSelectable={false}
           onClose={() => setSelectedDish(null)}
+        />
+      )}
+
+      {editingDish && (
+        <EditDishModal
+          dish={editingDish}
+          onClose={() => setEditingDish(null)}
+          onSaved={() => setEditingDish(null)}
         />
       )}
 

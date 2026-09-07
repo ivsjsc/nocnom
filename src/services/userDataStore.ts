@@ -7,6 +7,7 @@ import {
   type Unsubscribe
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { stripUndefinedFields } from '../lib/firestoreData';
 import type {
   Category,
   Dish,
@@ -60,25 +61,25 @@ const serializeDomain = (
   switch (domain) {
     case 'timetable':
       return {
-        value: state.timetable,
+        value: stripUndefinedFields(state.timetable),
         schemaVersion: USER_STATE_SCHEMA_VERSION,
         updatedAt: serverTimestamp()
       };
     case 'dishes':
       return {
-        items: state.dishes,
+        items: stripUndefinedFields(state.dishes),
         schemaVersion: USER_STATE_SCHEMA_VERSION,
         updatedAt: serverTimestamp()
       };
     case 'categories':
       return {
-        items: state.categories,
+        items: stripUndefinedFields(state.categories),
         schemaVersion: USER_STATE_SCHEMA_VERSION,
         updatedAt: serverTimestamp()
       };
     case 'logs':
       return {
-        items: state.logs,
+        items: stripUndefinedFields(state.logs),
         schemaVersion: USER_STATE_SCHEMA_VERSION,
         updatedAt: serverTimestamp()
       };

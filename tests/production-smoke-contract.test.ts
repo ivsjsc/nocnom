@@ -70,6 +70,22 @@ const addDishModal = fs.readFileSync(
   'src/components/AddDishModal.tsx',
   'utf8'
 );
+const editDishModal = fs.readFileSync(
+  'src/components/EditDishModal.tsx',
+  'utf8'
+);
+const menuPage = fs.readFileSync(
+  'src/components/MenuPage.tsx',
+  'utf8'
+);
+const userDataStore = fs.readFileSync(
+  'src/services/userDataStore.ts',
+  'utf8'
+);
+const firebaseClient = fs.readFileSync(
+  'src/lib/firebase.ts',
+  'utf8'
+);
 
 assert(
   addDishModal.includes('Ảnh công khai qua URL') &&
@@ -81,6 +97,22 @@ assert(
     !addDishModal.includes('uploadUserFoodImage') &&
     !addDishModal.includes("source: 'firebase-storage'"),
   'Add Dish UI does not offer Firebase Storage uploads'
+);
+
+assert(
+  editDishModal.includes('Ảnh công khai qua URL') &&
+    editDishModal.includes('Không tải file lên Firebase Storage'),
+  'Edit Dish UI uses the public URL media policy'
+);
+assert(
+  !editDishModal.includes('type="file"') &&
+    !menuPage.includes("window.prompt('URL hình ảnh:"),
+  'Dish image editing no longer uses file uploads or browser URL prompts'
+);
+assert(
+  userDataStore.includes('stripUndefinedFields(state.dishes)') &&
+    firebaseClient.includes('ignoreUndefinedProperties: true'),
+  'Firestore persistence has defense-in-depth protection against undefined fields'
 );
 
 const hostingDeploy = workflow.indexOf(
