@@ -262,7 +262,13 @@ export const estimateDishCalories = (dish: Pick<Dish, 'calories' | 'categoryId'>
 
 export const getDishNutritionSnapshot = (dish: Dish): MealNutritionSnapshot =>
   dishNutritionFieldsToMealSnapshot(
-    dish,
+    {
+      ...dish,
+      calorieSource:
+        dish.calorieSource === 'knowledge'
+          ? 'nutrition-db'
+          : dish.calorieSource
+    },
     estimateDishCalories(dish)
   );
 
