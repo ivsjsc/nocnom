@@ -618,7 +618,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div className="grid h-full w-full grid-cols-4">
                   <div className="bg-amber-400" title="Gầy (< 18.5)" />
-                  <div className="bg-emerald-500" title="Lý tưởng (18.5 - 22.9)" />
+                  <div className="bg-emerald-500" title="Khoảng tham khảo (18.5 - 22.9)" />
                   <div className="bg-orange-500" title="Thừa cân (23 - 24.9)" />
                   <div className="bg-rose-500" title="Béo phì (>= 25)" />
                 </div>
@@ -918,7 +918,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
           </div>
 
           <p className="health-copy mt-3 text-[11px] font-bold leading-relaxed">
-            💡 Tỷ lệ năng lượng lý tưởng sinh viên: Sáng 30% · Trưa 40% · Tối 30%. Hạn chế ăn đêm nhiều calo sau 21h.
+            Phân bổ 30% · 40% · 30% chỉ là mốc tham khảo để quan sát ba bữa; nhu cầu thực tế có thể khác theo lịch học, vận động và sức khỏe.
           </p>
         </section>
       </div>
