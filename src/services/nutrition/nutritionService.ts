@@ -9,6 +9,12 @@ import type {
   NutritionSearchResult,
   PortionSize
 } from './nutritionTypes';
+import type {
+  NutritionResolutionStatus,
+  NutritionSelection
+} from '../../domain/nutrition/nutritionTypes';
+import { calculatePer100gCalories } from '../../domain/nutrition/calorieCalculator';
+import { nutritionConfidenceLevel } from './nutritionResolver';
 import {
   getCachedDataset,
   getFoodByCanonicalIdSync,
@@ -114,20 +120,24 @@ export class NutritionService {
       food.energy?.calorie_status === 'TABLE_LOOKUP' ||
       food.validation?.result === 'NEEDS_REVIEW';
 
-    // 1. Gram-based calculation
-    if (typeof options.grams === 'number' && Number.isFinite(options.grams) && options.grams > 0) {
-      const kcalPer100g = food.energy.kcal_per_100g || 0;
-      const kcalTypical = Math.round((kcalPer100g * options.grams) / 100);
-      const ratio = options.grams / (food.serving?.standard_g || 100);
-      const kcalMin = Math.round((food.energy.kcal_min || kcalTypical * 0.85) * ratio);
-      const kcalMax = Math.round((food.energy.kcal_max || kcalTypical * 1.15) * ratio);
+    // 1. Gram-based calculation. The food-level range is on the standard
+    // serving basis, while the typical value comes from kcal/100g.
+    if (typeof options.grams === 'number') {
+      const gramResult = calculatePer100gCalories({
+        kcalPer100g: food.energy.kcal_per_100g,
+        grams: options.grams,
+        standardServingG: food.serving?.standard_g,
+        servingKcalMin: food.energy.kcal_min,
+        servingKcalMax: food.energy.kcal_max
+      });
+      if (!gramResult) return null;
 
       return {
         foodId: food.id,
         foodName: food.name,
-        kcalTypical,
-        kcalMin,
-        kcalMax,
+        kcalTypical: gramResult.kcalTypical,
+        kcalMin: gramResult.kcalMin,
+        kcalMax: gramResult.kcalMax,
         basis: 'grams',
         grams: options.grams,
         confidence: food.confidence.label_vi,
@@ -176,6 +186,49 @@ export class NutritionService {
       isReferenceOnly,
       calorieStatus: food.energy.calorie_status,
       verificationState: food.energy.verification_state
+    };
+  }
+
+  public async createSelection(
+    result: NutritionSearchResult,
+    portionSize: PortionSize,
+    resolutionStatus: Exclude<NutritionResolutionStatus, 'NO_MATCH'>,
+    confirmedByUser: boolean
+  ): Promise<NutritionSelection | null> {
+    if (result.isReferenceOnly && resolutionStatus === 'AUTO_ACCEPT') {
+      return null;
+    }
+
+    const calculation = await this.calculateCalories(result.food.id, {
+      portionSize
+    });
+    if (!calculation) return null;
+
+    const food = result.food;
+    return {
+      foodId: food.id,
+      foodName: food.name,
+      categoryName:
+        food.classification?.category_vi ||
+        food.classification?.source_category ||
+        '',
+      portionSize,
+      portionGrams: calculation.grams,
+      kcalTypical: calculation.kcalTypical,
+      kcalMin: calculation.kcalMin,
+      kcalMax: calculation.kcalMax,
+      confidence: nutritionConfidenceLevel(result),
+      confidenceLabel: result.confidenceLabel,
+      verificationState: calculation.verificationState,
+      calorieStatus: calculation.calorieStatus,
+      source:
+        food.provenance?.legacy_source_description ||
+        food.provenance?.source_role ||
+        'Nutrition Knowledge Base',
+      sourceUrl: food.provenance?.source_url || undefined,
+      matchType: result.matchType,
+      resolutionStatus,
+      confirmedByUser
     };
   }
 

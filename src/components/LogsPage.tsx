@@ -28,6 +28,7 @@ import {
 import type { User } from 'firebase/auth';
 import {
   estimateDishCalories,
+  getDishNutritionSnapshot,
   getEditableMealDateRange,
   getVietnamDateKey,
   isMealDateEditable,
@@ -465,6 +466,8 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
         calories: item.calories,
         nutritionRecordId: item.id,
         servingG: item.servingG,
+        servingAmount: item.servingAmount ?? item.servingG,
+        servingUnit: item.servingUnit ?? (item.kind === 'drink' ? 'ml' : 'g'),
         kcalMin: item.kcalMin,
         kcalMax: item.kcalMax
       }));
@@ -477,7 +480,8 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
         vendorName: vendor?.name || 'Không ghi quán',
         price: vendor?.price || 0,
         calories: estimateDishCalories(dish),
-        addons
+        addons,
+        nutritionSnapshot: getDishNutritionSnapshot(dish)
       });
       setEditorError('');
     } catch (error) {

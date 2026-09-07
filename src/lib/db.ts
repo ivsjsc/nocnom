@@ -1,4 +1,14 @@
 import { lookupNutrition, normalizeFoodName } from './nutritionKnowledge';
+import type {
+  CalorieSource,
+  MealNutritionSnapshot,
+  NutritionConfidenceLevel,
+  NutritionSelection
+} from '../domain/nutrition/nutritionTypes';
+import {
+  dishNutritionFieldsToMealSnapshot,
+  nutritionSelectionToDishFields
+} from '../domain/nutrition/nutritionPersistence';
 import { normalizeExternalImageUrl } from './url';
 import { deleteUserImageByPath } from '../services/imageStorage';
 import {
@@ -49,6 +59,7 @@ export type AddDishOptions = {
   image?: DishImageReference;
   vendors?: NewVendorInput[];
   dishId?: string;
+  nutritionSelection?: NutritionSelection;
 };
 
 export type Dish = {
@@ -66,11 +77,22 @@ export type Dish = {
   imageSize?: number;
   imageUpdatedAt?: number;
   calories?: number;
-  calorieSource?: 'manual' | 'knowledge';
-  calorieBasis?: 'serving' | '100g';
+  calorieSource?: CalorieSource | 'knowledge';
+  calorieBasis?: 'portion' | 'grams' | 'category' | 'serving' | '100g';
+  portionSize?: 'S' | 'M' | 'L';
+  portionGrams?: number;
+  kcalMin?: number;
+  kcalMax?: number;
   nutritionRecordId?: string;
-  nutritionConfidence?: 'verified' | 'estimated' | 'unknown';
+  nutritionConfidence?:
+    | NutritionConfidenceLevel
+    | 'verified'
+    | 'estimated'
+    | 'unknown';
+  nutritionVerificationState?: string;
   nutritionSource?: string;
+  nutritionSourceUrl?: string;
+  nutritionMatchType?: string;
   vendors: Vendor[];
 };
 
@@ -89,6 +111,8 @@ export type MealAddon = {
   calories: number;
   nutritionRecordId?: string;
   servingG?: number;
+  servingAmount?: number;
+  servingUnit?: 'g' | 'ml';
   kcalMin?: number;
   kcalMax?: number;
 };
@@ -101,6 +125,22 @@ export type LogEntry = {
   calories?: number;
   addons?: MealAddon[];
   mealKey?: MealKey;
+  calorieSource?: CalorieSource | 'knowledge';
+  calorieBasis?: 'portion' | 'grams' | 'category' | 'serving' | '100g';
+  portionSize?: 'S' | 'M' | 'L';
+  portionGrams?: number;
+  kcalMin?: number;
+  kcalMax?: number;
+  nutritionRecordId?: string;
+  nutritionConfidence?:
+    | NutritionConfidenceLevel
+    | 'verified'
+    | 'estimated'
+    | 'unknown';
+  nutritionVerificationState?: string;
+  nutritionSource?: string;
+  nutritionSourceUrl?: string;
+  nutritionMatchType?: string;
   timestamp: number;
 };
 
@@ -219,6 +259,12 @@ export const estimateDishCalories = (dish: Pick<Dish, 'calories' | 'categoryId'>
 
   return getDefaultCaloriesForCategory(dish.categoryId);
 };
+
+export const getDishNutritionSnapshot = (dish: Dish): MealNutritionSnapshot =>
+  dishNutritionFieldsToMealSnapshot(
+    dish,
+    estimateDishCalories(dish)
+  );
 
 const initialDishes: Dish[] = [
   {
@@ -717,12 +763,18 @@ const hydrateDishCaloriesFromKnowledge = async (dishId: string, foodName: string
       dish.id === dishId
         ? {
             ...dish,
-            calories: result.calories,
-            calorieSource: 'knowledge',
-            calorieBasis: result.basis,
-            nutritionRecordId: result.record.id,
-            nutritionConfidence: result.record.confidence,
-            nutritionSource: result.record.source
+            ...(result.selection
+              ? nutritionSelectionToDishFields(result.selection)
+              : {
+                  calories: result.calories,
+                  calorieSource: 'nutrition-db' as const,
+                  calorieBasis: 'serving' as const,
+                  nutritionRecordId: result.record.id,
+                  nutritionConfidence: result.record.confidence,
+                  nutritionVerificationState: result.record.verificationState,
+                  nutritionSource: result.record.source,
+                  nutritionSourceUrl: result.record.sourceUrl
+                })
           }
         : dish
     );
@@ -770,6 +822,20 @@ const normalizeMealAddons = (addons?: MealAddon[]): MealAddon[] => {
         typeof addon.servingG === 'number' && Number.isFinite(addon.servingG)
           ? Math.max(0, addon.servingG)
           : undefined,
+      servingAmount:
+        typeof addon.servingAmount === 'number' &&
+        Number.isFinite(addon.servingAmount)
+          ? Math.max(0, addon.servingAmount)
+          : typeof addon.servingG === 'number' &&
+              Number.isFinite(addon.servingG)
+            ? Math.max(0, addon.servingG)
+            : undefined,
+      servingUnit:
+        addon.servingUnit === 'ml' || addon.servingUnit === 'g'
+          ? addon.servingUnit
+          : addon.kind === 'drink'
+            ? 'ml'
+            : 'g',
       kcalMin:
         typeof addon.kcalMin === 'number' && Number.isFinite(addon.kcalMin)
           ? Math.max(0, Math.round(addon.kcalMin))
@@ -785,6 +851,7 @@ const normalizeMealAddons = (addons?: MealAddon[]): MealAddon[] => {
 const hydrateMissingDishCalories = async () => {
   const candidates = dishesData.filter(dish =>
     dish.calorieSource === 'knowledge' ||
+    dish.calorieSource === 'category-fallback' ||
     typeof dish.calories !== 'number' ||
     !Number.isFinite(dish.calories) ||
     dish.calories <= 0
@@ -940,7 +1007,8 @@ const upsertMealLogData = ({
   vendorName,
   price,
   calories,
-  addons
+  addons,
+  nutritionSnapshot
 }: {
   dateKey: string;
   mealKey: MealKey;
@@ -949,6 +1017,7 @@ const upsertMealLogData = ({
   price: number;
   calories?: number;
   addons?: MealAddon[];
+  nutritionSnapshot?: MealNutritionSnapshot;
 }) => {
   if (!isMealDateEditable(dateKey)) {
     throw new Error('Chỉ được thêm hoặc chỉnh sửa lịch sử của hôm nay và tối đa 3 ngày trước.');
@@ -977,6 +1046,23 @@ const upsertMealLogData = ({
         : undefined,
     addons: normalizeMealAddons(addons),
     mealKey,
+    ...(nutritionSnapshot
+      ? {
+          calorieSource: nutritionSnapshot.calorieSource,
+          calorieBasis: nutritionSnapshot.calorieBasis,
+          portionSize: nutritionSnapshot.portionSize,
+          portionGrams: nutritionSnapshot.portionGrams,
+          kcalMin: nutritionSnapshot.kcalMin,
+          kcalMax: nutritionSnapshot.kcalMax,
+          nutritionRecordId: nutritionSnapshot.nutritionRecordId,
+          nutritionConfidence: nutritionSnapshot.nutritionConfidence,
+          nutritionVerificationState:
+            nutritionSnapshot.nutritionVerificationState,
+          nutritionSource: nutritionSnapshot.nutritionSource,
+          nutritionSourceUrl: nutritionSnapshot.nutritionSourceUrl,
+          nutritionMatchType: nutritionSnapshot.nutritionMatchType
+        }
+      : {}),
     timestamp: timestampForMealDate(dateKey, mealKey)
   };
 
@@ -1053,7 +1139,8 @@ export const mockDb = {
     price: number,
     calories?: number,
     mealKey?: MealKey,
-    addons?: MealAddon[]
+    addons?: MealAddon[],
+    nutritionSnapshot?: MealNutritionSnapshot
   ) => {
     if (!mealKey) {
       const now = Date.now();
@@ -1064,6 +1151,7 @@ export const mockDb = {
         price,
         calories,
         addons: normalizeMealAddons(addons),
+        ...(nutritionSnapshot || {}),
         timestamp: now
       };
       logsData = [newLog, ...logsData];
@@ -1079,7 +1167,8 @@ export const mockDb = {
       vendorName,
       price,
       calories,
-      addons
+      addons,
+      nutritionSnapshot
     });
   },
   selectCombo: (day: string, comboKey: 'A' | 'B' | 'C' | null) => {
@@ -1168,9 +1257,16 @@ export const mockDb = {
             calories: Math.round(calories),
             calorieSource: 'manual',
             calorieBasis: 'serving',
+            portionSize: undefined,
+            portionGrams: undefined,
+            kcalMin: undefined,
+            kcalMax: undefined,
             nutritionRecordId: undefined,
             nutritionConfidence: undefined,
-            nutritionSource: undefined
+            nutritionVerificationState: undefined,
+            nutritionSource: undefined,
+            nutritionSourceUrl: undefined,
+            nutritionMatchType: undefined
           }
         : d
     );
@@ -1229,9 +1325,16 @@ export const mockDb = {
                   calories: undefined,
                   calorieSource: undefined,
                   calorieBasis: undefined,
+                  portionSize: undefined,
+                  portionGrams: undefined,
+                  kcalMin: undefined,
+                  kcalMax: undefined,
                   nutritionRecordId: undefined,
                   nutritionConfidence: undefined,
-                  nutritionSource: undefined
+                  nutritionVerificationState: undefined,
+                  nutritionSource: undefined,
+                  nutritionSourceUrl: undefined,
+                  nutritionMatchType: undefined
                 }
               : {})
           }
@@ -1310,9 +1413,9 @@ export const mockDb = {
       throw new Error('Tên món không được để trống.');
     }
 
-    const nutrition = await lookupNutrition(cleanName);
-    const resolvedCategoryId = nutrition?.record.category
-      ? ensureNutritionCategory(nutrition.record.category, categoryId)
+    const nutritionSelection = options.nutritionSelection;
+    const resolvedCategoryId = nutritionSelection?.categoryName
+      ? ensureNutritionCategory(nutritionSelection.categoryName, categoryId)
       : categoryId;
 
     const normalizedName = normalizeFoodName(cleanName);
@@ -1322,23 +1425,16 @@ export const mockDb = {
 
     if (existingIndex >= 0) {
       const current = dishesData[existingIndex];
-      const shouldUseKnowledge =
-        Boolean(nutrition) &&
+      const shouldUseNutrition =
+        Boolean(nutritionSelection) &&
         current.calorieSource !== 'manual';
 
       let updated: Dish = {
         ...current,
-        categoryId: nutrition ? resolvedCategoryId : current.categoryId,
+        categoryId: nutritionSelection ? resolvedCategoryId : current.categoryId,
         vendors: mergeVendorInputs(current.vendors, options.vendors),
-        ...(shouldUseKnowledge && nutrition
-          ? {
-              calories: nutrition.calories,
-              calorieSource: 'knowledge',
-              calorieBasis: nutrition.basis,
-              nutritionRecordId: nutrition.record.id,
-              nutritionConfidence: nutrition.record.confidence,
-              nutritionSource: nutrition.record.source
-            }
+        ...(shouldUseNutrition && nutritionSelection
+          ? nutritionSelectionToDishFields(nutritionSelection)
           : {})
       };
 
@@ -1381,7 +1477,7 @@ export const mockDb = {
 
       return {
         dish: updated,
-        nutritionMatched: Boolean(nutrition),
+        nutritionMatched: Boolean(nutritionSelection),
         created: false
       };
     }
@@ -1391,16 +1487,15 @@ export const mockDb = {
       name: cleanName,
       categoryId: resolvedCategoryId,
       isFavorite: false,
-      ...(nutrition
-        ? {
-            calories: nutrition.calories,
-            calorieSource: 'knowledge',
-            calorieBasis: nutrition.basis,
-            nutritionRecordId: nutrition.record.id,
-            nutritionConfidence: nutrition.record.confidence,
-            nutritionSource: nutrition.record.source
-          }
-        : {}),
+      ...(nutritionSelection
+        ? nutritionSelectionToDishFields(nutritionSelection)
+        : {
+            calories: getDefaultCaloriesForCategory(resolvedCategoryId),
+            calorieSource: 'category-fallback' as const,
+            calorieBasis: 'category' as const,
+            nutritionConfidence: 'unknown' as const,
+            nutritionVerificationState: 'UNVERIFIED_FALLBACK'
+          }),
       vendors: mergeVendorInputs([], options.vendors)
     };
 
@@ -1423,7 +1518,7 @@ export const mockDb = {
 
     return {
       dish: newDish,
-      nutritionMatched: Boolean(nutrition),
+      nutritionMatched: Boolean(nutritionSelection),
       created: true
     };
   },

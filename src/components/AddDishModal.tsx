@@ -16,14 +16,17 @@ import {
   type NewVendorInput
 } from '../lib/db';
 import {
-  lookupNutrition,
+  createNutritionLookupResult,
   normalizeFoodName,
   type NutritionLookupResult
 } from '../lib/nutritionKnowledge';
 import {
   nutritionService,
+  resolveNutrition,
+  type NutritionResolution,
   type NutritionSearchResult
 } from '../services/nutrition';
+import type { NutritionSelection } from '../domain/nutrition/nutritionTypes';
 import {
   searchFoodImages,
   type FoodImageCandidate
@@ -71,7 +74,12 @@ export default function AddDishModal({
   const [saveError, setSaveError] = useState('');
 
   const [suggestions, setSuggestions] = useState<NutritionSearchResult[]>([]);
-  const [selectedPortionSize, setSelectedPortionSize] = useState<'S' | 'M' | 'L'>('M');
+  const [nutritionResolution, setNutritionResolution] =
+    useState<NutritionResolution | null>(null);
+  const [selectedNutritionCandidate, setSelectedNutritionCandidate] =
+    useState<NutritionSearchResult | null>(null);
+  const [selectedPortionSize, setSelectedPortionSize] =
+    useState<'S' | 'M' | 'L'>('M');
 
   const selectedImage = useMemo(
     () => images.find(item => item.id === selectedImageId),
@@ -95,10 +103,42 @@ export default function AddDishModal({
     return () => URL.revokeObjectURL(previewUrl);
   }, [selectedImageFile]);
 
+  const applyResolution = async (
+    resolution: NutritionResolution
+  ) => {
+    const searchResults = [
+      ...(resolution.candidate ? [resolution.candidate] : []),
+      ...resolution.alternatives
+    ];
+    setNutritionResolution(resolution);
+    setSuggestions(searchResults);
+    setSelectedPortionSize('M');
+
+    if (
+      resolution.status === 'AUTO_ACCEPT' &&
+      resolution.candidate
+    ) {
+      const lookup = await createNutritionLookupResult(
+        resolution.candidate,
+        'M',
+        'AUTO_ACCEPT',
+        false
+      );
+      setNutrition(lookup);
+      setSelectedNutritionCandidate(resolution.candidate);
+      return;
+    }
+
+    setNutrition(null);
+    setSelectedNutritionCandidate(null);
+  };
+
   const analyze = async (foodName: string) => {
     const query = foodName.trim();
     if (query.length < 2) {
       setNutrition(null);
+      setNutritionResolution(null);
+      setSelectedNutritionCandidate(null);
       setSuggestions([]);
       setImages([]);
       setSelectedImageId('');
@@ -110,13 +150,11 @@ export default function AddDishModal({
     setAnalysisError('');
 
     try {
-      const [nutritionResult, searchResults, imageResults] = await Promise.all([
-        lookupNutrition(query),
-        nutritionService.searchFoods(query, { limit: 5 }),
+      const [resolution, imageResults] = await Promise.all([
+        resolveNutrition(query, 5),
         searchFoodImages(query, 6)
       ]);
-      setNutrition(nutritionResult);
-      setSuggestions(searchResults);
+      await applyResolution(resolution);
       setImages(imageResults);
       setSelectedImageId(current =>
         imageResults.some(item => item.id === current) ? current : ''
@@ -141,15 +179,14 @@ export default function AddDishModal({
     let active = true;
     const timer = window.setTimeout(() => {
       void (async () => {
-        const [nutritionResult, searchResults, imageResults] = await Promise.all([
-          lookupNutrition(query),
-          nutritionService.searchFoods(query, { limit: 5 }),
+        const [resolution, imageResults] = await Promise.all([
+          resolveNutrition(query, 5),
           searchFoodImages(query, 6)
         ]);
 
         if (!active) return;
-        setNutrition(nutritionResult);
-        setSuggestions(searchResults);
+        await applyResolution(resolution);
+        if (!active) return;
         setImages(imageResults);
         setSelectedImageId('');
         setAnalysisError('');
@@ -287,13 +324,36 @@ export default function AddDishModal({
         };
       }
 
+      let nutritionSelection: NutritionSelection | undefined;
+      if (nutrition && selectedNutritionCandidate) {
+        const isAutoAccepted =
+          nutritionResolution?.status === 'AUTO_ACCEPT' &&
+          nutritionResolution.candidate?.food.id ===
+            selectedNutritionCandidate.food.id;
+
+        const selection = await nutritionService.createSelection(
+          selectedNutritionCandidate,
+          selectedPortionSize,
+          isAutoAccepted ? 'AUTO_ACCEPT' : 'USER_CONFIRM',
+          !isAutoAccepted
+        );
+
+        if (!selection) {
+          throw new Error(
+            'Không thể xác nhận khẩu phần Nutrition đã chọn. Vui lòng chọn lại dữ liệu món.'
+          );
+        }
+        nutritionSelection = selection;
+      }
+
       const result = await mockDb.addDish(
         cleanName,
         fallbackCategoryId || categories[0]?.id || 'c1',
         {
           dishId: targetDishId,
           image,
-          vendors
+          vendors,
+          nutritionSelection
         }
       );
 
@@ -384,14 +444,31 @@ export default function AddDishModal({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {suggestions.map(sug => {
-                    const isSelected = sug.food.id === nutrition?.record.id;
+                    const isSelected =
+                      sug.food.id === selectedNutritionCandidate?.food.id;
                     return (
                       <button
                         key={sug.food.id}
                         type="button"
                         onClick={() => {
-                          setName(sug.food.name);
-                          void analyze(sug.food.name);
+                          void (async () => {
+                            const lookup = await createNutritionLookupResult(
+                              sug,
+                              'M',
+                              'USER_CONFIRM',
+                              true
+                            );
+                            if (!lookup) {
+                              setSaveError(
+                                'Bản ghi này chưa đủ điều kiện để dùng làm dữ liệu calo.'
+                              );
+                              return;
+                            }
+                            setNutrition(lookup);
+                            setSelectedNutritionCandidate(sug);
+                            setSelectedPortionSize('M');
+                            setSaveError('');
+                          })();
                         }}
                         className={
                           'px-2.5 py-1 rounded-xl text-xs font-semibold border transition-all ' +
@@ -413,6 +490,22 @@ export default function AddDishModal({
 
             {nutrition ? (
               <div className="mt-3 space-y-2">
+                <div
+                  className={
+                    'rounded-xl border px-3 py-2 text-[11px] font-black ' +
+                    (selectedNutritionCandidate?.isReferenceOnly
+                      ? 'border-amber-200 bg-amber-50 text-amber-900'
+                      : nutritionResolution?.status === 'AUTO_ACCEPT'
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                        : 'border-blue-200 bg-blue-50 text-blue-900')
+                  }
+                >
+                  {selectedNutritionCandidate?.isReferenceOnly
+                    ? 'Dữ liệu tham khảo · bạn đã xác nhận'
+                    : nutritionResolution?.status === 'AUTO_ACCEPT'
+                      ? 'Độ tin cậy cao · khớp chính xác'
+                      : 'Cần xác nhận · lựa chọn của bạn'}
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-3">
                     <div className="text-[10px] font-black uppercase text-emerald-700">Calo tự động</div>
@@ -423,9 +516,16 @@ export default function AddDishModal({
                       })()} kcal
                     </div>
                     <div className="text-[10px] font-bold text-emerald-700">
-                      {nutrition.kcalMin && nutrition.kcalMax
-                        ? `Khoảng ${nutrition.kcalMin}–${nutrition.kcalMax} kcal`
-                        : '/ khẩu phần chuẩn'}
+                      {(() => {
+                        const portion = nutrition.portions?.find(
+                          p => p.portion_size === selectedPortionSize
+                        );
+                        const min = portion?.kcal_min ?? nutrition.kcalMin;
+                        const max = portion?.kcal_max ?? nutrition.kcalMax;
+                        return min !== undefined && max !== undefined
+                          ? `Khoảng ${min}–${max} kcal`
+                          : '/ khẩu phần chuẩn';
+                      })()}
                     </div>
                   </div>
                   <div className="rounded-2xl bg-blue-50 border border-blue-100 p-3">
