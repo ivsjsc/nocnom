@@ -10,6 +10,13 @@ import {
   nutritionSelectionToDishFields
 } from '../domain/nutrition/nutritionPersistence';
 import { normalizeExternalImageUrl } from './url';
+import {
+  dateKeyFromUtcDay,
+  getVietnamDateKey,
+  getVietnamTimestampForDateKey,
+  parseDateKeyToUtcDay
+} from './dateTime';
+export { getVietnamDateKey } from './dateTime';
 import { deleteUserImageByPath } from '../services/imageStorage';
 import {
   loadOrMigrateUserState,
@@ -144,85 +151,41 @@ export type LogEntry = {
   timestamp: number;
 };
 
-const VIETNAM_TIME_ZONE = 'Asia/Ho_Chi_Minh';
-const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_HISTORY_EDIT_DAYS = 3;
-
-function datePartsInVietnam(timestamp: number) {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: VIETNAM_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).formatToParts(new Date(timestamp));
-
-  const lookup = Object.fromEntries(parts.map(part => [part.type, part.value]));
-  return {
-    year: Number(lookup.year),
-    month: Number(lookup.month),
-    day: Number(lookup.day)
-  };
-}
-
-export const getVietnamDateKey = (timestamp = Date.now()) => {
-  const { year, month, day } = datePartsInVietnam(timestamp);
-  return [
-    String(year).padStart(4, '0'),
-    String(month).padStart(2, '0'),
-    String(day).padStart(2, '0')
-  ].join('-');
-};
-
-function dateKeyToUtcDay(dateKey: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
-  if (!match) return null;
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const utc = Date.UTC(year, month - 1, day);
-  const check = new Date(utc);
-
-  if (
-    check.getUTCFullYear() !== year ||
-    check.getUTCMonth() !== month - 1 ||
-    check.getUTCDate() !== day
-  ) {
-    return null;
-  }
-
-  return Math.floor(utc / DAY_MS);
-}
 
 export const getEditableMealDateRange = (now = Date.now()) => {
   const todayKey = getVietnamDateKey(now);
-  const todayDay = dateKeyToUtcDay(todayKey)!;
-  const minDay = todayDay - MAX_HISTORY_EDIT_DAYS;
-  const minDate = new Date(minDay * DAY_MS);
+  const todayDay = parseDateKeyToUtcDay(todayKey);
+  if (todayDay === null) {
+    throw new Error('Không thể xác định ngày Việt Nam hiện tại.');
+  }
 
   return {
-    min: [
-      minDate.getUTCFullYear(),
-      String(minDate.getUTCMonth() + 1).padStart(2, '0'),
-      String(minDate.getUTCDate()).padStart(2, '0')
-    ].join('-'),
+    min: dateKeyFromUtcDay(todayDay - MAX_HISTORY_EDIT_DAYS),
     max: todayKey
   };
 };
 
 export const isMealDateEditable = (dateKey: string, now = Date.now()) => {
-  const candidate = dateKeyToUtcDay(dateKey);
-  if (candidate === null) return false;
+  const candidate = parseDateKeyToUtcDay(dateKey);
+  const today = parseDateKeyToUtcDay(getVietnamDateKey(now));
+  if (candidate === null || today === null) return false;
 
-  const today = dateKeyToUtcDay(getVietnamDateKey(now))!;
   const age = today - candidate;
   return age >= 0 && age <= MAX_HISTORY_EDIT_DAYS;
 };
 
 function timestampForMealDate(dateKey: string, mealKey: MealKey) {
-  const hour: Record<MealKey, string> = { A: '08:00:00', B: '12:00:00', C: '18:00:00' };
-  const timestamp = Date.parse(`${dateKey}T${hour[mealKey]}+07:00`);
-  if (!Number.isFinite(timestamp)) {
+  const hour: Record<MealKey, string> = {
+    A: '08:00:00',
+    B: '12:00:00',
+    C: '18:00:00'
+  };
+  const timestamp = getVietnamTimestampForDateKey(
+    dateKey,
+    hour[mealKey]
+  );
+  if (timestamp === null) {
     throw new Error('Ngày lịch sử không hợp lệ.');
   }
   return timestamp;

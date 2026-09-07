@@ -30,7 +30,6 @@ import {
   estimateDishCalories,
   getDishNutritionSnapshot,
   getEditableMealDateRange,
-  getVietnamDateKey,
   isMealDateEditable,
   mockDb,
   sumMealAddonCalories,
@@ -62,6 +61,12 @@ import {
   loadUserProfile,
   type UserProfileData
 } from '../services/userProfile';
+import {
+  getVietnamDateKey,
+  getVietnamTimestampForDateKey,
+  VIETNAM_TIME_ZONE
+} from '../lib/dateTime';
+import { useVietnamBusinessDate } from '../hooks/useVietnamBusinessDate';
 
 const mealKeys: MealKey[] = ['A', 'B', 'C'];
 const mealOrder: Record<MealKey, number> = { A: 0, B: 1, C: 2 };
@@ -85,11 +90,11 @@ const emptyDrafts = (): Record<MealKey, MealDraft> => ({
 });
 
 const timestampForDateKey = (dateKey: string) =>
-  Date.parse(dateKey + 'T12:00:00+07:00');
+  getVietnamTimestampForDateKey(dateKey, '12:00:00') ?? 0;
 
 const formatDay = (timestamp: number) =>
   new Intl.DateTimeFormat('vi-VN', {
-    timeZone: 'Asia/Ho_Chi_Minh',
+    timeZone: VIETNAM_TIME_ZONE,
     weekday: 'long',
     day: '2-digit',
     month: '2-digit',
@@ -98,7 +103,7 @@ const formatDay = (timestamp: number) =>
 
 const formatDateKey = (dateKey: string) =>
   new Intl.DateTimeFormat('vi-VN', {
-    timeZone: 'Asia/Ho_Chi_Minh',
+    timeZone: VIETNAM_TIME_ZONE,
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
@@ -119,12 +124,25 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
-  const editRange = useMemo(() => getEditableMealDateRange(), []);
+  const businessDate = useVietnamBusinessDate();
+  const editRange = useMemo(
+    () => getEditableMealDateRange(businessDate.now),
+    [businessDate.dateKey]
+  );
   const [calendarDate, setCalendarDate] = useState(editRange.max);
   const [mealDrafts, setMealDrafts] = useState<Record<MealKey, MealDraft>>(emptyDrafts);
   const [nutritionAddons, setNutritionAddons] = useState<NutritionAddonOption[]>([]);
   const [editorError, setEditorError] = useState('');
   const [dayMode, setDayMode] = useState<'DETAIL' | 'EDIT'>('DETAIL');
+
+  useEffect(() => {
+    setCalendarDate(current =>
+      current > editRange.max ? editRange.max : current
+    );
+    setSelectedDayKey(current =>
+      current && current > editRange.max ? editRange.max : current
+    );
+  }, [editRange.max]);
 
   // Hồ sơ sức khỏe người dùng
   const [profile, setProfile] = useState<Partial<UserProfileData> | null>(() => {
@@ -242,7 +260,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   }, [logs, selectedDayKey]);
 
   const selectedDayEditable = selectedDayKey
-    ? isMealDateEditable(selectedDayKey)
+    ? isMealDateEditable(selectedDayKey, businessDate.now)
     : false;
 
   useEffect(() => {
@@ -283,8 +301,8 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
       )
     : 0;
 
-  // Ngày hôm nay theo giờ Việt Nam
-  const todayKey = useMemo(() => getVietnamDateKey(Date.now()), []);
+  // Ngày nghiệp vụ luôn theo Asia/Ho_Chi_Minh và tự rollover lúc 00:00.
+  const todayKey = businessDate.dateKey;
 
   // Danh sách bữa ăn hôm nay
   const todayLogs = useMemo(() => {

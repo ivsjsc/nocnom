@@ -19,6 +19,7 @@ import {
 import DishDetailModal from './DishDetailModal';
 import DishImage from './DishImage';
 import DishPickerModal from './DishPickerModal';
+import { useVietnamBusinessDate } from '../hooks/useVietnamBusinessDate';
 
 const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const comboKeys = ['A', 'B', 'C'] as const;
@@ -57,14 +58,21 @@ export default function WeeklyTable({
   const [selected, setSelected] = useState<SelectedDish | null>(null);
   const [swapTarget, setSwapTarget] = useState<MealTarget | null>(null);
   const [actionTarget, setActionTarget] = useState<SelectedDish | null>(null);
-
-  const todayKey = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][
-    new Date().getDay()
-  ];
+  const { dayKey: todayKey } = useVietnamBusinessDate();
 
   const [expandedDays, setExpandedDays] = useState<Set<string>>(
     () => new Set(excludeToday ? [] : [todayKey])
   );
+
+  useEffect(() => {
+    if (excludeToday) return;
+    setExpandedDays(current => {
+      if (current.has(todayKey)) return current;
+      const next = new Set(current);
+      next.add(todayKey);
+      return next;
+    });
+  }, [excludeToday, todayKey]);
 
   useEffect(() => {
     const unsubTable = mockDb.subscribe('all', setTimetable);

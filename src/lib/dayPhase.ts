@@ -1,3 +1,5 @@
+import { getVietnamDateTimeParts } from './dateTime';
+
 export type DayPhase = 'sunrise' | 'day' | 'sunset' | 'night';
 
 export interface DayPhaseInfo {
@@ -7,7 +9,7 @@ export interface DayPhaseInfo {
 }
 
 /**
- * Local-time day phase used by the Home dashboard.
+ * Vietnam business-time day phase used by the Home dashboard.
  *
  * 05:00-08:59  Sunrise
  * 09:00-15:59  Day
@@ -15,7 +17,7 @@ export interface DayPhaseInfo {
  * 19:00-04:59  Night
  */
 export function getDayPhase(date: Date): DayPhaseInfo {
-  const hour = date.getHours();
+  const hour = getVietnamDateTimeParts(date.getTime()).hour;
 
   if (hour >= 5 && hour < 9) {
     return {

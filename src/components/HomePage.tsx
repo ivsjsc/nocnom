@@ -22,8 +22,11 @@ import DishDetailModal from './DishDetailModal';
 import DishImage from './DishImage';
 import WeeklyTable from './WeeklyTable';
 import { getDayPhase } from '../lib/dayPhase';
-
-const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+import {
+  formatVietnamTime,
+  getVietnamDateKey,
+  getVietnamDayKey
+} from '../lib/dateTime';
 const comboKeys = ['A', 'B', 'C'] as const;
 const mealLabels = ['BỮA SÁNG', 'BỮA TRƯA', 'BỮA TỐI'];
 const dayDisplay: Record<string, string> = {
@@ -46,7 +49,9 @@ export default function HomePage() {
     day: string;
     comboKey: 'A' | 'B' | 'C';
   } | null>(null);
-  const todayKey = dayKeys[time.getDay()];
+  const nowTimestamp = time.getTime();
+  const todayKey = getVietnamDayKey(nowTimestamp);
+  const todayDateKey = getVietnamDateKey(nowTimestamp);
   const dayPhase = getDayPhase(time);
 
   const DayPhaseIcon =
@@ -83,10 +88,13 @@ export default function HomePage() {
     };
   }, []);
 
-  const todayLogs = useMemo(() => {
-    const today = new Date().toDateString();
-    return logs.filter(log => new Date(log.timestamp).toDateString() === today);
-  }, [logs]);
+  const todayLogs = useMemo(
+    () =>
+      logs.filter(
+        log => getVietnamDateKey(log.timestamp) === todayDateKey
+      ),
+    [logs, todayDateKey]
+  );
 
   if (!timetable || dishes.length === 0) {
     return (
@@ -146,7 +154,7 @@ export default function HomePage() {
               <Clock className="w-4.5 h-4.5 animate-pulse" />
             </div>
             <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
-              {time.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+              {formatVietnamTime(nowTimestamp)}
             </span>
           </div>
         </div>
