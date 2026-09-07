@@ -21,6 +21,7 @@ export type UserProfileData = {
   weightKg?: number | string;
   activityLevel?: ActivityLevel;
   healthGoal?: HealthGoal;
+  dailyCalorieTarget?: number | string;
 };
 
 const getFirebaseErrorCode = (error: unknown) => {
