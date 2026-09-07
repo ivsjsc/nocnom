@@ -54,6 +54,10 @@ const healthTextLight = token('health-text-light');
 const healthMutedLight = token('health-muted-light');
 const healthTextDark = token('health-text-dark');
 const healthMutedDark = token('health-muted-dark');
+const appSurface = token('app-surface');
+const appTextPrimary = token('app-text-primary');
+const appTextSecondary = token('app-text-secondary');
+const appTextMuted = token('app-text-muted');
 
 assert(
   Boolean(
@@ -66,7 +70,11 @@ assert(
     healthTextLight &&
     healthMutedLight &&
     healthTextDark &&
-    healthMutedDark
+    healthMutedDark &&
+    appSurface &&
+    appTextPrimary &&
+    appTextSecondary &&
+    appTextMuted
   ),
   'Required contrast tokens exist'
 );
@@ -79,6 +87,25 @@ assert(contrast(healthMutedLight, healthCardLight) >= 7, 'Health supporting text
 assert(contrast(healthTextDark, healthCardDark) >= 7, 'Health primary text reaches enhanced contrast in dark mode');
 assert(contrast(healthMutedDark, healthCardDark) >= 7, 'Health supporting text reaches enhanced contrast in dark mode');
 assert(css.includes('.health-card') && css.includes('.health-copy'), 'Health semantic contrast classes are defined');
+assert(
+  contrast(appTextPrimary, appSurface) >= 7,
+  'Semantic app primary text reaches enhanced contrast in light mode'
+);
+assert(
+  contrast(appTextSecondary, appSurface) >= 7,
+  'Semantic app secondary text reaches enhanced contrast in light mode'
+);
+assert(
+  contrast(appTextMuted, appSurface) >= 4.5,
+  'Semantic app muted text reaches WCAG AA in light mode'
+);
+assert(
+  css.includes('.app-header-surface') &&
+    css.includes('.home-stat-card') &&
+    css.includes('.weekly-day-card') &&
+    css.includes('.app-nav-item.is-active'),
+  'Core navigation and dashboard surfaces use semantic theme classes'
+);
 
 if (failures > 0) process.exit(1);
 console.log('UI contrast tests: PASS');

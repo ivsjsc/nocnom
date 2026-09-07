@@ -133,7 +133,7 @@ export default function HomePage() {
   return (
     <div className="space-y-6 pb-28">
       <section className="grid grid-cols-2 gap-3">
-        <div className="bg-gradient-to-br from-white to-slate-50/80 dark:from-slate-800 dark:to-slate-900/90 rounded-[24px] border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:shadow-md transition-all duration-300 p-4.5 flex flex-col justify-center relative overflow-hidden group">
+        <div className="home-stat-card rounded-[24px] border p-4.5 flex flex-col justify-center relative overflow-hidden group transition-all duration-300">
           <div className="absolute -right-2 -bottom-2 w-16 h-16 bg-blue-500/5 rounded-full blur-xl group-hover:bg-blue-500/10 transition-all" />
           <div className="flex items-center gap-2.5">
             <div
@@ -146,32 +146,32 @@ export default function HomePage() {
             >
               <DayPhaseIcon className="w-4.5 h-4.5" aria-hidden="true" />
             </div>
-            <div className="text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight leading-tight">
+            <div className="theme-text-primary text-lg sm:text-xl font-black tracking-tight leading-tight">
               {dayPhase.greeting}
             </div>
           </div>
         </div>
-        <div className="bg-gradient-to-br from-white to-amber-50/40 dark:from-slate-800 dark:to-slate-900/90 rounded-[24px] border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:shadow-md transition-all duration-300 p-4.5 flex flex-col justify-center relative overflow-hidden group">
+        <div className="home-stat-card rounded-[24px] border p-4.5 flex flex-col justify-center relative overflow-hidden group transition-all duration-300">
           <div className="absolute -right-2 -bottom-2 w-16 h-16 bg-amber-500/5 rounded-full blur-xl group-hover:bg-amber-500/10 transition-all" />
           <div className="flex items-center gap-2.5">
             <div className="w-8.5 h-8.5 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-500/20">
               <Clock className="w-4.5 h-4.5 animate-pulse" />
             </div>
-            <span className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
+            <span className="theme-text-primary text-2xl sm:text-3xl font-black font-mono tracking-tight">
               {formatVietnamTime(nowTimestamp)}
             </span>
           </div>
         </div>
 
-        <div className="col-span-2 rounded-[24px] bg-gradient-to-r from-orange-700 to-amber-700 p-4 text-white shadow-lg shadow-orange-900/10">
+        <div className="home-calorie-card col-span-2 rounded-[24px] p-4">
           <div className="flex items-center gap-3">
             <div className="h-11 w-11 shrink-0 rounded-2xl bg-white/15 flex items-center justify-center">
               <Flame className="w-5 h-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white/95">Calo hôm nay · ước tính</div>
+              <div className="text-[11px] font-black uppercase tracking-[0.12em] text-white">Calo hôm nay · ước tính</div>
               <div className="mt-0.5 text-2xl font-black leading-none">≈ {plannedCalories.toLocaleString('vi-VN')} kcal</div>
-              <div className="mt-1 text-[10px] font-bold text-white/95">
+              <div className="mt-1 text-[11px] font-bold text-white/95">
                 Kế hoạch {plannedMealKeys.length} bữa · đã ghi nhận ≈ {consumedCalories.toLocaleString('vi-VN')} kcal
               </div>
             </div>
@@ -179,7 +179,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="rounded-[32px] bg-gradient-to-br from-[#3f63f4] to-[#2f4ed8] text-white p-6 sm:p-7 shadow-lg shadow-blue-900/10">
+      <section className="home-primary-hero rounded-[32px] p-6 sm:p-7">
         <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
           Hôm nay {dayDisplay[todayKey]}
         </h2>
@@ -195,11 +195,11 @@ export default function HomePage() {
               return (
                 <div
                   key={comboKey}
-                  className="rounded-[18px] border border-white/15 bg-white/10 px-4 py-3 flex items-center gap-3"
+                  className="home-hero-meal rounded-[18px] border px-4 py-3 flex items-center gap-3"
                 >
                   <Ban className="w-4 h-4 shrink-0 text-blue-100" />
                   <div className="min-w-0">
-                    <div className="text-[10px] font-black text-blue-100">
+                    <div className="text-[11px] font-black text-blue-100">
                       {mealLabels[index]}
                     </div>
                     <div className="text-sm font-black text-white/90">
@@ -217,7 +217,7 @@ export default function HomePage() {
             return (
               <div
                 key={comboKey}
-                className="rounded-[22px] border border-white/15 bg-white/10 p-3 flex items-center gap-3"
+                className="home-hero-meal rounded-[22px] border p-3 flex items-center gap-3"
               >
                 <DishImage
                   src={dish.imageUrl}
@@ -226,13 +226,13 @@ export default function HomePage() {
                 />
 
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-black text-blue-50">
+                  <div className="text-[11px] font-black text-blue-50">
                     {mealLabels[index]}
                   </div>
                   <div className="font-black text-sm sm:text-base truncate">
                     {dish.name}
                   </div>
-                  <div className="text-[10px] text-blue-50 font-semibold">
+                  <div className="text-[11px] text-blue-50 font-semibold">
                     ≈ {estimateDishCalories(dish)} kcal ·{' '}
                     {price ? price.toLocaleString('vi-VN') + 'đ' : 'chưa có giá'}
                   </div>
@@ -262,10 +262,10 @@ export default function HomePage() {
             <CalendarDays className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-base font-black text-slate-950 dark:text-white">
+            <h2 className="theme-text-primary text-base font-black">
               Lịch ăn tuần này
             </h2>
-            <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-700 dark:text-slate-300">
+            <p className="theme-text-secondary mt-1 text-xs font-semibold leading-relaxed">
               Các ngày còn lại trong tuần. Chạm ngày để xem; chỉ mở bộ chọn khi cần đổi món.
             </p>
           </div>
