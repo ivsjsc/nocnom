@@ -868,8 +868,8 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                 {' '}Protein {macroTargetPlan.proteinPct}% · Carb {macroTargetPlan.carbsPct}% · Fat {macroTargetPlan.fatPct}%.
                 {todayMacros.totalItems > 0 && !todayMacros.isComplete ? (
                   <span className="health-macro-note-warning mt-1 block font-bold">
-                    Số đã ăn chỉ cộng các món có đủ dữ liệu macro ({todayMacros.knownItems}/{todayMacros.totalItems} mục).
-                    nOcnOm không suy ra protein/carb/fat từ kcal còn thiếu.
+                    Số đã ăn chỉ cộng các mục có đủ Protein / Carb / Fat ({todayMacros.knownItems}/{todayMacros.totalItems} mục).
+                    Dữ liệu có thể đến từ Nutrition DB, bản người dùng nhập hoặc công thức nguyên liệu. nOcnOm không suy ra protein/carb/fat từ kcal; có thể bổ sung tại Kho món → Sửa món.
                   </span>
                 ) : todayMacros.totalItems === 0 ? (
                   <span className="mt-1 block">

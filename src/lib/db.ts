@@ -10,6 +10,15 @@ import {
   nutritionSelectionToDishFields
 } from '../domain/nutrition/nutritionPersistence';
 import { normalizeKcalInternal } from '../domain/nutrition/caloriePrecision';
+import {
+  normalizeUserNutritionInput,
+  type MacroEnergyConsistency,
+  type NutritionDataOrigin,
+  type NutritionDataStatus,
+  type NutritionRecipeSnapshot,
+  type NutritionSourceKind,
+  type UserNutritionInput
+} from '../domain/nutrition/userNutrition';
 import { migrateDefaultDishRecords } from '../domain/menu/defaultDishMigration';
 import { normalizePriceVnd } from '../domain/menu/vendorOffer';
 import {
@@ -75,6 +84,7 @@ export type AddDishOptions = {
   vendors?: NewVendorInput[];
   dishId?: string;
   nutritionSelection?: NutritionSelection;
+  userNutrition?: UserNutritionInput;
 };
 
 export type Dish = {
@@ -103,7 +113,7 @@ export type Dish = {
   proteinG?: number;
   carbsG?: number;
   fatG?: number;
-  macroSource?: 'nutrition-db' | 'manual';
+  macroSource?: 'nutrition-db' | 'manual' | 'recipe';
   nutritionRecordId?: string;
   nutritionCanonicalName?: string;
   nutritionConfidence?:
@@ -121,6 +131,15 @@ export type Dish = {
   nutritionSourceUrl?: string;
   nutritionMatchType?: string;
   nutritionMatchScore?: number;
+  nutritionDataOrigin?: NutritionDataOrigin;
+  nutritionDataStatus?: NutritionDataStatus;
+  nutritionSourceKind?: NutritionSourceKind;
+  nutritionSourceNote?: string;
+  userOverrideOfNutritionRecordId?: string;
+  macroEnergyKcal?: number;
+  macroEnergyDeltaPct?: number;
+  macroEnergyConsistency?: MacroEnergyConsistency;
+  nutritionRecipe?: NutritionRecipeSnapshot;
   legacyNames?: string[];
   vendors: Vendor[];
 };
@@ -153,7 +172,7 @@ export type LogEntry = {
   proteinG?: number;
   carbsG?: number;
   fatG?: number;
-  macroSource?: 'nutrition-db' | 'manual';
+  macroSource?: 'nutrition-db' | 'manual' | 'recipe';
   nutritionRecordId?: string;
   nutritionCanonicalName?: string;
   nutritionConfidence?:
@@ -171,6 +190,15 @@ export type LogEntry = {
   nutritionSourceUrl?: string;
   nutritionMatchType?: string;
   nutritionMatchScore?: number;
+  nutritionDataOrigin?: NutritionDataOrigin;
+  nutritionDataStatus?: NutritionDataStatus;
+  nutritionSourceKind?: NutritionSourceKind;
+  nutritionSourceNote?: string;
+  userOverrideOfNutritionRecordId?: string;
+  macroEnergyKcal?: number;
+  macroEnergyDeltaPct?: number;
+  macroEnergyConsistency?: MacroEnergyConsistency;
+  nutritionRecipe?: NutritionRecipeSnapshot;
   timestamp: number;
 };
 
@@ -971,6 +999,90 @@ const applyDishImage = (
 };
 
 
+const nutritionSourceLabel = (kind: NutritionSourceKind) => {
+  switch (kind) {
+    case 'nutrition-label':
+      return 'Nhãn dinh dưỡng';
+    case 'manufacturer':
+      return 'Nhà sản xuất';
+    case 'recipe':
+      return 'Công thức người dùng';
+    case 'other':
+      return 'Nguồn người dùng cung cấp';
+    case 'reference-db':
+      return 'Nutrition Knowledge Base';
+    default:
+      return 'Người dùng tự nhập';
+  }
+};
+
+const userNutritionToDishFields = (
+  input: UserNutritionInput,
+  reference?: Partial<Dish>
+): Partial<Dish> => {
+  const normalized = normalizeUserNutritionInput(input);
+  const linkedReferenceId =
+    reference?.userOverrideOfNutritionRecordId ||
+    reference?.nutritionRecordId;
+
+  return {
+    calories: normalized.calories,
+    calorieSource: 'manual',
+    calorieBasis: 'serving',
+    portionSize: undefined,
+    portionGrams: undefined,
+    servingAmount: normalized.servingAmount,
+    servingUnit: normalized.servingUnit,
+    kcalMin: undefined,
+    kcalMax: undefined,
+    proteinG: normalized.proteinG,
+    carbsG: normalized.carbsG,
+    fatG: normalized.fatG,
+    macroSource:
+      normalized.proteinG !== undefined &&
+      normalized.carbsG !== undefined &&
+      normalized.fatG !== undefined
+        ? normalized.dataOrigin === 'user-recipe'
+          ? 'recipe'
+          : 'manual'
+        : undefined,
+    nutritionRecordId: reference?.nutritionRecordId,
+    nutritionCanonicalName: reference?.nutritionCanonicalName,
+    nutritionConfidence: 'unknown',
+    nutritionVerificationState:
+      normalized.dataOrigin === 'user-recipe'
+        ? 'RECIPE_CALCULATED_NOT_INDEPENDENTLY_VERIFIED'
+        : 'USER_PROVIDED_NOT_INDEPENDENTLY_VERIFIED',
+    nutritionCalorieStatus:
+      normalized.dataOrigin === 'user-recipe'
+        ? 'CALCULATED'
+        : 'USER_PROVIDED',
+    nutritionValidationResult:
+      normalized.macroEnergyConsistency === 'inconsistent'
+        ? 'NEEDS_REVIEW'
+        : normalized.macroEnergyConsistency === 'review'
+          ? 'PASS_WITH_WARNING'
+          : 'USER_PROVIDED',
+    nutritionTrainingEligibility: undefined,
+    nutritionReferenceOnly: false,
+    nutritionSource: nutritionSourceLabel(normalized.sourceKind),
+    nutritionSourceId: normalized.sourceKind,
+    nutritionSourceUrl: normalized.sourceUrl,
+    nutritionMatchType: reference?.nutritionMatchType,
+    nutritionMatchScore: reference?.nutritionMatchScore,
+    nutritionDataOrigin: normalized.dataOrigin,
+    nutritionDataStatus: normalized.dataStatus,
+    nutritionSourceKind: normalized.sourceKind,
+    nutritionSourceNote: normalized.sourceNote,
+    userOverrideOfNutritionRecordId: linkedReferenceId,
+    macroEnergyKcal: normalized.macroEnergyKcal,
+    macroEnergyDeltaPct: normalized.macroEnergyDeltaPct,
+    macroEnergyConsistency: normalized.macroEnergyConsistency,
+    nutritionRecipe: normalized.recipe
+  };
+};
+
+
 const upsertMealLogData = ({
   dateKey,
   mealKey,
@@ -1050,7 +1162,17 @@ const upsertMealLogData = ({
           nutritionSourceId: nutritionSnapshot.nutritionSourceId,
           nutritionSourceUrl: nutritionSnapshot.nutritionSourceUrl,
           nutritionMatchType: nutritionSnapshot.nutritionMatchType,
-          nutritionMatchScore: nutritionSnapshot.nutritionMatchScore
+          nutritionMatchScore: nutritionSnapshot.nutritionMatchScore,
+          nutritionDataOrigin: nutritionSnapshot.nutritionDataOrigin,
+          nutritionDataStatus: nutritionSnapshot.nutritionDataStatus,
+          nutritionSourceKind: nutritionSnapshot.nutritionSourceKind,
+          nutritionSourceNote: nutritionSnapshot.nutritionSourceNote,
+          userOverrideOfNutritionRecordId:
+            nutritionSnapshot.userOverrideOfNutritionRecordId,
+          macroEnergyKcal: nutritionSnapshot.macroEnergyKcal,
+          macroEnergyDeltaPct: nutritionSnapshot.macroEnergyDeltaPct,
+          macroEnergyConsistency: nutritionSnapshot.macroEnergyConsistency,
+          nutritionRecipe: nutritionSnapshot.nutritionRecipe
         }
       : {}),
     timestamp: timestampForMealDate(dateKey, mealKey)
@@ -1247,46 +1369,76 @@ export const mockDb = {
       });
     }
   },
+  updateDishNutrition: (id: string, input: UserNutritionInput) => {
+    const current = dishesData.find(dish => dish.id === id);
+    if (!current) {
+      throw new Error('Không tìm thấy món cần cập nhật.');
+    }
+
+    const fields = userNutritionToDishFields(input, current);
+    dishesData = dishesData.map(dish =>
+      dish.id === id
+        ? {
+            ...dish,
+            ...fields
+          }
+        : dish
+    );
+    saveToLocalStorage('dishes');
+    dishListeners.forEach(listener => listener(dishesData));
+  },
   updateDishCalories: (id: string, calories: number) => {
+    const current = dishesData.find(dish => dish.id === id);
+    if (!current) {
+      throw new Error('Không tìm thấy món cần cập nhật.');
+    }
+
     const normalizedCalories = normalizeKcalInternal(calories);
     if (
       normalizedCalories === null ||
       normalizedCalories <= 0 ||
       normalizedCalories > 5000
     ) {
-      throw new Error('Calo phải là số hợp lệ từ 0 đến 5.000 kcal/phần.');
+      throw new Error('Calo phải là số hợp lệ từ 1 đến 5.000 kcal/phần.');
     }
+
+    const hasMacros =
+      typeof current.proteinG === 'number' &&
+      typeof current.carbsG === 'number' &&
+      typeof current.fatG === 'number';
+
+    const fields = userNutritionToDishFields(
+      {
+        mode: 'manual',
+        calories: normalizedCalories,
+        servingAmount: current.servingAmount,
+        servingUnit: current.servingUnit,
+        ...(hasMacros
+          ? {
+              proteinG: current.proteinG,
+              carbsG: current.carbsG,
+              fatG: current.fatG
+            }
+          : {}),
+        sourceKind:
+          current.nutritionSourceKind === 'reference-db' ||
+          current.nutritionSourceKind === 'recipe'
+            ? 'self-entered'
+            : current.nutritionSourceKind,
+        sourceUrl:
+          current.nutritionDataOrigin === 'user-manual'
+            ? current.nutritionSourceUrl
+            : undefined,
+        sourceNote: current.nutritionSourceNote
+      },
+      current
+    );
 
     dishesData = dishesData.map(d =>
       d.id === id
         ? {
             ...d,
-            calories: normalizedCalories,
-            calorieSource: 'manual',
-            calorieBasis: 'serving',
-            portionSize: undefined,
-            portionGrams: undefined,
-            servingAmount: undefined,
-            servingUnit: undefined,
-            kcalMin: undefined,
-            kcalMax: undefined,
-            proteinG: undefined,
-            carbsG: undefined,
-            fatG: undefined,
-            macroSource: undefined,
-            nutritionRecordId: undefined,
-            nutritionCanonicalName: undefined,
-            nutritionConfidence: undefined,
-            nutritionVerificationState: undefined,
-            nutritionCalorieStatus: undefined,
-            nutritionValidationResult: undefined,
-            nutritionTrainingEligibility: undefined,
-            nutritionReferenceOnly: undefined,
-            nutritionSource: undefined,
-            nutritionSourceId: undefined,
-            nutritionSourceUrl: undefined,
-            nutritionMatchType: undefined,
-            nutritionMatchScore: undefined
+            ...fields
           }
         : d
     );
@@ -1297,24 +1449,40 @@ export const mockDb = {
     id: string,
     macros: { proteinG: number; carbsG: number; fatG: number }
   ) => {
-    const values = [macros.proteinG, macros.carbsG, macros.fatG];
-    if (
-      values.some(
-        value => !Number.isFinite(value) || value < 0 || value > 500
-      )
-    ) {
-      throw new Error('Macro phải là số hợp lệ từ 0 đến 500 g/phần.');
+    const current = dishesData.find(dish => dish.id === id);
+    if (!current) {
+      throw new Error('Không tìm thấy món cần cập nhật.');
     }
 
-    const round1 = (value: number) => Math.round(value * 10) / 10;
+    const calories = estimateDishCalories(current);
+    const fields = userNutritionToDishFields(
+      {
+        mode: 'manual',
+        calories,
+        servingAmount: current.servingAmount,
+        servingUnit: current.servingUnit,
+        proteinG: macros.proteinG,
+        carbsG: macros.carbsG,
+        fatG: macros.fatG,
+        sourceKind:
+          current.nutritionSourceKind === 'reference-db' ||
+          current.nutritionSourceKind === 'recipe'
+            ? 'self-entered'
+            : current.nutritionSourceKind,
+        sourceUrl:
+          current.nutritionDataOrigin === 'user-manual'
+            ? current.nutritionSourceUrl
+            : undefined,
+        sourceNote: current.nutritionSourceNote
+      },
+      current
+    );
+
     dishesData = dishesData.map(dish =>
       dish.id === id
         ? {
             ...dish,
-            proteinG: round1(macros.proteinG),
-            carbsG: round1(macros.carbsG),
-            fatG: round1(macros.fatG),
-            macroSource: 'manual' as const
+            ...fields
           }
         : dish
     );
@@ -1499,17 +1667,28 @@ export const mockDb = {
 
     if (existingIndex >= 0) {
       const current = dishesData[existingIndex];
-      const shouldUseNutrition =
-        Boolean(nutritionSelection) &&
+      const referenceFields = nutritionSelection
+        ? nutritionSelectionToDishFields(nutritionSelection)
+        : undefined;
+      const shouldUseReferenceNutrition =
+        Boolean(referenceFields) &&
+        !options.userNutrition &&
         current.calorieSource !== 'manual';
+      const customNutritionFields = options.userNutrition
+        ? userNutritionToDishFields(
+            options.userNutrition,
+            referenceFields ? { ...current, ...referenceFields } : current
+          )
+        : undefined;
 
       let updated: Dish = {
         ...current,
         categoryId: nutritionSelection ? resolvedCategoryId : current.categoryId,
         vendors: mergeVendorInputs(current.vendors, options.vendors),
-        ...(shouldUseNutrition && nutritionSelection
-          ? nutritionSelectionToDishFields(nutritionSelection)
-          : {})
+        ...(shouldUseReferenceNutrition && referenceFields
+          ? referenceFields
+          : {}),
+        ...(customNutritionFields || {})
       };
 
       updated = applyDishImage(updated, options.image);
@@ -1556,20 +1735,33 @@ export const mockDb = {
       };
     }
 
+    const referenceFields = nutritionSelection
+      ? nutritionSelectionToDishFields(nutritionSelection)
+      : undefined;
+    const customNutritionFields = options.userNutrition
+      ? userNutritionToDishFields(options.userNutrition, referenceFields)
+      : undefined;
+
     let newDish: Dish = {
       id: options.dishId || createLocalId('d'),
       name: cleanName,
       categoryId: resolvedCategoryId,
       isFavorite: false,
-      ...(nutritionSelection
-        ? nutritionSelectionToDishFields(nutritionSelection)
-        : {
-            calories: getDefaultCaloriesForCategory(resolvedCategoryId),
-            calorieSource: 'category-fallback' as const,
-            calorieBasis: 'category' as const,
-            nutritionConfidence: 'unknown' as const,
-            nutritionVerificationState: 'UNVERIFIED_FALLBACK'
-          }),
+      ...(customNutritionFields
+        ? {
+            ...(referenceFields || {}),
+            ...customNutritionFields
+          }
+        : referenceFields
+          ? referenceFields
+          : {
+              calories: getDefaultCaloriesForCategory(resolvedCategoryId),
+              calorieSource: 'category-fallback' as const,
+              calorieBasis: 'category' as const,
+              nutritionConfidence: 'unknown' as const,
+              nutritionVerificationState: 'UNVERIFIED_FALLBACK',
+              nutritionDataStatus: 'estimated' as const
+            }),
       vendors: mergeVendorInputs([], options.vendors)
     };
 

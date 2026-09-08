@@ -14,6 +14,7 @@ import {
 import { normalizePriceVnd } from '../domain/menu/vendorOffer';
 import { normalizeExternalImageUrl } from '../lib/url';
 import DishImage from './DishImage';
+import type { NutritionSourceKind } from '../domain/nutrition/userNutrition';
 
 type Props = {
   dish: Dish;
@@ -40,6 +41,27 @@ export default function EditDishModal({
   const [fatG, setFatG] = useState(
     dish.fatG === undefined ? '' : String(dish.fatG)
   );
+  const [nutritionSourceKind, setNutritionSourceKind] = useState<
+    Exclude<NutritionSourceKind, 'reference-db' | 'recipe'>
+  >(
+    dish.nutritionDataOrigin === 'user-manual' &&
+      dish.nutritionSourceKind &&
+      dish.nutritionSourceKind !== 'reference-db' &&
+      dish.nutritionSourceKind !== 'recipe'
+      ? dish.nutritionSourceKind
+      : 'self-entered'
+  );
+  const [nutritionSourceUrl, setNutritionSourceUrl] = useState(
+    dish.nutritionDataOrigin === 'user-manual'
+      ? dish.nutritionSourceUrl || ''
+      : ''
+  );
+  const [nutritionSourceNote, setNutritionSourceNote] = useState(
+    dish.nutritionDataOrigin === 'user-manual'
+      ? dish.nutritionSourceNote || ''
+      : ''
+  );
+  const [nutritionSourceTouched, setNutritionSourceTouched] = useState(false);
   const [vendorName, setVendorName] = useState('');
   const [vendorPrice, setVendorPrice] = useState('');
   const [vendorPhone, setVendorPhone] = useState('');
@@ -134,24 +156,31 @@ export default function EditDishModal({
 
       const caloriesChanged =
         parsedCalories !== estimateDishCalories(dish);
-      if (caloriesChanged) {
-        mockDb.updateDishCalories(dish.id, parsedCalories);
-      }
+      const macrosChanged = parsedMacros
+        ? parsedMacros[0] !== dish.proteinG ||
+          parsedMacros[1] !== dish.carbsG ||
+          parsedMacros[2] !== dish.fatG
+        : dish.proteinG !== undefined ||
+          dish.carbsG !== undefined ||
+          dish.fatG !== undefined;
 
-      if (parsedMacros) {
-        const [nextProteinG, nextCarbsG, nextFatG] = parsedMacros;
-        if (
-          caloriesChanged ||
-          nextProteinG !== dish.proteinG ||
-          nextCarbsG !== dish.carbsG ||
-          nextFatG !== dish.fatG
-        ) {
-          mockDb.updateDishMacros(dish.id, {
-            proteinG: nextProteinG,
-            carbsG: nextCarbsG,
-            fatG: nextFatG
-          });
-        }
+      if (caloriesChanged || macrosChanged || nutritionSourceTouched) {
+        mockDb.updateDishNutrition(dish.id, {
+          mode: 'manual',
+          calories: parsedCalories,
+          servingAmount: dish.servingAmount,
+          servingUnit: dish.servingUnit,
+          ...(parsedMacros
+            ? {
+                proteinG: parsedMacros[0],
+                carbsG: parsedMacros[1],
+                fatG: parsedMacros[2]
+              }
+            : {}),
+          sourceKind: nutritionSourceKind,
+          sourceUrl: nutritionSourceUrl.trim() || undefined,
+          sourceNote: nutritionSourceNote.trim() || undefined
+        });
       }
 
       if (hasVendorDraft && normalizedVendorPrice !== null) {
@@ -351,9 +380,70 @@ export default function EditDishModal({
             </div>
             {dish.macroSource && (
               <div className="mt-2 text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
-                Nguồn macro hiện tại: {dish.macroSource === 'nutrition-db' ? 'Nutrition Knowledge Base' : 'nhập thủ công'}.
+                Nguồn macro hiện tại:{' '}
+                {dish.macroSource === 'nutrition-db'
+                  ? 'Nutrition Knowledge Base'
+                  : dish.macroSource === 'recipe'
+                    ? 'tính từ công thức'
+                    : 'nhập thủ công'}.
               </div>
             )}
+
+            {dish.nutritionRecordId && (
+              <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[10px] font-semibold leading-relaxed text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+                Món này đang liên kết với bản tham khảo
+                {dish.nutritionCanonicalName ? ` “${dish.nutritionCanonicalName}”` : ''}.
+                Nếu bạn sửa calo/macro, nOcnOm sẽ tạo <strong>bản ghi cá nhân</strong> và giữ liên kết này thay vì sửa Nutrition DB chung.
+              </div>
+            )}
+
+            <div className="mt-3 grid grid-cols-1 gap-2">
+              <label className="block">
+                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">
+                  Nguồn dữ liệu khi tùy chỉnh
+                </span>
+                <select
+                  value={nutritionSourceKind}
+                  onChange={event => {
+                    setNutritionSourceKind(
+                      event.target.value as Exclude<
+                        NutritionSourceKind,
+                        'reference-db' | 'recipe'
+                      >
+                    );
+                    setNutritionSourceTouched(true);
+                  }}
+                  className="mt-1.5 h-10 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-xs font-bold"
+                >
+                  <option value="self-entered">Tự nhập / tự cân</option>
+                  <option value="nutrition-label">Nhãn dinh dưỡng</option>
+                  <option value="manufacturer">Website nhà sản xuất</option>
+                  <option value="other">Nguồn tham khảo khác</option>
+                </select>
+              </label>
+
+              <input
+                type="url"
+                value={nutritionSourceUrl}
+                onChange={event => {
+                  setNutritionSourceUrl(event.target.value);
+                  setNutritionSourceTouched(true);
+                }}
+                placeholder="URL nguồn dinh dưỡng (không bắt buộc)"
+                className="h-10 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-xs font-semibold"
+              />
+
+              <textarea
+                value={nutritionSourceNote}
+                onChange={event => {
+                  setNutritionSourceNote(event.target.value);
+                  setNutritionSourceTouched(true);
+                }}
+                rows={2}
+                placeholder="Ghi chú về khẩu phần, nhãn hoặc cách cân..."
+                className="w-full resize-none rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold"
+              />
+            </div>
           </section>
 
           <section className="rounded-[22px] border border-slate-200 dark:border-slate-800 p-4">

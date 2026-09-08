@@ -190,27 +190,42 @@ export default function DishDetailModal({
             <div className="rounded-[22px] border border-blue-100 bg-white p-4 shadow-sm space-y-3">
               <div className="flex items-center justify-between">
                 <div className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">
-                  Nutrition Knowledge Base
+                  {dish.nutritionDataOrigin === 'user-recipe'
+                    ? 'Dinh dưỡng từ công thức'
+                    : dish.nutritionDataOrigin === 'user-manual' || dish.calorieSource === 'manual'
+                      ? 'Dữ liệu dinh dưỡng cá nhân'
+                      : 'Nutrition Knowledge Base'}
                 </div>
                 <div className="text-[10px] font-bold text-slate-500">
-                  {dish.nutritionConfidence === 'high'
-                    ? 'Độ tin cậy cao'
-                    : dish.nutritionConfidence === 'reference'
-                      ? 'Dữ liệu tham khảo'
-                      : canonicalFood?.confidence.label_vi || 'Ước tính'}
+                  {dish.nutritionDataStatus === 'verified' ||
+                  dish.nutritionDataStatus === 'curated' ||
+                  dish.nutritionVerificationState === 'VERIFIED'
+                    ? 'Đã xác minh'
+                    : dish.nutritionDataOrigin === 'user-recipe'
+                      ? 'Tính từ nguyên liệu'
+                      : dish.nutritionDataOrigin === 'user-manual' || dish.calorieSource === 'manual'
+                        ? 'Người dùng cung cấp'
+                        : dish.nutritionConfidence === 'high'
+                          ? 'Độ tin cậy cao'
+                          : dish.nutritionConfidence === 'reference'
+                            ? 'Dữ liệu tham khảo'
+                            : canonicalFood?.confidence.label_vi || 'Ước tính'}
                 </div>
               </div>
 
               <div className="rounded-xl bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700">
                 Nguồn calo:{' '}
                 <span className="font-black text-slate-950">
-                  {dish.calorieSource === 'nutrition-db'
-                    ? dish.nutritionSource || 'Nutrition Knowledge Base'
-                    : dish.calorieSource === 'manual'
-                      ? 'Nhập thủ công'
-                      : dish.calorieSource === 'category-fallback'
-                        ? 'Ước tính theo nhóm món'
-                        : 'Dữ liệu cũ'}
+                  {dish.nutritionSource ||
+                    (dish.nutritionDataOrigin === 'user-recipe'
+                      ? 'Công thức người dùng'
+                      : dish.calorieSource === 'nutrition-db'
+                        ? 'Nutrition Knowledge Base'
+                        : dish.calorieSource === 'manual'
+                          ? 'Người dùng tự nhập'
+                          : dish.calorieSource === 'category-fallback'
+                            ? 'Ước tính theo nhóm món'
+                            : 'Dữ liệu cũ')}
                 </span>
                 {dish.servingAmount
                   ? ` · ${dish.servingAmount}${dish.servingUnit || 'g'}`
@@ -218,6 +233,34 @@ export default function DishDetailModal({
                     ? ` · ${dish.portionGrams}g`
                     : ''}
               </div>
+
+              {dish.userOverrideOfNutritionRecordId && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[10px] font-semibold leading-relaxed text-blue-900">
+                  Đây là <strong>bản dinh dưỡng cá nhân</strong>
+                  {canonicalFood
+                    ? <> dựa trên liên kết tham khảo <strong>{canonicalFood.name}</strong></>
+                    : ' có liên kết tới Nutrition DB'}.
+                  Bản tham khảo chung không bị chỉnh sửa.
+                </div>
+              )}
+
+              {dish.nutritionSourceUrl && (
+                <a
+                  href={getSafeExternalUrl(dish.nutritionSourceUrl) || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-[10px] font-bold text-blue-700 hover:underline"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Mở nguồn dữ liệu dinh dưỡng
+                </a>
+              )}
+
+              {dish.nutritionSourceNote && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[10px] font-semibold leading-relaxed text-slate-700">
+                  {dish.nutritionSourceNote}
+                </div>
+              )}
 
               {dish.proteinG !== undefined &&
                 dish.carbsG !== undefined &&
@@ -239,6 +282,63 @@ export default function DishDetailModal({
               ) : (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-600">
                   Chưa có đủ Protein / Carb / Fat cho khẩu phần này. nOcnOm không suy ra macro từ kcal.
+                </div>
+              )}
+
+              {dish.macroEnergyConsistency &&
+                dish.macroEnergyConsistency !== 'not-applicable' && (
+                  <div
+                    className={
+                      'rounded-xl border px-3 py-2 text-[10px] font-bold leading-relaxed ' +
+                      (dish.macroEnergyConsistency === 'consistent'
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                        : dish.macroEnergyConsistency === 'review'
+                          ? 'border-amber-200 bg-amber-50 text-amber-900'
+                          : 'border-rose-200 bg-rose-50 text-rose-800')
+                    }
+                  >
+                    Đối chiếu 4P + 4C + 9F
+                    {dish.macroEnergyKcal !== undefined
+                      ? ` ≈ ${dish.macroEnergyKcal} kcal`
+                      : ''}
+                    {dish.macroEnergyDeltaPct !== undefined
+                      ? ` · chênh ${dish.macroEnergyDeltaPct}%`
+                      : ''}.
+                    {dish.macroEnergyConsistency === 'inconsistent'
+                      ? ' Dữ liệu nên được kiểm tra lại trước khi coi là nguồn đáng tin cậy.'
+                      : ''}
+                  </div>
+                )}
+
+              {dish.nutritionRecipe && (
+                <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-3">
+                  <div className="text-[10px] font-black uppercase tracking-wide text-violet-800">
+                    Công thức · {dish.nutritionRecipe.servings} khẩu phần
+                  </div>
+                  <div className="mt-2 space-y-1.5">
+                    {dish.nutritionRecipe.ingredients.map(ingredient => (
+                      <div
+                        key={ingredient.id}
+                        className="flex items-start justify-between gap-3 rounded-xl bg-white px-2.5 py-2 text-[10px]"
+                      >
+                        <div className="min-w-0">
+                          <div className="font-black text-slate-900">
+                            {ingredient.name}
+                          </div>
+                          <div className="text-slate-500">
+                            {ingredient.amountG} g · {ingredient.kcalPer100g} kcal/100g
+                          </div>
+                        </div>
+                        {ingredient.proteinPer100g !== undefined &&
+                          ingredient.carbsPer100g !== undefined &&
+                          ingredient.fatPer100g !== undefined && (
+                            <div className="shrink-0 text-right font-bold text-slate-600">
+                              P {ingredient.proteinPer100g} · C {ingredient.carbsPer100g} · F {ingredient.fatPer100g}
+                            </div>
+                          )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

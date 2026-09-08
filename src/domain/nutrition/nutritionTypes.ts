@@ -1,3 +1,11 @@
+import type {
+  MacroEnergyConsistency,
+  NutritionDataOrigin,
+  NutritionDataStatus,
+  NutritionRecipeSnapshot,
+  NutritionSourceKind
+} from './userNutrition';
+
 export type CalorieSource =
   | 'manual'
   | 'nutrition-db'
@@ -33,7 +41,7 @@ export type NutritionSelection = {
   proteinG?: number;
   carbsG?: number;
   fatG?: number;
-  macroSource?: 'nutrition-db' | 'manual';
+  macroSource?: 'nutrition-db' | 'manual' | 'recipe';
   confidence: NutritionConfidenceLevel;
   confidenceLabel: string;
   verificationState: string;
@@ -63,7 +71,7 @@ export type DishNutritionFields = {
   proteinG?: number;
   carbsG?: number;
   fatG?: number;
-  macroSource?: 'nutrition-db' | 'manual';
+  macroSource?: 'nutrition-db' | 'manual' | 'recipe';
   nutritionRecordId?: string;
   nutritionCanonicalName?: string;
   nutritionConfidence?: NutritionConfidenceLevel | 'verified' | 'estimated';
@@ -77,6 +85,15 @@ export type DishNutritionFields = {
   nutritionSourceUrl?: string;
   nutritionMatchType?: string;
   nutritionMatchScore?: number;
+  nutritionDataOrigin?: NutritionDataOrigin;
+  nutritionDataStatus?: NutritionDataStatus;
+  nutritionSourceKind?: NutritionSourceKind;
+  nutritionSourceNote?: string;
+  userOverrideOfNutritionRecordId?: string;
+  macroEnergyKcal?: number;
+  macroEnergyDeltaPct?: number;
+  macroEnergyConsistency?: MacroEnergyConsistency;
+  nutritionRecipe?: NutritionRecipeSnapshot;
 };
 
 export type MealNutritionSnapshot = Pick<
@@ -107,4 +124,13 @@ export type MealNutritionSnapshot = Pick<
   | 'nutritionSourceUrl'
   | 'nutritionMatchType'
   | 'nutritionMatchScore'
+  | 'nutritionDataOrigin'
+  | 'nutritionDataStatus'
+  | 'nutritionSourceKind'
+  | 'nutritionSourceNote'
+  | 'userOverrideOfNutritionRecordId'
+  | 'macroEnergyKcal'
+  | 'macroEnergyDeltaPct'
+  | 'macroEnergyConsistency'
+  | 'nutritionRecipe'
 >;
