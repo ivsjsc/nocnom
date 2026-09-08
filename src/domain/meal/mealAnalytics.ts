@@ -9,6 +9,7 @@ export type MealKey = 'A' | 'B' | 'C';
 
 export type AnalyticsAddon = {
   kind?: 'fruit' | 'drink';
+  name?: string;
   calories?: number;
   proteinG?: number;
   carbsG?: number;
@@ -143,12 +144,21 @@ export const calculateConsumedMacros = (logs: AnalyticsLog[]) => {
   let fatG = 0;
   let knownItems = 0;
   let totalItems = 0;
+  const missingItems: Array<{
+    label: string;
+    kind: 'dish' | 'addon';
+  }> = [];
 
   const collect = (
-    item: Pick<AnalyticsLog, 'proteinG' | 'carbsG' | 'fatG'> | AnalyticsAddon
+    item: Pick<AnalyticsLog, 'proteinG' | 'carbsG' | 'fatG'> | AnalyticsAddon,
+    label: string,
+    kind: 'dish' | 'addon'
   ) => {
     totalItems++;
-    if (!completeMacro(item)) return;
+    if (!completeMacro(item)) {
+      missingItems.push({ label, kind });
+      return;
+    }
     knownItems++;
     proteinG += item.proteinG;
     carbsG += item.carbsG;
@@ -156,8 +166,19 @@ export const calculateConsumedMacros = (logs: AnalyticsLog[]) => {
   };
 
   for (const log of logs) {
-    collect(log);
-    (log.addons || []).forEach(collect);
+    collect(log, log.dishName || 'Món chính chưa đặt tên', 'dish');
+    (log.addons || []).forEach((addon, index) =>
+      collect(
+        addon,
+        addon.name ||
+          (addon.kind === 'fruit'
+            ? 'Trái cây ăn kèm'
+            : addon.kind === 'drink'
+              ? 'Đồ uống ăn kèm'
+              : `Món kèm ${index + 1}`),
+        'addon'
+      )
+    );
   }
 
   const round1 = (value: number) => Math.round(value * 10) / 10;
@@ -167,6 +188,7 @@ export const calculateConsumedMacros = (logs: AnalyticsLog[]) => {
     fatG: round1(fatG),
     knownItems,
     totalItems,
+    missingItems,
     coveragePct:
       totalItems > 0 ? Math.round((knownItems / totalItems) * 100) : 0,
     isComplete: totalItems > 0 && knownItems === totalItems
