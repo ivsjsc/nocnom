@@ -106,5 +106,43 @@ assert(
   'Methodology semantic typography has explicit light and dark contracts'
 );
 
+
+const componentDir = 'src/components';
+const componentFiles = fs
+  .readdirSync(componentDir)
+  .filter(file => file.endsWith('.tsx'));
+
+for (const file of componentFiles) {
+  const source = fs.readFileSync(`${componentDir}/${file}`, 'utf8');
+  const classNames = Array.from(
+    source.matchAll(/className=(?:"([^"]*)"|'([^']*)')/g),
+    match => match[1] || match[2] || ''
+  );
+
+  const obviousCollisions = classNames.filter(className => {
+    const lightSurface = /(^|\\s)(bg-white|bg-slate-50|bg-slate-100)(\\s|$)/.test(className);
+    const lightForeground = /(^|\\s)(text-white|text-slate-100|text-slate-200|text-slate-300)(\\s|$)/.test(className);
+    const darkSurface = /(^|\\s)(bg-slate-800|bg-slate-900|bg-slate-950)(\\s|$)/.test(className);
+    const darkForeground = /(^|\\s)(text-slate-800|text-slate-900|text-slate-950)(\\s|$)/.test(className);
+    return (lightSurface && lightForeground) || (darkSurface && darkForeground);
+  });
+
+  const lowOpacityText = classNames.filter(
+    className =>
+      /text-/.test(className) &&
+      /opacity-(30|40|50)/.test(className) &&
+      !/disabled:opacity/.test(className)
+  );
+
+  assert(
+    obviousCollisions.length === 0,
+    `${file} has no obvious same-element foreground/background contrast collision`
+  );
+  assert(
+    lowOpacityText.length === 0,
+    `${file} has no low-opacity text outside disabled states`
+  );
+}
+
 if (failures > 0) process.exit(1);
 console.log('UI readability tests: PASS');
