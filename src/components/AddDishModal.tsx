@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Check,
+  ChefHat,
+  Database,
   Image as ImageIcon,
+  PenLine,
   Loader2,
   Plus,
   RefreshCw,
@@ -33,12 +36,18 @@ import {
 } from '../lib/imageSearch';
 import { normalizeExternalImageUrl } from '../lib/url';
 import DishImage from './DishImage';
+import CustomNutritionEditor, {
+  type CustomNutritionEditorState
+} from './CustomNutritionEditor';
+import type { UserNutritionMode } from '../domain/nutrition/userNutrition';
 
 type Props = {
   categories: Category[];
   onClose: () => void;
   onSaved: (dish: Dish, created: boolean) => void;
 };
+
+type NutritionEntryMode = 'reference' | UserNutritionMode;
 
 const currency = new Intl.NumberFormat('vi-VN');
 
@@ -62,6 +71,14 @@ export default function AddDishModal({
   const [isSaving, setIsSaving] = useState(false);
   const [analysisError, setAnalysisError] = useState('');
   const [saveError, setSaveError] = useState('');
+  const [nutritionMode, setNutritionMode] =
+    useState<NutritionEntryMode>('reference');
+  const [customNutritionState, setCustomNutritionState] =
+    useState<CustomNutritionEditorState>({
+      input: null,
+      normalized: null,
+      error: 'Chưa nhập dữ liệu dinh dưỡng.'
+    });
 
   const [suggestions, setSuggestions] = useState<NutritionSearchResult[]>([]);
   const [nutritionResolution, setNutritionResolution] =
@@ -225,6 +242,19 @@ export default function AddDishModal({
       setSaveError('Cần chọn danh mục cho món chưa có trong dữ liệu.');
       return;
     }
+    if (nutritionMode === 'reference' && (!nutrition || !selectedNutritionCandidate)) {
+      setSaveError(
+        'Chưa có bản ghi tham khảo phù hợp. Chọn “Nhập thủ công” hoặc “Tính từ nguyên liệu” để tạo dữ liệu cá nhân.'
+      );
+      return;
+    }
+    if (nutritionMode !== 'reference' && !customNutritionState.input) {
+      setSaveError(
+        customNutritionState.error ||
+          'Dữ liệu dinh dưỡng cá nhân chưa hợp lệ.'
+      );
+      return;
+    }
 
     setIsSaving(true);
     setSaveError('');
@@ -303,7 +333,11 @@ export default function AddDishModal({
           dishId: targetDishId,
           image,
           vendors,
-          nutritionSelection
+          nutritionSelection,
+          userNutrition:
+            nutritionMode === 'reference'
+              ? undefined
+              : customNutritionState.input || undefined
         }
       );
 
@@ -366,7 +400,57 @@ export default function AddDishModal({
               </button>
             </div>
 
-            {suggestions.length > 0 && name.trim().length >= 2 && (
+            <div className="mt-3 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Cách khai báo dinh dưỡng">
+              {([
+                {
+                  id: 'reference' as const,
+                  label: 'Tra cứu DB',
+                  desc: '590+ món tham khảo',
+                  Icon: Database
+                },
+                {
+                  id: 'manual' as const,
+                  label: 'Thủ công',
+                  desc: 'Nhãn / tự nhập',
+                  Icon: PenLine
+                },
+                {
+                  id: 'recipe' as const,
+                  label: 'Nguyên liệu',
+                  desc: 'Tính theo công thức',
+                  Icon: ChefHat
+                }
+              ]).map(item => {
+                const active = nutritionMode === item.id;
+                const Icon = item.Icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => {
+                      setNutritionMode(item.id);
+                      setSaveError('');
+                    }}
+                    className={
+                      'min-h-[72px] rounded-2xl border p-2.5 text-left transition-all ' +
+                      (active
+                        ? 'border-blue-500 bg-blue-50 text-blue-950 ring-2 ring-blue-100'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200')
+                    }
+                  >
+                    <Icon className="h-4 w-4 text-blue-600" />
+                    <div className="mt-1.5 text-[11px] font-black">{item.label}</div>
+                    <div className="mt-0.5 text-[9px] font-semibold text-slate-500">
+                      {item.desc}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {nutritionMode === 'reference' && suggestions.length > 0 && name.trim().length >= 2 && (
               <div className="mt-3 space-y-1.5">
                 <div className="text-[10px] font-black uppercase text-slate-500">
                   Gợi ý từ Nutrition Knowledge Base:
@@ -417,7 +501,7 @@ export default function AddDishModal({
               </div>
             )}
 
-            {nutrition ? (
+            {nutritionMode === 'reference' && nutrition ? (
               <div className="mt-3 space-y-2">
                 <div
                   className={
@@ -508,7 +592,7 @@ export default function AddDishModal({
                   </div>
                 )}
               </div>
-            ) : name.trim().length >= 2 && !isAnalyzing ? (
+            ) : nutritionMode === 'reference' && name.trim().length >= 2 && !isAnalyzing ? (
               <div className="mt-3">
                 <div className="rounded-2xl bg-amber-50 border border-amber-100 p-3 text-xs font-semibold text-amber-800">
                   Chưa khớp Nutrition Knowledge Base. Món vẫn có thể được thêm thủ công.
@@ -527,6 +611,42 @@ export default function AddDishModal({
                 </select>
               </div>
             ) : null}
+
+            {nutritionMode !== 'reference' && (
+              <div className="mt-3 space-y-3">
+                {nutrition && selectedNutritionCandidate ? (
+                  <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] font-semibold leading-relaxed text-blue-800">
+                    Có bản tham khảo tương ứng: <strong>{selectedNutritionCandidate.food.name}</strong>.
+                    Dữ liệu cá nhân sẽ được lưu riêng và giữ liên kết tới bản tham khảo; không sửa Nutrition DB chung.
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[10px] font-semibold leading-relaxed text-slate-700">
+                    Đây là dữ liệu cá nhân của tài khoản. Nutrition DB chung vẫn giữ nguyên.
+                  </div>
+                )}
+
+                <CustomNutritionEditor
+                  key={nutritionMode}
+                  mode={nutritionMode}
+                  onChange={setCustomNutritionState}
+                />
+
+                <label className="block text-[11px] font-black uppercase text-slate-500">
+                  Danh mục món
+                </label>
+                <select
+                  value={fallbackCategoryId}
+                  onChange={event => setFallbackCategoryId(event.target.value)}
+                  className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold"
+                >
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {analysisError && (
               <div className="mt-3 text-xs font-semibold text-amber-700">{analysisError}</div>
