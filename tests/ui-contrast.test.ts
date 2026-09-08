@@ -106,6 +106,27 @@ assert(
     css.includes('.app-nav-item.is-active'),
   'Core navigation and dashboard surfaces use semantic theme classes'
 );
+assert(
+  contrast('#0f172a', '#f1f5f9') >= 7,
+  'Methodology formula text has enhanced contrast in light mode'
+);
+assert(
+  contrast('#f8fafc', '#17263a') >= 7,
+  'Methodology formula text has enhanced contrast in dark mode'
+);
+assert(
+  contrast('#334155', '#ffffff') >= 7,
+  'Methodology supporting copy has enhanced contrast on light cards'
+);
+assert(
+  contrast('#d5deea', '#0f1b2d') >= 7,
+  'Methodology supporting copy has enhanced contrast on dark cards'
+);
+assert(
+  contrast('#f8fafc', '#475569') >= 4.5 &&
+    contrast('#fde047', '#475569') >= 4.5,
+  'Macro note primary and warning text meet WCAG AA on its owned surface'
+);
 
 if (failures > 0) process.exit(1);
 console.log('UI contrast tests: PASS');
