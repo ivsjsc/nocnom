@@ -249,12 +249,30 @@ export default function HealthMethodologyPage({ onBack }: Props) {
           </div>
 
           <div className="methodology-accent-panel rounded-2xl border p-3.5">
-            <div className="text-xs font-black uppercase tracking-wide">Override hiện có</div>
+            <div className="text-xs font-black uppercase tracking-wide">Calo & Macro tùy chỉnh</div>
             <p className="mt-2 text-sm font-semibold leading-relaxed">
               Bạn có thể đặt thủ công <strong>mục tiêu kcal/ngày</strong>. Nếu để trống, app tự tính từ hồ sơ + RMR/TDEE + mục tiêu dinh dưỡng.
             </p>
-            <p className="mt-2 text-[11px] font-bold leading-relaxed">
-              Macro và nước hiện được engine tự suy ra theo mục tiêu; chưa có trường override trực tiếp từng Protein/Carb/Fat/nước.
+            <div className="mt-3 space-y-2 text-[11px] font-semibold leading-relaxed">
+              <div className="methodology-formula-row rounded-xl border px-3 py-2">
+                <strong>Tự động:</strong> ưu tiên protein/fat theo g/kg khi có cân nặng hợp lệ; Carb nhận phần năng lượng còn lại. Nếu không đủ dữ liệu cân nặng, dùng preset tỷ lệ theo mục tiêu.
+              </div>
+              <div className="methodology-formula-row rounded-xl border px-3 py-2">
+                <strong>Tỷ lệ %:</strong> người dùng nhập Protein / Carb / Fat với tổng đúng 100%; app đổi sang gram bằng mục tiêu kcal hiện tại.
+              </div>
+              <div className="methodology-formula-row rounded-xl border px-3 py-2">
+                <strong>Gram/ngày:</strong> người dùng nhập trực tiếp P/C/F. App chỉ tính 4P + 4C + 9F để đối chiếu với mục tiêu kcal và cảnh báo chênh lệch; không tự sửa số đã nhập.
+              </div>
+            </div>
+          </div>
+
+          <div className="methodology-card rounded-2xl border p-3.5 md:col-span-2">
+            <div className="methodology-source text-xs font-black uppercase tracking-wide">Nguồn Macro của món đã ăn</div>
+            <p className="methodology-copy mt-2 text-sm font-semibold leading-relaxed">
+              Macro tiêu thụ chỉ cộng khi một món hoặc món kèm có đủ cả <strong>Protein + Carb + Fat</strong>. Dữ liệu có thể đến từ Nutrition Reference DB, dữ liệu người dùng nhập, nhãn dinh dưỡng hoặc công thức nguyên liệu.
+            </p>
+            <p className="methodology-copy mt-2 text-[11px] font-semibold leading-relaxed">
+              Nếu thiếu bất kỳ thành phần nào, item đó không được cộng vào tổng Macro và được liệt kê là “Chưa đủ Macro”. nOcnOm không suy ngược P/C/F từ kcal để lấp dữ liệu.
             </p>
           </div>
         </div>

@@ -20,6 +20,8 @@ import {
 import {
   calculateAge,
   calculateBMI,
+  calculateDailyCalorieTargetFromProfile,
+  calculateMacroTargetPlan,
   getBMICategory,
   getIdealWeightRange,
   HEALTH_LIMITS,
@@ -27,7 +29,8 @@ import {
   BMI_REFERENCE_LABELS,
   type ActivityLevel,
   type Gender,
-  type HealthGoal
+  type HealthGoal,
+  type MacroTargetMode
 } from '../lib/healthUtils';
 
 type Props = {
@@ -50,6 +53,13 @@ type ProfileForm = {
   activityLevel: ActivityLevel;
   healthGoal: HealthGoal;
   dailyCalorieTarget: string;
+  macroTargetMode: MacroTargetMode;
+  macroProteinPct: string;
+  macroCarbsPct: string;
+  macroFatPct: string;
+  macroProteinG: string;
+  macroCarbsG: string;
+  macroFatG: string;
 };
 
 const emptyProfile: ProfileForm = {
@@ -65,10 +75,20 @@ const emptyProfile: ProfileForm = {
   weightKg: '',
   activityLevel: '',
   healthGoal: '',
-  dailyCalorieTarget: ''
+  dailyCalorieTarget: '',
+  macroTargetMode: 'auto',
+  macroProteinPct: '',
+  macroCarbsPct: '',
+  macroFatPct: '',
+  macroProteinG: '',
+  macroCarbsG: '',
+  macroFatG: ''
 };
 
 const toStringValue = (value: unknown) => (typeof value === 'string' ? value : '');
+
+const optionalNumberValue = (value: string): number | undefined =>
+  value.trim() ? Number(value) : undefined;
 
 export default function ProfileModal({
   user,
@@ -118,7 +138,32 @@ export default function ProfileModal({
           healthGoal: (data.healthGoal as HealthGoal) || '',
           dailyCalorieTarget: data.dailyCalorieTarget
             ? String(data.dailyCalorieTarget)
-            : ''
+            : '',
+          macroTargetMode: (data.macroTargetMode as MacroTargetMode) || 'auto',
+          macroProteinPct:
+            data.macroProteinPct !== undefined && data.macroProteinPct !== ''
+              ? String(data.macroProteinPct)
+              : '',
+          macroCarbsPct:
+            data.macroCarbsPct !== undefined && data.macroCarbsPct !== ''
+              ? String(data.macroCarbsPct)
+              : '',
+          macroFatPct:
+            data.macroFatPct !== undefined && data.macroFatPct !== ''
+              ? String(data.macroFatPct)
+              : '',
+          macroProteinG:
+            data.macroProteinG !== undefined && data.macroProteinG !== ''
+              ? String(data.macroProteinG)
+              : '',
+          macroCarbsG:
+            data.macroCarbsG !== undefined && data.macroCarbsG !== ''
+              ? String(data.macroCarbsG)
+              : '',
+          macroFatG:
+            data.macroFatG !== undefined && data.macroFatG !== ''
+              ? String(data.macroFatG)
+              : ''
         });
       } catch (error) {
         if (!active) return;
@@ -178,6 +223,72 @@ export default function ProfileModal({
   const idealWeight = useMemo(() => {
     return !isNaN(currentHeight) ? getIdealWeightRange(currentHeight) : null;
   }, [currentHeight]);
+
+  const automaticCalorieTarget = useMemo(
+    () =>
+      calculateDailyCalorieTargetFromProfile({
+        weightKg: form.weightKg,
+        heightCm: form.heightCm,
+        dateOfBirth: form.dateOfBirth,
+        gender: form.gender,
+        activityLevel: form.activityLevel,
+        healthGoal: form.healthGoal
+      }),
+    [
+      form.activityLevel,
+      form.dateOfBirth,
+      form.gender,
+      form.healthGoal,
+      form.heightCm,
+      form.weightKg
+    ]
+  );
+
+  const effectiveCalorieTarget = useMemo(() => {
+    const custom = Number(form.dailyCalorieTarget);
+    return form.dailyCalorieTarget.trim() &&
+      Number.isFinite(custom) &&
+      custom >= 800 &&
+      custom <= 6000
+      ? custom
+      : automaticCalorieTarget;
+  }, [automaticCalorieTarget, form.dailyCalorieTarget]);
+
+  const macroTargetPreview = useMemo(
+    () =>
+      calculateMacroTargetPlan(
+        effectiveCalorieTarget,
+        form.healthGoal,
+        Number.isFinite(currentWeight) ? currentWeight : null,
+        form.macroTargetMode === 'ratio'
+          ? {
+              mode: 'ratio',
+              proteinPct: optionalNumberValue(form.macroProteinPct),
+              carbsPct: optionalNumberValue(form.macroCarbsPct),
+              fatPct: optionalNumberValue(form.macroFatPct)
+            }
+          : form.macroTargetMode === 'grams'
+            ? {
+                mode: 'grams',
+                proteinG: optionalNumberValue(form.macroProteinG),
+                carbsG: optionalNumberValue(form.macroCarbsG),
+                fatG: optionalNumberValue(form.macroFatG)
+              }
+            : { mode: 'auto' }
+      ),
+    [
+      currentWeight,
+      effectiveCalorieTarget,
+      form.healthGoal,
+      form.macroCarbsG,
+      form.macroCarbsPct,
+      form.macroFatG,
+      form.macroFatPct,
+      form.macroProteinG,
+      form.macroProteinPct,
+      form.macroTargetMode
+    ]
+  );
 
   const handleSave = async () => {
     if (!form.fullName.trim()) {
@@ -242,6 +353,66 @@ export default function ProfileModal({
       return;
     }
 
+    const ratioValues = [
+      form.macroProteinPct,
+      form.macroCarbsPct,
+      form.macroFatPct
+    ];
+    const ratioNumbers = ratioValues.map(value => Number(value));
+    if (form.macroTargetMode === 'ratio') {
+      if (
+        ratioValues.some(value => !value.trim()) ||
+        ratioNumbers.some(
+          value => !Number.isFinite(value) || value < 0 || value > 100
+        )
+      ) {
+        setStatus({
+          type: 'error',
+          message: 'Tỷ lệ Macro cần đủ Protein / Carb / Fat, mỗi giá trị từ 0 đến 100%.'
+        });
+        return;
+      }
+
+      const ratioTotal = ratioNumbers.reduce((sum, value) => sum + value, 0);
+      if (Math.abs(ratioTotal - 100) > 0.1) {
+        setStatus({
+          type: 'error',
+          message: `Tổng tỷ lệ Macro phải bằng 100%. Hiện tại là ${ratioTotal.toFixed(1)}%.`
+        });
+        return;
+      }
+
+      if (!effectiveCalorieTarget) {
+        setStatus({
+          type: 'error',
+          message: 'Chế độ tỷ lệ % cần có mục tiêu calo/ngày. Hãy hoàn thiện hồ sơ hoặc nhập mục tiêu calo tùy chỉnh.'
+        });
+        return;
+      }
+    }
+
+    const gramValues = [
+      form.macroProteinG,
+      form.macroCarbsG,
+      form.macroFatG
+    ];
+    const gramNumbers = gramValues.map(value => Number(value));
+    if (form.macroTargetMode === 'grams') {
+      if (
+        gramValues.some(value => !value.trim()) ||
+        gramNumbers.some(
+          value => !Number.isFinite(value) || value < 0 || value > 500
+        ) ||
+        gramNumbers.every(value => value === 0)
+      ) {
+        setStatus({
+          type: 'error',
+          message: 'Mục tiêu gram cần đủ Protein / Carb / Fat từ 0 đến 500 g/ngày và không thể đồng thời bằng 0.'
+        });
+        return;
+      }
+    }
+
     setSaving(true);
     setStatus(null);
 
@@ -267,7 +438,20 @@ export default function ProfileModal({
         dailyCalorieTarget:
           form.dailyCalorieTarget.trim()
             ? Math.round(dailyCalorieTargetValue)
-            : ''
+            : '',
+        macroTargetMode: form.macroTargetMode,
+        macroProteinPct:
+          form.macroTargetMode === 'ratio' ? ratioNumbers[0] : '',
+        macroCarbsPct:
+          form.macroTargetMode === 'ratio' ? ratioNumbers[1] : '',
+        macroFatPct:
+          form.macroTargetMode === 'ratio' ? ratioNumbers[2] : '',
+        macroProteinG:
+          form.macroTargetMode === 'grams' ? gramNumbers[0] : '',
+        macroCarbsG:
+          form.macroTargetMode === 'grams' ? gramNumbers[1] : '',
+        macroFatG:
+          form.macroTargetMode === 'grams' ? gramNumbers[2] : ''
       });
 
       onProfileSaved?.(photoUrl, fullName);
@@ -602,6 +786,185 @@ export default function ProfileModal({
                       Nếu nhập giá trị này, nOcnOm sẽ ưu tiên mục tiêu bạn đặt. Để trống để dùng mục tiêu tự động từ BMR/TDEE và mục tiêu dinh dưỡng.
                     </div>
                   </label>
+                </div>
+
+                <div className="mt-3 rounded-2xl border border-emerald-200 bg-white p-3.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-[11px] font-black uppercase tracking-wide text-slate-700">
+                        Mục tiêu Macro
+                      </div>
+                      <div className="mt-1 text-[10px] font-semibold leading-relaxed text-slate-600">
+                        Chọn cách đặt Protein / Carb / Fat. Đây là mục tiêu lập kế hoạch; không phải số liệu món ăn và không được dùng để suy ngược macro còn thiếu.
+                      </div>
+                    </div>
+                    <Target className="h-4 w-4 shrink-0 text-emerald-600" />
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Cách đặt mục tiêu Macro">
+                    {([
+                      { id: 'auto', label: 'Tự động', hint: 'Theo hồ sơ' },
+                      { id: 'ratio', label: 'Tỷ lệ %', hint: 'Tự chia kcal' },
+                      { id: 'grams', label: 'Gram/ngày', hint: 'Tự đặt P/C/F' }
+                    ] as Array<{ id: MacroTargetMode; label: string; hint: string }>).map(item => {
+                      const active = form.macroTargetMode === item.id;
+                      return (
+                        <button
+                          type="button"
+                          key={item.id}
+                          role="radio"
+                          aria-checked={active}
+                          onClick={() => updateField('macroTargetMode', item.id)}
+                          className={
+                            'min-h-[62px] rounded-2xl border px-2 py-2 text-left transition-all ' +
+                            (active
+                              ? 'border-emerald-600 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-100'
+                              : 'border-slate-200 bg-slate-50 text-slate-700')
+                          }
+                        >
+                          <div className="text-[10px] font-black">{item.label}</div>
+                          <div className="mt-0.5 text-[9px] font-semibold text-slate-500">{item.hint}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {form.macroTargetMode === 'auto' && (
+                    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[10px] font-semibold leading-relaxed text-slate-700">
+                      nOcnOm dùng cân nặng + mục tiêu dinh dưỡng khi đủ dữ liệu. Nếu chưa đủ cân nặng hợp lệ, engine dùng preset tỷ lệ theo mục tiêu. Mọi kết quả đều được gắn trạng thái <strong>ước tính</strong>.
+                    </div>
+                  )}
+
+                  {form.macroTargetMode === 'ratio' && (
+                    <div className="mt-3">
+                      <div className="grid grid-cols-3 gap-2">
+                        {([
+                          ['macroProteinPct', 'Protein %'],
+                          ['macroCarbsPct', 'Carb %'],
+                          ['macroFatPct', 'Fat %']
+                        ] as const).map(([field, label]) => (
+                          <label key={field} className="block">
+                            <span className="text-[9px] font-black text-slate-600">{label}</span>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.1"
+                              inputMode="decimal"
+                              value={form[field]}
+                              onChange={event => updateField(field, event.target.value)}
+                              placeholder="0"
+                              className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 text-sm font-black text-slate-950 focus:border-emerald-500 focus:outline-none"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <div className="mt-2 text-[10px] font-bold text-slate-600">
+                        Tổng hiện tại:{' '}
+                        <span className={
+                          Math.abs(
+                            Number(form.macroProteinPct || 0) +
+                            Number(form.macroCarbsPct || 0) +
+                            Number(form.macroFatPct || 0) -
+                            100
+                          ) <= 0.1
+                            ? 'text-emerald-700'
+                            : 'text-amber-700'
+                        }>
+                          {(
+                            Number(form.macroProteinPct || 0) +
+                            Number(form.macroCarbsPct || 0) +
+                            Number(form.macroFatPct || 0)
+                          ).toFixed(1)}%
+                        </span>
+                        {' '}· phải bằng 100%.
+                      </div>
+                      {!effectiveCalorieTarget && (
+                        <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] font-bold leading-relaxed text-amber-800">
+                          Cần có mục tiêu calo/ngày để đổi tỷ lệ % thành số gram.
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {form.macroTargetMode === 'grams' && (
+                    <div className="mt-3">
+                      <div className="grid grid-cols-3 gap-2">
+                        {([
+                          ['macroProteinG', 'Protein (g)'],
+                          ['macroCarbsG', 'Carb (g)'],
+                          ['macroFatG', 'Fat (g)']
+                        ] as const).map(([field, label]) => (
+                          <label key={field} className="block">
+                            <span className="text-[9px] font-black text-slate-600">{label}</span>
+                            <input
+                              type="number"
+                              min="0"
+                              max="500"
+                              step="0.1"
+                              inputMode="decimal"
+                              value={form[field]}
+                              onChange={event => updateField(field, event.target.value)}
+                              placeholder="0"
+                              className="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 text-sm font-black text-slate-950 focus:border-emerald-500 focus:outline-none"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <div className="mt-2 text-[10px] font-semibold leading-relaxed text-slate-600">
+                        nOcnOm chỉ quy đổi năng lượng theo 4 kcal/g Protein, 4 kcal/g Carb và 9 kcal/g Fat để kiểm tra tính nhất quán; không tự sửa giá trị bạn nhập.
+                      </div>
+                    </div>
+                  )}
+
+                  {macroTargetPreview ? (
+                    <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-[10px] font-black uppercase tracking-wide text-emerald-800">
+                          Xem trước mục tiêu/ngày
+                        </div>
+                        <div className="text-[9px] font-black text-emerald-700">
+                          {macroTargetPreview.source === 'user-defined' ? 'Do bạn đặt' : 'Ước tính tự động'}
+                        </div>
+                      </div>
+                      <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                        <div className="rounded-xl bg-white p-2">
+                          <div className="text-sm font-black text-slate-950">{macroTargetPreview.proteinG} g</div>
+                          <div className="text-[9px] font-bold text-slate-500">Protein · {macroTargetPreview.proteinPct}%</div>
+                        </div>
+                        <div className="rounded-xl bg-white p-2">
+                          <div className="text-sm font-black text-slate-950">{macroTargetPreview.carbsG} g</div>
+                          <div className="text-[9px] font-bold text-slate-500">Carb · {macroTargetPreview.carbsPct}%</div>
+                        </div>
+                        <div className="rounded-xl bg-white p-2">
+                          <div className="text-sm font-black text-slate-950">{macroTargetPreview.fatG} g</div>
+                          <div className="text-[9px] font-bold text-slate-500">Fat · {macroTargetPreview.fatPct}%</div>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-[10px] font-semibold text-slate-700">
+                        Năng lượng từ macro ≈ <strong>{macroTargetPreview.macroEnergyKcal.toLocaleString('vi-VN')} kcal</strong>
+                        {effectiveCalorieTarget
+                          ? <> · mục tiêu calo {Math.round(effectiveCalorieTarget).toLocaleString('vi-VN')} kcal</>
+                          : null}
+                      </div>
+                      {macroTargetPreview.calorieConsistency &&
+                        macroTargetPreview.calorieConsistency !== 'aligned' && (
+                          <div className={
+                            'mt-2 rounded-xl border px-3 py-2 text-[10px] font-bold leading-relaxed ' +
+                            (macroTargetPreview.calorieConsistency === 'review'
+                              ? 'border-amber-200 bg-amber-50 text-amber-800'
+                              : 'border-rose-200 bg-rose-50 text-rose-800')
+                          }>
+                            Macro quy đổi lệch {macroTargetPreview.calorieDeltaPct}% so với mục tiêu calo hiện tại.
+                            nOcnOm giữ nguyên cả hai mục tiêu để bạn quyết định, không tự điều chỉnh số liệu.
+                          </div>
+                        )}
+                    </div>
+                  ) : (
+                    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[10px] font-semibold leading-relaxed text-slate-600">
+                      Chưa đủ dữ liệu hợp lệ để tạo mục tiêu Macro. nOcnOm sẽ không tự điền giá trị còn thiếu.
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -61,7 +61,14 @@ try {
       weightKg: 58.5,
       activityLevel: 'moderate',
       healthGoal: 'maintain',
-      dailyCalorieTarget: 1850
+      dailyCalorieTarget: 1850,
+      macroTargetMode: 'auto',
+      macroProteinPct: '',
+      macroCarbsPct: '',
+      macroFatPct: '',
+      macroProteinG: '',
+      macroCarbsG: '',
+      macroFatG: ''
     })
   );
 
@@ -129,6 +136,74 @@ try {
       aliceProfile,
       {
         dailyCalorieTarget: 200
+      },
+      { merge: true }
+    )
+  );
+
+  await assertSucceeds(
+    setDoc(
+      aliceProfile,
+      {
+        macroTargetMode: 'ratio',
+        macroProteinPct: 30,
+        macroCarbsPct: 40,
+        macroFatPct: 30,
+        macroProteinG: '',
+        macroCarbsG: '',
+        macroFatG: ''
+      },
+      { merge: true }
+    )
+  );
+
+  await assertFails(
+    setDoc(
+      aliceProfile,
+      {
+        macroTargetMode: 'ratio',
+        macroProteinPct: 30,
+        macroCarbsPct: 30,
+        macroFatPct: 30
+      },
+      { merge: true }
+    )
+  );
+
+  await assertSucceeds(
+    setDoc(
+      aliceProfile,
+      {
+        macroTargetMode: 'grams',
+        macroProteinPct: '',
+        macroCarbsPct: '',
+        macroFatPct: '',
+        macroProteinG: 120,
+        macroCarbsG: 200,
+        macroFatG: 60
+      },
+      { merge: true }
+    )
+  );
+
+  await assertFails(
+    setDoc(
+      aliceProfile,
+      {
+        macroTargetMode: 'grams',
+        macroProteinG: 0,
+        macroCarbsG: 0,
+        macroFatG: 0
+      },
+      { merge: true }
+    )
+  );
+
+  await assertFails(
+    setDoc(
+      aliceProfile,
+      {
+        macroTargetMode: 'unsupported'
       },
       { merge: true }
     )

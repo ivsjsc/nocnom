@@ -165,6 +165,19 @@ assert(
   'Custom calorie target is editable in profile and reused on the Health screen'
 );
 assert(
+  profileModal.includes('Mục tiêu Macro') &&
+    profileModal.includes("macroTargetMode === 'ratio'") &&
+    profileModal.includes("macroTargetMode === 'grams'") &&
+    logsPage.includes("profile?.macroTargetMode") &&
+    logsPage.includes('Tùy chỉnh Macro'),
+  'Macro targets support auto, percentage and gram modes and are reused on Health'
+);
+assert(
+  logsPage.includes('todayMacros.missingItems') &&
+    logsPage.includes('Chưa đủ Macro:'),
+  'Health macro card identifies consumed items with missing P/C/F instead of inventing values'
+);
+assert(
   loginMenu.includes('<span>Quản lý tài khoản</span>') &&
     !loginMenu.includes('<span>Quản lý tài khoản nOcnOm</span>') &&
     loginMenu.includes('<span>Chỉ số & cơ sở tính toán</span>'),

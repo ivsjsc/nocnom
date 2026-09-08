@@ -198,7 +198,7 @@ const partialMacros = calculateConsumedMacros([
     proteinG: 30,
     carbsG: 80,
     fatG: 20,
-    addons: [{ kind: 'drink', calories: 120 }]
+    addons: [{ kind: 'drink', name: 'Nước cam', calories: 120 }]
   }
 ]);
 assert(
@@ -206,7 +206,9 @@ assert(
     partialMacros.totalItems === 2 &&
     partialMacros.coveragePct === 50 &&
     !partialMacros.isComplete &&
-    partialMacros.proteinG === 30,
+    partialMacros.proteinG === 30 &&
+    partialMacros.missingItems.length === 1 &&
+    partialMacros.missingItems[0]?.label === 'Nước cam',
   'Macro aggregation reports partial coverage instead of treating missing data as zero'
 );
 

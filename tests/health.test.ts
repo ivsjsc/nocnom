@@ -155,6 +155,101 @@ assert(
   'Weight-gain macro target uses goal-specific protein and fat anchors'
 );
 
+const customRatioMacros = calculateMacroTargetPlan(
+  2000,
+  '',
+  null,
+  {
+    mode: 'ratio',
+    proteinPct: 30,
+    carbsPct: 40,
+    fatPct: 30
+  }
+);
+assert(
+  Boolean(
+    customRatioMacros &&
+      customRatioMacros.strategy === 'custom_ratio' &&
+      customRatioMacros.source === 'user-defined' &&
+      customRatioMacros.proteinG === 150 &&
+      customRatioMacros.carbsG === 200 &&
+      customRatioMacros.fatG === 66.7
+  ),
+  'Custom ratio mode derives grams from the calorie target without requiring a health-goal preset'
+);
+assert(
+  calculateMacroTargetPlan(
+    2000,
+    'maintain',
+    60,
+    {
+      mode: 'ratio',
+      proteinPct: 30,
+      carbsPct: 30,
+      fatPct: 30
+    }
+  ) === null,
+  'Custom ratio mode rejects ratios that do not total 100%'
+);
+
+const customGramMacros = calculateMacroTargetPlan(
+  2000,
+  '',
+  null,
+  {
+    mode: 'grams',
+    proteinG: 120,
+    carbsG: 200,
+    fatG: 60
+  }
+);
+assert(
+  Boolean(
+    customGramMacros &&
+      customGramMacros.strategy === 'custom_grams' &&
+      customGramMacros.source === 'user-defined' &&
+      customGramMacros.macroEnergyKcal === 1820 &&
+      customGramMacros.calorieDeltaKcal === -180 &&
+      customGramMacros.calorieDeltaPct === 9 &&
+      customGramMacros.calorieConsistency === 'review'
+  ),
+  'Custom gram mode preserves explicit gram targets and reports calorie consistency without auto-correction'
+);
+
+const gramOnlyMacros = calculateMacroTargetPlan(
+  null,
+  '',
+  null,
+  {
+    mode: 'grams',
+    proteinG: 100,
+    carbsG: 200,
+    fatG: 50
+  }
+);
+assert(
+  Boolean(
+    gramOnlyMacros &&
+      gramOnlyMacros.calorieTarget === 1650 &&
+      gramOnlyMacros.macroEnergyKcal === 1650
+  ),
+  'Custom gram targets remain usable without an inferred calorie target'
+);
+assert(
+  calculateMacroTargetPlan(
+    null,
+    '',
+    null,
+    {
+      mode: 'grams',
+      proteinG: 0,
+      carbsG: 0,
+      fatG: 0
+    }
+  ) === null,
+  'All-zero custom gram target is rejected'
+);
+
 assert(
   calculateDailyCalorieTargetFromProfile({
     weightKg: 60,

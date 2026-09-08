@@ -5,7 +5,12 @@ import {
   setDoc
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import type { ActivityLevel, Gender, HealthGoal } from '../lib/healthUtils';
+import type {
+  ActivityLevel,
+  Gender,
+  HealthGoal,
+  MacroTargetMode
+} from '../lib/healthUtils';
 
 export type UserProfileData = {
   fullName: string;
@@ -22,6 +27,13 @@ export type UserProfileData = {
   activityLevel?: ActivityLevel;
   healthGoal?: HealthGoal;
   dailyCalorieTarget?: number | string;
+  macroTargetMode?: MacroTargetMode;
+  macroProteinPct?: number | string;
+  macroCarbsPct?: number | string;
+  macroFatPct?: number | string;
+  macroProteinG?: number | string;
+  macroCarbsG?: number | string;
+  macroFatG?: number | string;
 };
 
 const getFirebaseErrorCode = (error: unknown) => {

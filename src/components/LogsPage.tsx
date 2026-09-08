@@ -58,8 +58,7 @@ import {
   HEALTH_LIMITS,
   DEFAULT_BMI_REFERENCE_SYSTEM,
   BMI_REFERENCE_LABELS,
-  ACTIVITY_LABELS,
-  GOAL_LABELS
+  ACTIVITY_LABELS
 } from '../lib/healthUtils';
 import {
   getCachedUserProfile,
@@ -104,6 +103,13 @@ const emptyDrafts = (): Record<MealKey, MealDraft> => ({
 
 const timestampForDateKey = (dateKey: string) =>
   getVietnamTimestampForDateKey(dateKey, '12:00:00') ?? 0;
+
+const optionalProfileNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'string' && !value.trim()) return undefined;
+  if (typeof value !== 'string' && typeof value !== 'number') return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+};
 
 const formatDay = (timestamp: number) =>
   new Intl.DateTimeFormat('vi-VN', {
@@ -421,10 +427,26 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
       : null;
 
   const waterReq = weightNum ? calculateWaterRequirement(weightNum) : null;
+  const macroTargetMode = profile?.macroTargetMode || 'auto';
   const macroTargetPlan = calculateMacroTargetPlan(
     targetCalories,
     healthGoal,
-    weightNum || null
+    weightNum || null,
+    macroTargetMode === 'ratio'
+      ? {
+          mode: 'ratio',
+          proteinPct: optionalProfileNumber(profile?.macroProteinPct),
+          carbsPct: optionalProfileNumber(profile?.macroCarbsPct),
+          fatPct: optionalProfileNumber(profile?.macroFatPct)
+        }
+      : macroTargetMode === 'grams'
+        ? {
+            mode: 'grams',
+            proteinG: optionalProfileNumber(profile?.macroProteinG),
+            carbsG: optionalProfileNumber(profile?.macroCarbsG),
+            fatG: optionalProfileNumber(profile?.macroFatG)
+          }
+        : { mode: 'auto' }
   );
   const todayMacros = useMemo(
     () => calculateConsumedMacros(todayLogs),
@@ -455,6 +477,16 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
         }
       ]
     : [];
+
+  const macroTargetSummary = macroTargetPlan
+    ? macroTargetPlan.strategy === 'custom_ratio'
+      ? 'Tỷ lệ % do bạn đặt'
+      : macroTargetPlan.strategy === 'custom_grams'
+        ? 'Gram/ngày do bạn đặt'
+        : macroTargetPlan.strategy === 'goal_weight_based'
+          ? 'Ước tính theo cân nặng + mục tiêu'
+          : 'Preset tỷ lệ theo mục tiêu'
+    : '';
 
   const calorieProgressPct =
     targetCalories !== null && targetCalories > 0
@@ -811,11 +843,23 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               </div>
             </div>
 
-            <span className="health-coverage-badge rounded-full border px-2.5 py-1.5 text-[10px] font-black">
-              {todayMacros.totalItems > 0
-                ? `Độ phủ dữ liệu ${todayMacros.coveragePct}%`
-                : 'Chưa có bữa hôm nay'}
-            </span>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <span className="health-coverage-badge rounded-full border px-2.5 py-1.5 text-[10px] font-black">
+                {todayMacros.totalItems > 0
+                  ? `Độ phủ dữ liệu ${todayMacros.coveragePct}%`
+                  : 'Chưa có bữa hôm nay'}
+              </span>
+              {onOpenProfile && (
+                <button
+                  type="button"
+                  onClick={onOpenProfile}
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-[10px] font-black text-emerald-800 transition hover:bg-emerald-100 active:scale-95 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"
+                >
+                  <Edit3 className="h-3.5 w-3.5" />
+                  Tùy chỉnh Macro
+                </button>
+              )}
+            </div>
           </div>
 
           {macroTargetPlan ? (
@@ -863,13 +907,40 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               </div>
 
               <div className="health-macro-note mt-3 rounded-2xl border px-3.5 py-3 text-[11px] font-semibold leading-relaxed">
-                Mục tiêu macro được ước tính từ mục tiêu năng lượng hiện tại và mục tiêu
-                <strong className="health-macro-note-strong font-black"> {GOAL_LABELS[healthGoal].label.toLowerCase()}</strong>:
-                {' '}Protein {macroTargetPlan.proteinPct}% · Carb {macroTargetPlan.carbsPct}% · Fat {macroTargetPlan.fatPct}%.
+                <span className="health-macro-note-strong font-black">{macroTargetSummary}</span>
+                {' '}· Protein {macroTargetPlan.proteinPct}% · Carb {macroTargetPlan.carbsPct}% · Fat {macroTargetPlan.fatPct}%.
+                {macroTargetPlan.source === 'user-defined' ? (
+                  <span className="mt-1 block">
+                    Đây là mục tiêu bạn tự đặt. nOcnOm chỉ tính quy đổi 4/4/9 để hiển thị và kiểm tra tính nhất quán; không tự thay đổi mục tiêu.
+                  </span>
+                ) : (
+                  <span className="mt-1 block">
+                    Đây là mục tiêu ước tính để lập kế hoạch, không phải chỉ định lâm sàng.
+                  </span>
+                )}
+                {macroTargetPlan.calorieConsistency &&
+                  macroTargetPlan.calorieConsistency !== 'aligned' ? (
+                    <span className="health-macro-note-warning mt-1 block font-bold">
+                      Năng lượng quy đổi từ Macro ≈ {macroTargetPlan.macroEnergyKcal.toLocaleString('vi-VN')} kcal,
+                      lệch {macroTargetPlan.calorieDeltaPct}% so với mục tiêu calo hiện tại. nOcnOm giữ nguyên cả hai thay vì tự sửa số liệu.
+                    </span>
+                  ) : null}
                 {todayMacros.totalItems > 0 && !todayMacros.isComplete ? (
                   <span className="health-macro-note-warning mt-1 block font-bold">
                     Số đã ăn chỉ cộng các mục có đủ Protein / Carb / Fat ({todayMacros.knownItems}/{todayMacros.totalItems} mục).
-                    Dữ liệu có thể đến từ Nutrition DB, bản người dùng nhập hoặc công thức nguyên liệu. nOcnOm không suy ra protein/carb/fat từ kcal; có thể bổ sung tại Kho món → Sửa món.
+                    Dữ liệu có thể đến từ Nutrition DB, bản người dùng nhập hoặc công thức nguyên liệu. nOcnOm không suy ra protein/carb/fat từ kcal.
+                    {todayMacros.missingItems.length > 0 ? (
+                      <span className="mt-1 block">
+                        Chưa đủ Macro: {todayMacros.missingItems
+                          .slice(0, 4)
+                          .map(item => item.label)
+                          .join(', ')}
+                        {todayMacros.missingItems.length > 4
+                          ? ` và ${todayMacros.missingItems.length - 4} mục khác`
+                          : ''}.
+                        {' '}Có thể bổ sung tại Kho món → Sửa món.
+                      </span>
+                    ) : null}
                   </span>
                 ) : todayMacros.totalItems === 0 ? (
                   <span className="mt-1 block">
@@ -884,7 +955,20 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
             </>
           ) : (
             <div className="health-copy mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs font-bold dark:border-slate-700 dark:bg-slate-950/70">
-              Hoàn thiện hồ sơ sức khỏe và chọn mục tiêu dinh dưỡng để nOcnOm tính mục tiêu Protein / Carb / Fat.
+              {macroTargetMode === 'ratio'
+                ? 'Mục tiêu tỷ lệ % chưa hợp lệ hoặc chưa có mục tiêu calo. Hãy đặt đủ Protein / Carb / Fat với tổng 100%.'
+                : macroTargetMode === 'grams'
+                  ? 'Mục tiêu gram chưa hợp lệ. Hãy nhập đủ Protein / Carb / Fat cho một ngày.'
+                  : 'Hoàn thiện hồ sơ sức khỏe và chọn mục tiêu dinh dưỡng để nOcnOm ước tính mục tiêu Protein / Carb / Fat.'}
+              {onOpenProfile && (
+                <button
+                  type="button"
+                  onClick={onOpenProfile}
+                  className="ml-2 underline decoration-2 underline-offset-2"
+                >
+                  Mở tùy chỉnh Macro
+                </button>
+              )}
             </div>
           )}
         </section>
