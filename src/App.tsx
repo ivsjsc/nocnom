@@ -9,12 +9,14 @@ import LogsPage from './components/LogsPage';
 import MenuPage from './components/MenuPage';
 import Login from './components/Login';
 import AuthModal from './components/AuthModal';
+import HealthMethodologyPage from './components/HealthMethodologyPage';
 import { nutritionService } from './services/nutrition';
 
 type Tab = 'home' | 'logs' | 'menu';
+type AppView = Tab | 'health-methodology';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [activeTab, setActiveTab] = useState<AppView>('home');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -52,7 +54,7 @@ export default function App() {
       setAuthChecked(true);
 
       if (!user) {
-        setActiveTab(tab => tab === 'menu' ? 'home' : tab);
+        setActiveTab(tab => tab === 'menu' || tab === 'health-methodology' ? 'home' : tab);
       }
     });
   }, []);
@@ -168,6 +170,7 @@ export default function App() {
               user={currentUser}
               darkMode={darkMode}
               onRequestAuth={() => openAuth()}
+              onOpenHealthMethodology={() => setActiveTab('health-methodology')}
             />
           </div>
         </div>
@@ -182,6 +185,9 @@ export default function App() {
           />
         )}
         {activeTab === 'menu' && currentUser && <MenuPage canManage />}
+        {activeTab === 'health-methodology' && currentUser && (
+          <HealthMethodologyPage onBack={() => setActiveTab('home')} />
+        )}
       </main>
 
 
