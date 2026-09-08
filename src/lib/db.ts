@@ -15,6 +15,7 @@ import {
   type MacroEnergyConsistency,
   type NutritionDataOrigin,
   type NutritionDataStatus,
+  type NutritionInputBasis,
   type NutritionRecipeSnapshot,
   type NutritionSourceKind,
   type UserNutritionInput
@@ -135,6 +136,11 @@ export type Dish = {
   nutritionDataStatus?: NutritionDataStatus;
   nutritionSourceKind?: NutritionSourceKind;
   nutritionSourceNote?: string;
+  nutritionInputBasis?: NutritionInputBasis;
+  nutritionSourceCalories?: number;
+  nutritionSourceProteinG?: number;
+  nutritionSourceCarbsG?: number;
+  nutritionSourceFatG?: number;
   userOverrideOfNutritionRecordId?: string;
   macroEnergyKcal?: number;
   macroEnergyDeltaPct?: number;
@@ -194,6 +200,11 @@ export type LogEntry = {
   nutritionDataStatus?: NutritionDataStatus;
   nutritionSourceKind?: NutritionSourceKind;
   nutritionSourceNote?: string;
+  nutritionInputBasis?: NutritionInputBasis;
+  nutritionSourceCalories?: number;
+  nutritionSourceProteinG?: number;
+  nutritionSourceCarbsG?: number;
+  nutritionSourceFatG?: number;
   userOverrideOfNutritionRecordId?: string;
   macroEnergyKcal?: number;
   macroEnergyDeltaPct?: number;
@@ -1039,8 +1050,8 @@ const userNutritionToDishFields = (
     carbsG: normalized.carbsG,
     fatG: normalized.fatG,
     macroSource:
-      normalized.proteinG !== undefined &&
-      normalized.carbsG !== undefined &&
+      normalized.proteinG !== undefined ||
+      normalized.carbsG !== undefined ||
       normalized.fatG !== undefined
         ? normalized.dataOrigin === 'user-recipe'
           ? 'recipe'
@@ -1074,6 +1085,11 @@ const userNutritionToDishFields = (
     nutritionDataStatus: normalized.dataStatus,
     nutritionSourceKind: normalized.sourceKind,
     nutritionSourceNote: normalized.sourceNote,
+    nutritionInputBasis: normalized.inputBasis,
+    nutritionSourceCalories: normalized.sourceCalories,
+    nutritionSourceProteinG: normalized.sourceProteinG,
+    nutritionSourceCarbsG: normalized.sourceCarbsG,
+    nutritionSourceFatG: normalized.sourceFatG,
     userOverrideOfNutritionRecordId: linkedReferenceId,
     macroEnergyKcal: normalized.macroEnergyKcal,
     macroEnergyDeltaPct: normalized.macroEnergyDeltaPct,
@@ -1167,6 +1183,11 @@ const upsertMealLogData = ({
           nutritionDataStatus: nutritionSnapshot.nutritionDataStatus,
           nutritionSourceKind: nutritionSnapshot.nutritionSourceKind,
           nutritionSourceNote: nutritionSnapshot.nutritionSourceNote,
+          nutritionInputBasis: nutritionSnapshot.nutritionInputBasis,
+          nutritionSourceCalories: nutritionSnapshot.nutritionSourceCalories,
+          nutritionSourceProteinG: nutritionSnapshot.nutritionSourceProteinG,
+          nutritionSourceCarbsG: nutritionSnapshot.nutritionSourceCarbsG,
+          nutritionSourceFatG: nutritionSnapshot.nutritionSourceFatG,
           userOverrideOfNutritionRecordId:
             nutritionSnapshot.userOverrideOfNutritionRecordId,
           macroEnergyKcal: nutritionSnapshot.macroEnergyKcal,
