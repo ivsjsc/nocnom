@@ -100,6 +100,10 @@ export type Dish = {
   servingUnit?: 'g' | 'ml' | 'portion';
   kcalMin?: number;
   kcalMax?: number;
+  proteinG?: number;
+  carbsG?: number;
+  fatG?: number;
+  macroSource?: 'nutrition-db' | 'manual';
   nutritionRecordId?: string;
   nutritionCanonicalName?: string;
   nutritionConfidence?:
@@ -146,6 +150,10 @@ export type LogEntry = {
   servingUnit?: 'g' | 'ml' | 'portion';
   kcalMin?: number;
   kcalMax?: number;
+  proteinG?: number;
+  carbsG?: number;
+  fatG?: number;
+  macroSource?: 'nutrition-db' | 'manual';
   nutritionRecordId?: string;
   nutritionCanonicalName?: string;
   nutritionConfidence?:
@@ -1258,6 +1266,10 @@ export const mockDb = {
             servingUnit: undefined,
             kcalMin: undefined,
             kcalMax: undefined,
+            proteinG: undefined,
+            carbsG: undefined,
+            fatG: undefined,
+            macroSource: undefined,
             nutritionRecordId: undefined,
             nutritionCanonicalName: undefined,
             nutritionConfidence: undefined,
@@ -1276,6 +1288,34 @@ export const mockDb = {
     );
     saveToLocalStorage('dishes');
     dishListeners.forEach(l => l(dishesData));
+  },
+  updateDishMacros: (
+    id: string,
+    macros: { proteinG: number; carbsG: number; fatG: number }
+  ) => {
+    const values = [macros.proteinG, macros.carbsG, macros.fatG];
+    if (
+      values.some(
+        value => !Number.isFinite(value) || value < 0 || value > 500
+      )
+    ) {
+      throw new Error('Macro phải là số hợp lệ từ 0 đến 500 g/phần.');
+    }
+
+    const round1 = (value: number) => Math.round(value * 10) / 10;
+    dishesData = dishesData.map(dish =>
+      dish.id === id
+        ? {
+            ...dish,
+            proteinG: round1(macros.proteinG),
+            carbsG: round1(macros.carbsG),
+            fatG: round1(macros.fatG),
+            macroSource: 'manual' as const
+          }
+        : dish
+    );
+    saveToLocalStorage('dishes');
+    dishListeners.forEach(listener => listener(dishesData));
   },
   updateVendorLink: (dishId: string, vendorId: string, link: string) => {
     dishesData = dishesData.map(dish => {
