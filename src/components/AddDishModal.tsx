@@ -626,7 +626,6 @@ export default function AddDishModal({
                 )}
 
                 <CustomNutritionEditor
-                  key={nutritionMode}
                   mode={nutritionMode}
                   onChange={setCustomNutritionState}
                 />
