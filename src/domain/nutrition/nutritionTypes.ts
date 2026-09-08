@@ -30,6 +30,10 @@ export type NutritionSelection = {
   kcalTypical: number;
   kcalMin?: number;
   kcalMax?: number;
+  proteinG?: number;
+  carbsG?: number;
+  fatG?: number;
+  macroSource?: 'nutrition-db' | 'manual';
   confidence: NutritionConfidenceLevel;
   confidenceLabel: string;
   verificationState: string;
@@ -56,6 +60,10 @@ export type DishNutritionFields = {
   servingUnit?: NutritionServingUnit;
   kcalMin?: number;
   kcalMax?: number;
+  proteinG?: number;
+  carbsG?: number;
+  fatG?: number;
+  macroSource?: 'nutrition-db' | 'manual';
   nutritionRecordId?: string;
   nutritionCanonicalName?: string;
   nutritionConfidence?: NutritionConfidenceLevel | 'verified' | 'estimated';
@@ -82,6 +90,10 @@ export type MealNutritionSnapshot = Pick<
   | 'servingUnit'
   | 'kcalMin'
   | 'kcalMax'
+  | 'proteinG'
+  | 'carbsG'
+  | 'fatG'
+  | 'macroSource'
   | 'nutritionRecordId'
   | 'nutritionCanonicalName'
   | 'nutritionConfidence'
