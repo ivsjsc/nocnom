@@ -6,6 +6,46 @@ import AddDishModal from './AddDishModal';
 import DishImage from './DishImage';
 import EditDishModal from './EditDishModal';
 
+const nutritionBadge = (dish: Dish) => {
+  if (
+    dish.nutritionDataStatus === 'verified' ||
+    dish.nutritionDataStatus === 'curated' ||
+    dish.nutritionVerificationState === 'VERIFIED'
+  ) {
+    return {
+      label: 'Đã xác minh',
+      className:
+        'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300'
+    };
+  }
+  if (dish.nutritionDataOrigin === 'user-recipe') {
+    return {
+      label: 'Tính từ công thức',
+      className:
+        'border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-900 dark:bg-violet-950/30 dark:text-violet-300'
+    };
+  }
+  if (dish.nutritionDataOrigin === 'user-manual' || dish.calorieSource === 'manual') {
+    return {
+      label: 'Tự nhập',
+      className:
+        'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300'
+    };
+  }
+  if (dish.nutritionDataOrigin === 'reference-db' || dish.calorieSource === 'nutrition-db') {
+    return {
+      label: 'Tham khảo',
+      className:
+        'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300'
+    };
+  }
+  return {
+    label: 'Ước tính',
+    className:
+      'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+  };
+};
+
 const normalizeText = (value: string) =>
   value
     .normalize('NFD')
@@ -236,7 +276,19 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
               <DishImage src={dish.imageUrl} alt={dish.name} className="w-16 h-16 rounded-2xl shrink-0 border border-slate-100 dark:border-slate-800" />
 
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-black uppercase text-blue-600 dark:text-blue-400">{categoryName(dish.categoryId)}</div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="text-[11px] font-black uppercase text-blue-600 dark:text-blue-400">
+                    {categoryName(dish.categoryId)}
+                  </div>
+                  {(() => {
+                    const badge = nutritionBadge(dish);
+                    return (
+                      <span className={'rounded-full border px-2 py-0.5 text-[9px] font-black ' + badge.className}>
+                        {badge.label}
+                      </span>
+                    );
+                  })()}
+                </div>
                 <h3 className="theme-text-primary mt-1 font-black text-sm leading-snug">{dish.name}</h3>
                 <div className="theme-text-secondary mt-1 text-[11px] font-extrabold">
                   {dish.vendors.length} quán bán · ≈ {estimateDishCalories(dish)} kcal
