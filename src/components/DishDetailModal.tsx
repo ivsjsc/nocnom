@@ -262,28 +262,66 @@ export default function DishDetailModal({
                 </div>
               )}
 
-              {dish.proteinG !== undefined &&
-                dish.carbsG !== undefined &&
-                dish.fatG !== undefined ? (
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="rounded-xl bg-emerald-50 px-2.5 py-2 text-center">
-                    <div className="text-[9px] font-black uppercase text-emerald-700">Protein</div>
-                    <div className="mt-0.5 text-sm font-black text-emerald-950">{dish.proteinG} g</div>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ['Protein', dish.proteinG, 'emerald'],
+                  ['Carb', dish.carbsG, 'blue'],
+                  ['Fat', dish.fatG, 'amber']
+                ] as const).map(([label, value, tone]) => (
+                  <div
+                    key={label}
+                    className={
+                      'rounded-xl px-2.5 py-2 text-center ' +
+                      (tone === 'emerald'
+                        ? 'bg-emerald-50'
+                        : tone === 'blue'
+                          ? 'bg-blue-50'
+                          : 'bg-amber-50')
+                    }
+                  >
+                    <div
+                      className={
+                        'text-[9px] font-black uppercase ' +
+                        (tone === 'emerald'
+                          ? 'text-emerald-700'
+                          : tone === 'blue'
+                            ? 'text-blue-700'
+                            : 'text-amber-700')
+                      }
+                    >
+                      {label}
+                    </div>
+                    <div className="mt-0.5 text-sm font-black text-slate-950">
+                      {value === undefined ? '—' : `${value} g`}
+                    </div>
                   </div>
-                  <div className="rounded-xl bg-blue-50 px-2.5 py-2 text-center">
-                    <div className="text-[9px] font-black uppercase text-blue-700">Carb</div>
-                    <div className="mt-0.5 text-sm font-black text-blue-950">{dish.carbsG} g</div>
-                  </div>
-                  <div className="rounded-xl bg-amber-50 px-2.5 py-2 text-center">
-                    <div className="text-[9px] font-black uppercase text-amber-700">Fat</div>
-                    <div className="mt-0.5 text-sm font-black text-amber-950">{dish.fatG} g</div>
-                  </div>
+                ))}
+              </div>
+
+              {dish.proteinG === undefined ||
+              dish.carbsG === undefined ||
+              dish.fatG === undefined ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-900">
+                  Thiếu dữ liệu:{' '}
+                  {[
+                    dish.proteinG === undefined ? 'Protein' : '',
+                    dish.carbsG === undefined ? 'Carb' : '',
+                    dish.fatG === undefined ? 'Fat' : ''
+                  ].filter(Boolean).join(' / ')}.
+                  {' '}Các giá trị còn lại vẫn được giữ và cộng riêng; nOcnOm không suy ra phần thiếu từ kcal.
                 </div>
-              ) : (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-600">
-                  Chưa có đủ Protein / Carb / Fat cho khẩu phần này. nOcnOm không suy ra macro từ kcal.
-                </div>
-              )}
+              ) : null}
+
+              {dish.nutritionInputBasis &&
+                dish.nutritionInputBasis !== 'serving' && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[10px] font-semibold leading-relaxed text-slate-700">
+                    Số liệu gốc được nhập theo{' '}
+                    <strong>{dish.nutritionInputBasis === '100g' ? '100 g' : '100 ml'}</strong>
+                    {dish.servingAmount
+                      ? ` và đã quy đổi sang khẩu phần thực tế ${dish.servingAmount} ${dish.servingUnit || ''}`
+                      : ''}.
+                  </div>
+                )}
 
               {dish.macroEnergyConsistency &&
                 dish.macroEnergyConsistency !== 'not-applicable' && (
