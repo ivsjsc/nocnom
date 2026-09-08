@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { LogOut, Settings2, UserRound } from 'lucide-react';
+import { BookOpenCheck, LogOut, Settings2, UserRound } from 'lucide-react';
 import { signOut, type User } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import ProfileModal from './ProfileModal';
@@ -17,9 +17,15 @@ type LoginProps = {
   user: User | null;
   darkMode: boolean;
   onRequestAuth: () => void;
+  onOpenHealthMethodology: () => void;
 };
 
-export default function Login({ user, darkMode, onRequestAuth }: LoginProps) {
+export default function Login({
+  user,
+  darkMode,
+  onRequestAuth,
+  onOpenHealthMethodology
+}: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -223,8 +229,24 @@ export default function Login({ user, darkMode, onRequestAuth }: LoginProps) {
                 (darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50')
               }
             >
-              <span>Quản lý tài khoản nOcnOm</span>
+              <span>Quản lý tài khoản</span>
               <Settings2 className="w-4 h-4 text-slate-400" aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false);
+                onOpenHealthMethodology();
+              }}
+              className={
+                'flex min-h-11 w-full items-center justify-between gap-3 rounded-2xl px-3 text-sm font-bold transition-colors ' +
+                (darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50')
+              }
+            >
+              <span>Chỉ số & cơ sở tính toán</span>
+              <BookOpenCheck className="w-4 h-4 text-slate-400" aria-hidden="true" />
             </button>
 
             <button
