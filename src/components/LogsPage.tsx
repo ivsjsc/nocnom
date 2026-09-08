@@ -49,6 +49,7 @@ import {
   calculateBMI,
   calculateBMR,
   calculateCalorieGoalPlan,
+  calculateMacroTargetPlan,
   calculateTDEEEstimate,
   calculateWaterRequirement,
   getBMICategory,
@@ -74,6 +75,7 @@ import { useVietnamBusinessDate } from '../hooks/useVietnamBusinessDate';
 import {
   buildRecentConsumedSeries,
   calculateConsumedCalories,
+  calculateConsumedMacros,
   calculateMealDistribution,
   getLogsForVietnamDate,
   resolveLogMainCalories
@@ -419,6 +421,39 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
       : null;
 
   const waterReq = weightNum ? calculateWaterRequirement(weightNum) : null;
+  const macroTargetPlan = calculateMacroTargetPlan(
+    targetCalories,
+    healthGoal
+  );
+  const todayMacros = useMemo(
+    () => calculateConsumedMacros(todayLogs),
+    [todayLogs]
+  );
+  const macroRows = macroTargetPlan
+    ? [
+        {
+          key: 'protein',
+          label: 'Protein',
+          value: todayMacros.proteinG,
+          target: macroTargetPlan.proteinG,
+          pct: macroTargetPlan.proteinPct
+        },
+        {
+          key: 'carbs',
+          label: 'Carb',
+          value: todayMacros.carbsG,
+          target: macroTargetPlan.carbsG,
+          pct: macroTargetPlan.carbsPct
+        },
+        {
+          key: 'fat',
+          label: 'Fat',
+          value: todayMacros.fatG,
+          target: macroTargetPlan.fatG,
+          pct: macroTargetPlan.fatPct
+        }
+      ]
+    : [];
 
   const calorieProgressPct =
     targetCalories !== null && targetCalories > 0
@@ -475,7 +510,10 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
         servingAmount: item.servingAmount ?? item.servingG,
         servingUnit: item.servingUnit ?? (item.kind === 'drink' ? 'ml' : 'g'),
         kcalMin: item.kcalMin,
-        kcalMax: item.kcalMax
+        kcalMax: item.kcalMax,
+        proteinG: item.proteinG,
+        carbsG: item.carbsG,
+        fatG: item.fatG
       }));
 
     try {
@@ -753,6 +791,101 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* THẺ MACRO: Protein / Carb / Fat theo mục tiêu */}
+        <section className="health-card md:col-span-2 rounded-[26px] border p-4.5 shadow-sm transition-all">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                <UtensilsCrossed className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <span className="health-kicker block text-[11px] font-black tracking-wide">
+                  Cân bằng dinh dưỡng
+                </span>
+                <span className="text-sm font-black text-slate-950 dark:text-white">
+                  Macro · Protein / Carb / Fat
+                </span>
+              </div>
+            </div>
+
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[10px] font-black text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+              {todayMacros.totalItems > 0
+                ? `Độ phủ dữ liệu ${todayMacros.coveragePct}%`
+                : 'Chưa có bữa hôm nay'}
+            </span>
+          </div>
+
+          {macroTargetPlan ? (
+            <>
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                {macroRows.map(row => {
+                  const progress =
+                    todayMacros.knownItems > 0 && row.target > 0
+                      ? Math.min(100, Math.round((row.value / row.target) * 100))
+                      : 0;
+                  const valueLabel =
+                    todayMacros.knownItems === 0
+                      ? '--'
+                      : `${todayMacros.isComplete ? '' : '≥ '}${row.value.toLocaleString('vi-VN', {
+                          maximumFractionDigits: 1
+                        })}`;
+
+                  return (
+                    <div
+                      key={row.key}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/70"
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[11px] font-black text-slate-800 dark:text-slate-200">
+                          {row.label}
+                        </span>
+                        <span className="text-[9px] font-black text-slate-500 dark:text-slate-400">
+                          {row.pct}% kcal
+                        </span>
+                      </div>
+                      <div className="mt-1 text-sm font-black text-slate-950 dark:text-white">
+                        {valueLabel} / {row.target.toLocaleString('vi-VN', {
+                          maximumFractionDigits: 1
+                        })} g
+                      </div>
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                        <div
+                          className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="health-copy mt-3 rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-[11px] font-semibold leading-relaxed dark:border-slate-700 dark:bg-slate-950/70">
+                Mục tiêu macro được ước tính từ mục tiêu năng lượng hiện tại và mục tiêu
+                <strong className="font-black"> {GOAL_LABELS[healthGoal].label.toLowerCase()}</strong>:
+                {' '}Protein {macroTargetPlan.proteinPct}% · Carb {macroTargetPlan.carbsPct}% · Fat {macroTargetPlan.fatPct}%.
+                {todayMacros.totalItems > 0 && !todayMacros.isComplete ? (
+                  <span className="mt-1 block font-bold text-amber-700 dark:text-amber-300">
+                    Số đã ăn chỉ cộng các món có đủ dữ liệu macro ({todayMacros.knownItems}/{todayMacros.totalItems} mục).
+                    nOcnOm không suy ra protein/carb/fat từ kcal còn thiếu.
+                  </span>
+                ) : todayMacros.totalItems === 0 ? (
+                  <span className="mt-1 block">
+                    Ghi nhận bữa ăn để bắt đầu theo dõi lượng macro thực tế.
+                  </span>
+                ) : (
+                  <span className="mt-1 block font-bold text-emerald-700 dark:text-emerald-300">
+                    Dữ liệu macro của các mục đã ăn hôm nay đã đầy đủ.
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="health-copy mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs font-bold dark:border-slate-700 dark:bg-slate-950/70">
+              Hoàn thiện hồ sơ sức khỏe và chọn mục tiêu dinh dưỡng để nOcnOm tính mục tiêu Protein / Carb / Fat.
+            </div>
+          )}
         </section>
 
         {/* THẺ 3: Xu hướng Calo 7 ngày gần nhất */}

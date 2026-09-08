@@ -51,6 +51,15 @@ export type NutritionFoodEnergy = {
   verification_state: VerificationState;
 };
 
+export type NutritionFoodMacros = {
+  protein_g_per_100g: number;
+  carbs_g_per_100g: number;
+  fat_g_per_100g: number;
+  source?: string;
+  source_url?: string;
+  verification_state?: string;
+};
+
 export type NutritionFoodConfidence = {
   label_vi: string;
   quality_band: QualityBand;
@@ -90,6 +99,7 @@ export type NutritionFood = {
   classification: NutritionFoodClassification;
   serving: NutritionFoodServing;
   energy: NutritionFoodEnergy;
+  macros?: NutritionFoodMacros;
   confidence: NutritionFoodConfidence;
   estimation?: NutritionFoodEstimation;
   provenance?: NutritionFoodProvenance;
@@ -224,6 +234,9 @@ export type NutritionAddonOption = {
   servingUnit?: 'g' | 'ml' | 'portion';
   kcalMin?: number;
   kcalMax?: number;
+  proteinG?: number;
+  carbsG?: number;
+  fatG?: number;
   source?: string;
   sourceUrl?: string;
   confidence: string;

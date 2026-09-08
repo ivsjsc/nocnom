@@ -17,6 +17,9 @@ const normalized = normalizeMealAddons([
     kind: 'fruit',
     name: 'Táo',
     calories: 80,
+    proteinG: 0.5,
+    carbsG: 21,
+    fatG: 0.3,
     servingAmount: 150,
     servingUnit: 'g'
   },
@@ -56,6 +59,12 @@ assert(
 assert(
   normalized.every(item => item.calories >= 0),
   'Addon calorie snapshots are never negative'
+);
+assert(
+  normalized.find(item => item.kind === 'fruit')?.proteinG === 0.5 &&
+    normalized.find(item => item.kind === 'fruit')?.carbsG === 21 &&
+    normalized.find(item => item.kind === 'fruit')?.fatG === 0.3,
+  'Addon macro snapshots survive normalization'
 );
 assert(
   normalized.find(item => item.kind === 'fruit')?.servingUnit === 'g' &&

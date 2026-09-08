@@ -33,6 +33,10 @@ export const nutritionSelectionToDishFields = (
     typeof selection.kcalMax === 'number' && Number.isFinite(selection.kcalMax)
       ? normalizeKcalInternal(selection.kcalMax) ?? undefined
       : undefined,
+  proteinG: selection.proteinG,
+  carbsG: selection.carbsG,
+  fatG: selection.fatG,
+  macroSource: selection.macroSource,
   nutritionRecordId: selection.foodId,
   nutritionCanonicalName: selection.canonicalName,
   nutritionConfidence: selection.confidence,
@@ -61,6 +65,10 @@ export const dishNutritionFieldsToMealSnapshot = (
   servingUnit: fields.servingUnit,
   kcalMin: fields.kcalMin,
   kcalMax: fields.kcalMax,
+  proteinG: fields.proteinG,
+  carbsG: fields.carbsG,
+  fatG: fields.fatG,
+  macroSource: fields.macroSource,
   nutritionRecordId: fields.nutritionRecordId,
   nutritionCanonicalName: fields.nutritionCanonicalName,
   nutritionConfidence: fields.nutritionConfidence,

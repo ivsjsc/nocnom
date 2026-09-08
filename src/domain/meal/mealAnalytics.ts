@@ -10,6 +10,9 @@ export type MealKey = 'A' | 'B' | 'C';
 export type AnalyticsAddon = {
   kind?: 'fruit' | 'drink';
   calories?: number;
+  proteinG?: number;
+  carbsG?: number;
+  fatG?: number;
 };
 
 export type AnalyticsLog = {
@@ -17,6 +20,9 @@ export type AnalyticsLog = {
   mealKey?: MealKey;
   dishName: string;
   calories?: number;
+  proteinG?: number;
+  carbsG?: number;
+  fatG?: number;
   addons?: AnalyticsAddon[];
 };
 
@@ -114,6 +120,58 @@ export const calculateConsumedCalories = (
       total + resolveLogTotalCalories(log, dishes, estimateDish),
     0
   );
+
+const validMacro = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0;
+
+type CompleteMacro = {
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+};
+
+const completeMacro = (
+  item: Pick<AnalyticsLog, 'proteinG' | 'carbsG' | 'fatG'> | AnalyticsAddon
+): item is CompleteMacro =>
+  validMacro(item.proteinG) &&
+  validMacro(item.carbsG) &&
+  validMacro(item.fatG);
+
+export const calculateConsumedMacros = (logs: AnalyticsLog[]) => {
+  let proteinG = 0;
+  let carbsG = 0;
+  let fatG = 0;
+  let knownItems = 0;
+  let totalItems = 0;
+
+  const collect = (
+    item: Pick<AnalyticsLog, 'proteinG' | 'carbsG' | 'fatG'> | AnalyticsAddon
+  ) => {
+    totalItems++;
+    if (!completeMacro(item)) return;
+    knownItems++;
+    proteinG += item.proteinG;
+    carbsG += item.carbsG;
+    fatG += item.fatG;
+  };
+
+  for (const log of logs) {
+    collect(log);
+    (log.addons || []).forEach(collect);
+  }
+
+  const round1 = (value: number) => Math.round(value * 10) / 10;
+  return {
+    proteinG: round1(proteinG),
+    carbsG: round1(carbsG),
+    fatG: round1(fatG),
+    knownItems,
+    totalItems,
+    coveragePct:
+      totalItems > 0 ? Math.round((knownItems / totalItems) * 100) : 0,
+    isComplete: totalItems > 0 && knownItems === totalItems
+  };
+};
 
 export const calculateMealDistribution = (
   logs: AnalyticsLog[],

@@ -11,6 +11,7 @@ import {
   type CalorieGoalPlan,
   type Gender,
   type HealthGoal,
+  type MacroTargetPlan,
   type TDEEEstimate,
   type WaterEstimate
 } from './healthTypes';
@@ -319,6 +320,48 @@ export function calculateCalorieGoal(
   goal: HealthGoal
 ): number | null {
   return calculateCalorieGoalPlan(tdee, goal)?.value ?? null;
+}
+
+export function calculateMacroTargetPlan(
+  calorieTarget: number | null,
+  goal: HealthGoal
+): MacroTargetPlan | null {
+  if (
+    calorieTarget === null ||
+    !Number.isFinite(calorieTarget) ||
+    calorieTarget <= 0 ||
+    !goal
+  ) {
+    return null;
+  }
+
+  // Internal balanced presets used as an app planning aid, not a clinical
+  // prescription. The weight-loss preset prioritizes protein while the gain
+  // preset keeps carbohydrate availability higher.
+  const ratios: Record<
+    Exclude<HealthGoal, ''>,
+    { protein: number; carbs: number; fat: number }
+  > = {
+    maintain: { protein: 0.2, carbs: 0.5, fat: 0.3 },
+    lose: { protein: 0.3, carbs: 0.45, fat: 0.25 },
+    gain: { protein: 0.25, carbs: 0.5, fat: 0.25 }
+  };
+
+  const ratio = ratios[goal];
+  const round1 = (value: number) => Math.round(value * 10) / 10;
+
+  return {
+    calorieTarget: Math.round(calorieTarget),
+    proteinG: round1((calorieTarget * ratio.protein) / 4),
+    carbsG: round1((calorieTarget * ratio.carbs) / 4),
+    fatG: round1((calorieTarget * ratio.fat) / 9),
+    proteinPct: Math.round(ratio.protein * 100),
+    carbsPct: Math.round(ratio.carbs * 100),
+    fatPct: Math.round(ratio.fat * 100),
+    strategy: 'goal_ratio',
+    goal,
+    type: 'estimate'
+  };
 }
 
 export function calculateDailyCalorieTargetFromProfile({

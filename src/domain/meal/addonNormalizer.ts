@@ -12,6 +12,9 @@ export type MealAddonSnapshot = {
   servingUnit?: ServingUnit;
   kcalMin?: number;
   kcalMax?: number;
+  proteinG?: number;
+  carbsG?: number;
+  fatG?: number;
 };
 
 const validNonNegative = (value: unknown): value is number =>
@@ -67,6 +70,9 @@ export const normalizeMealAddons = (
     const rawCalories = optionalNonNegative(addon.calories);
     const kcalMin = optionalNonNegative(addon.kcalMin);
     const kcalMax = optionalNonNegative(addon.kcalMax);
+    const proteinG = optionalNonNegative(addon.proteinG);
+    const carbsG = optionalNonNegative(addon.carbsG);
+    const fatG = optionalNonNegative(addon.fatG);
 
     normalized.push({
       id,
@@ -82,7 +88,10 @@ export const normalizeMealAddons = (
       kcalMin:
         kcalMin === undefined ? undefined : Math.round(kcalMin),
       kcalMax:
-        kcalMax === undefined ? undefined : Math.round(kcalMax)
+        kcalMax === undefined ? undefined : Math.round(kcalMax),
+      proteinG,
+      carbsG,
+      fatG
     });
   }
 

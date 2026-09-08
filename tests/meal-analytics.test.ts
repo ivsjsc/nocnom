@@ -1,6 +1,7 @@
 import {
   buildRecentConsumedSeries,
   calculateConsumedCalories,
+  calculateConsumedMacros,
   calculateMealDistribution,
   calculatePlannedCalories,
   getLogsForVietnamDate,
@@ -164,6 +165,49 @@ assert(
 assert(
   consumed !== plannedFull.totalCalories,
   'Planned and consumed calories remain separate measures'
+);
+
+const completeMacros = calculateConsumedMacros([
+  {
+    timestamp: Date.parse('2026-09-07T08:00:00+07:00'),
+    mealKey: 'A',
+    dishName: 'Breakfast',
+    proteinG: 25,
+    carbsG: 60,
+    fatG: 15,
+    addons: [
+      { kind: 'fruit', proteinG: 1, carbsG: 20, fatG: 0.2 },
+      { kind: 'drink', proteinG: 8, carbsG: 12, fatG: 5 }
+    ]
+  }
+]);
+assert(
+  completeMacros.proteinG === 34 &&
+    completeMacros.carbsG === 92 &&
+    completeMacros.fatG === 20.2 &&
+    completeMacros.coveragePct === 100 &&
+    completeMacros.isComplete,
+  'Macro aggregation includes main dish + addons with complete coverage'
+);
+
+const partialMacros = calculateConsumedMacros([
+  {
+    timestamp: Date.parse('2026-09-07T12:00:00+07:00'),
+    mealKey: 'B',
+    dishName: 'Lunch',
+    proteinG: 30,
+    carbsG: 80,
+    fatG: 20,
+    addons: [{ kind: 'drink', calories: 120 }]
+  }
+]);
+assert(
+  partialMacros.knownItems === 1 &&
+    partialMacros.totalItems === 2 &&
+    partialMacros.coveragePct === 50 &&
+    !partialMacros.isComplete &&
+    partialMacros.proteinG === 30,
+  'Macro aggregation reports partial coverage instead of treating missing data as zero'
 );
 
 const distribution = calculateMealDistribution(todayLogs, dishes, estimate);
