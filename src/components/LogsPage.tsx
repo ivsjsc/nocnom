@@ -651,7 +651,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
 
             {/* Chỉ số BMI & Phân loại */}
             <div className="mt-4 flex items-baseline gap-3">
-              <span className="text-3xl font-black tracking-tight text-slate-950 dark:text-slate-100">
+              <span className="health-value text-3xl font-black tracking-tight">
                 {bmi !== null ? bmi : '--'}
               </span>
               <span className="health-chip-muted inline-flex min-h-7 items-center rounded-full px-2.5 text-xs font-black">
@@ -715,7 +715,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                 </div>
               </div>
 
-              <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] font-black text-blue-800 dark:border-blue-800 dark:bg-blue-500/15 dark:text-blue-200">
+              <span className="health-goal-badge rounded-full border px-2.5 py-1.5 text-[11px] font-black">
                 {displayTargetCalories !== null
                   ? `Mục tiêu ≈ ${displayTargetCalories.toLocaleString('vi-VN')} kcal`
                   : 'Cần hồ sơ đầy đủ'}
@@ -725,7 +725,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
             {/* Tiến độ Calo hôm nay */}
             <div className="mt-4 flex items-baseline justify-between">
               <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-black text-slate-950 dark:text-slate-100">
+                <span className="health-value text-3xl font-black">
                   {todayCalories.toLocaleString('vi-VN')}
                 </span>
                 <span className="health-copy text-sm font-black">
@@ -811,7 +811,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               </div>
             </div>
 
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[10px] font-black text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <span className="health-coverage-badge rounded-full border px-2.5 py-1.5 text-[10px] font-black">
               {todayMacros.totalItems > 0
                 ? `Độ phủ dữ liệu ${todayMacros.coveragePct}%`
                 : 'Chưa có bữa hôm nay'}
@@ -839,14 +839,14 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                       className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/70"
                     >
                       <div className="flex items-center justify-between gap-1">
-                        <span className="text-[11px] font-black text-slate-800 dark:text-slate-200">
+                        <span className="health-label text-[11px] font-black">
                           {row.label}
                         </span>
-                        <span className="text-[9px] font-black text-slate-500 dark:text-slate-400">
+                        <span className="health-meta text-[9px] font-black">
                           {row.pct}% kcal
                         </span>
                       </div>
-                      <div className="mt-1 text-sm font-black text-slate-950 dark:text-white">
+                      <div className="health-value mt-1 text-sm font-black">
                         {valueLabel} / {row.target.toLocaleString('vi-VN', {
                           maximumFractionDigits: 1
                         })} g
