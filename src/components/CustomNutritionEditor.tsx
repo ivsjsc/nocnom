@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 import {
   normalizeUserNutritionInput,
   type NormalizedUserNutrition,
+  type NutritionInputBasis,
   type NutritionSourceKind,
   type RecipeIngredientNutrition,
   type UserNutritionInput,
@@ -101,9 +102,18 @@ export default function CustomNutritionEditor({
       ? String(initialValue.servingAmount)
       : ''
   );
+  const [inputBasis, setInputBasis] = useState<NutritionInputBasis>(
+    initialValue?.mode === 'manual'
+      ? initialValue.inputBasis || 'serving'
+      : 'serving'
+  );
   const [servingUnit, setServingUnit] = useState<'g' | 'ml' | 'portion'>(
     initialValue?.mode === 'manual'
-      ? initialValue.servingUnit || 'portion'
+      ? initialValue.inputBasis === '100g'
+        ? 'g'
+        : initialValue.inputBasis === '100ml'
+          ? 'ml'
+          : initialValue.servingUnit || 'portion'
       : 'portion'
   );
   const [proteinG, setProteinG] = useState(
@@ -163,9 +173,15 @@ export default function CustomNutritionEditor({
     if (mode === 'manual') {
       input = {
         mode: 'manual',
+        inputBasis,
         calories: Number(calories),
         servingAmount: optionalNumber(servingAmount),
-        servingUnit,
+        servingUnit:
+          inputBasis === '100g'
+            ? 'g'
+            : inputBasis === '100ml'
+              ? 'ml'
+              : servingUnit,
         proteinG: optionalNumber(proteinG),
         carbsG: optionalNumber(carbsG),
         fatG: optionalNumber(fatG),
@@ -220,6 +236,7 @@ export default function CustomNutritionEditor({
     carbsG,
     fatG,
     ingredients,
+    inputBasis,
     mode,
     proteinG,
     servingAmount,
@@ -449,16 +466,90 @@ export default function CustomNutritionEditor({
     );
   }
 
+  const basisLabel =
+    inputBasis === '100g'
+      ? '100 g'
+      : inputBasis === '100ml'
+        ? '100 ml'
+        : 'khẩu phần này';
+
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-3 text-[11px] font-semibold leading-relaxed text-blue-900">
-        Nhập theo <strong>cùng một khẩu phần</strong>. Protein / Carb / Fat là tùy chọn, nhưng nếu nhập thì phải đủ cả ba. nOcnOm không suy ngược macro từ số kcal.
+        Chép đúng số liệu từ <strong>nhãn dinh dưỡng / nhà sản xuất / nguồn bạn có</strong>.
+        Không biết chất nào thì để trống chất đó; nOcnOm chỉ cộng phần đã biết và không suy ngược Macro từ kcal.
       </div>
+
+      <div>
+        <div className="text-[10px] font-black uppercase text-slate-600">
+          Số liệu nguồn đang tính theo
+        </div>
+        <div className="mt-1.5 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Đơn vị số liệu dinh dưỡng nguồn">
+          {([
+            ['serving', 'Khẩu phần', 'Đúng phần đang ăn'],
+            ['100g', '100 g', 'Nhãn theo 100 g'],
+            ['100ml', '100 ml', 'Đồ uống theo 100 ml']
+          ] as const).map(([value, label, hint]) => {
+            const active = inputBasis === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => {
+                  setInputBasis(value);
+                  if (value === '100g') setServingUnit('g');
+                  if (value === '100ml') setServingUnit('ml');
+                }}
+                className={
+                  'min-h-[64px] rounded-xl border p-2 text-left transition ' +
+                  (active
+                    ? 'border-blue-500 bg-blue-50 text-blue-950 ring-2 ring-blue-100'
+                    : 'border-slate-200 bg-white text-slate-700')
+                }
+              >
+                <div className="text-[10px] font-black">{label}</div>
+                <div className="mt-0.5 text-[8px] font-semibold leading-snug text-slate-500">{hint}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <label className="block">
+        <span className="text-[10px] font-black uppercase text-slate-600">
+          Nguồn dữ liệu
+        </span>
+        <select
+          value={sourceKind}
+          onChange={event =>
+            setSourceKind(
+              event.target.value as Exclude<
+                NutritionSourceKind,
+                'reference-db' | 'recipe'
+              >
+            )
+          }
+          className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold"
+        >
+          {sourceOptions.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        {sourceKind === 'nutrition-label' && (
+          <div className="mt-1.5 text-[10px] font-semibold leading-relaxed text-slate-600">
+            Ví dụ sản phẩm 55 g nhưng nhãn ghi trên 100 g: chọn <strong>100 g</strong>, nhập 55 g ở khẩu phần thực tế và chép nguyên các số trên nhãn.
+          </div>
+        )}
+      </label>
 
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
           <span className="text-[10px] font-black uppercase text-slate-600">
-            Năng lượng / khẩu phần
+            Năng lượng / {basisLabel}
           </span>
           <div className="mt-1.5 relative">
             <input
@@ -479,7 +570,7 @@ export default function CustomNutritionEditor({
 
         <label className="block">
           <span className="text-[10px] font-black uppercase text-slate-600">
-            Khẩu phần
+            {inputBasis === 'serving' ? 'Khẩu phần' : 'Bạn thực tế ăn/uống'}
           </span>
           <div className="mt-1.5 flex">
             <input
@@ -489,27 +580,33 @@ export default function CustomNutritionEditor({
               step="0.1"
               value={servingAmount}
               onChange={event => setServingAmount(event.target.value)}
-              placeholder="Không bắt buộc"
+              placeholder={inputBasis === 'serving' ? 'Không bắt buộc' : 'Bắt buộc'}
               className="h-11 min-w-0 flex-1 rounded-l-xl border border-r-0 border-slate-300 bg-white px-3 text-sm font-bold"
             />
-            <select
-              value={servingUnit}
-              onChange={event =>
-                setServingUnit(event.target.value as 'g' | 'ml' | 'portion')
-              }
-              className="h-11 rounded-r-xl border border-slate-300 bg-slate-50 px-2 text-xs font-black"
-            >
-              <option value="portion">phần</option>
-              <option value="g">g</option>
-              <option value="ml">ml</option>
-            </select>
+            {inputBasis === 'serving' ? (
+              <select
+                value={servingUnit}
+                onChange={event =>
+                  setServingUnit(event.target.value as 'g' | 'ml' | 'portion')
+                }
+                className="h-11 rounded-r-xl border border-slate-300 bg-slate-50 px-2 text-xs font-black"
+              >
+                <option value="portion">phần</option>
+                <option value="g">g</option>
+                <option value="ml">ml</option>
+              </select>
+            ) : (
+              <div className="h-11 min-w-12 rounded-r-xl border border-slate-300 bg-slate-50 px-3 text-xs font-black flex items-center justify-center text-slate-700">
+                {inputBasis === '100g' ? 'g' : 'ml'}
+              </div>
+            )}
           </div>
         </label>
       </div>
 
       <div>
         <div className="text-[10px] font-black uppercase text-slate-600">
-          Macro / cùng khẩu phần
+          Macro / {basisLabel}
         </div>
         <div className="mt-1.5 grid grid-cols-3 gap-2">
           {[
@@ -538,29 +635,43 @@ export default function CustomNutritionEditor({
         </div>
       </div>
 
-      <label className="block">
-        <span className="text-[10px] font-black uppercase text-slate-600">
-          Nguồn dữ liệu
-        </span>
-        <select
-          value={sourceKind}
-          onChange={event =>
-            setSourceKind(
-              event.target.value as Exclude<
-                NutritionSourceKind,
-                'reference-db' | 'recipe'
-              >
-            )
-          }
-          className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold"
-        >
-          {sourceOptions.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      {state.normalized && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-[10px] font-black uppercase tracking-wide text-emerald-800">
+              Kết quả dùng để tính cho khẩu phần này
+            </div>
+            <div className="text-[9px] font-bold text-emerald-700">
+              {state.normalized.servingAmount
+                ? `${state.normalized.servingAmount} ${state.normalized.servingUnit}`
+                : '1 khẩu phần'}
+            </div>
+          </div>
+          <div className="mt-2 grid grid-cols-4 gap-2 text-center">
+            <div className="rounded-xl bg-white p-2">
+              <div className="text-sm font-black text-slate-950">{state.normalized.calories}</div>
+              <div className="text-[9px] font-bold text-slate-500">kcal</div>
+            </div>
+            {([
+              ['P', state.normalized.proteinG],
+              ['C', state.normalized.carbsG],
+              ['F', state.normalized.fatG]
+            ] as const).map(([label, value]) => (
+              <div key={label} className="rounded-xl bg-white p-2">
+                <div className="text-sm font-black text-slate-950">
+                  {value === undefined ? '—' : value}
+                </div>
+                <div className="text-[9px] font-bold text-slate-500">{label} (g)</div>
+              </div>
+            ))}
+          </div>
+          {inputBasis !== 'serving' && (
+            <div className="mt-2 text-[10px] font-semibold leading-relaxed text-emerald-900">
+              Đã tự quy đổi từ số liệu / {basisLabel} sang khẩu phần thực tế. Số gốc vẫn được lưu để truy vết nguồn.
+            </div>
+          )}
+        </div>
+      )}
 
       <SourceFields
         sourceUrl={sourceUrl}
