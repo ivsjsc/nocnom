@@ -14,6 +14,10 @@ const home = fs.readFileSync('src/components/HomePage.tsx', 'utf8');
 const health = fs.readFileSync('src/components/LogsPage.tsx', 'utf8');
 const menu = fs.readFileSync('src/components/MenuPage.tsx', 'utf8');
 const css = fs.readFileSync('src/index.css', 'utf8');
+const methodology = fs.readFileSync(
+  'src/components/HealthMethodologyPage.tsx',
+  'utf8'
+);
 
 assert(home.includes('data-ui="weekly-schedule-intro"'), 'Weekly schedule intro has a dedicated readable surface');
 assert(
@@ -72,6 +76,34 @@ assert(
     css.includes('color: #fde047;') &&
     css.includes('.dark .health-macro-note {'),
   'Macro guidance panel defines high-contrast colors for light and dark themes'
+);
+assert(
+  css.includes('html:not(.dark) .app-shell .text-slate-950') &&
+    css.includes('html:not(.dark) .app-shell .bg-white') &&
+    css.includes('.dark .app-shell .text-slate-950') &&
+    css.includes("input:not([type='checkbox']):not([type='radio'])"),
+  'App-wide theme contract provides a neutral contrast floor for both themes and form controls'
+);
+assert(
+  methodology.includes('methodology-hero') &&
+    methodology.includes('methodology-card') &&
+    methodology.includes('methodology-formula') &&
+    methodology.includes('methodology-formula-row') &&
+    methodology.includes('methodology-step'),
+  'Methodology page uses semantic surfaces for hero, cards, formulas, presets and calculation steps'
+);
+assert(
+  !methodology.includes('bg-slate-50 p-3 font-mono text-sm font-black text-slate-900') &&
+    !methodology.includes('rounded-[24px] border border-slate-200 bg-white'),
+  'Methodology page no longer relies on conflicting raw light/dark utility combinations'
+);
+assert(
+  css.includes('.methodology-formula {') &&
+    css.includes('.dark .methodology-formula') &&
+    css.includes('.methodology-card-title') &&
+    css.includes('.methodology-copy') &&
+    css.includes('.methodology-source'),
+  'Methodology semantic typography has explicit light and dark contracts'
 );
 
 if (failures > 0) process.exit(1);
