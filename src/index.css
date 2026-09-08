@@ -283,6 +283,11 @@ html:not(.dark) .app-bottom-nav {
   color: #475569;
 }
 
+.health-card-title,
+.health-card-strong {
+  color: #0f172a;
+}
+
 .health-goal-badge {
   background: #eff6ff;
   border-color: #93c5fd;
@@ -313,6 +318,12 @@ html:not(.dark) .health-card .health-label {
 
 html:not(.dark) .health-card .health-meta {
   color: #475569 !important;
+}
+
+html:not(.dark) .health-card .health-card-title,
+html:not(.dark) .health-card .health-card-strong {
+  color: #0f172a !important;
+  opacity: 1 !important;
 }
 
 html:not(.dark) .health-card .health-goal-badge {
@@ -357,6 +368,11 @@ html:not(.dark) .health-card .health-coverage-badge {
 
 .dark .health-meta {
   color: #cbd5e1;
+}
+
+.dark .health-card-title,
+.dark .health-card-strong {
+  color: #f8fafc;
 }
 
 .dark .health-goal-badge {
