@@ -1760,7 +1760,7 @@ export const mockDb = {
               calorieBasis: 'category' as const,
               nutritionConfidence: 'unknown' as const,
               nutritionVerificationState: 'UNVERIFIED_FALLBACK',
-              nutritionDataStatus: 'reference' as const
+              nutritionDataStatus: 'estimated' as const
             }),
       vendors: mergeVendorInputs([], options.vendors)
     };
