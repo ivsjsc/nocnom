@@ -423,7 +423,8 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
   const waterReq = weightNum ? calculateWaterRequirement(weightNum) : null;
   const macroTargetPlan = calculateMacroTargetPlan(
     targetCalories,
-    healthGoal
+    healthGoal,
+    weightNum || null
   );
   const todayMacros = useMemo(
     () => calculateConsumedMacros(todayLogs),
