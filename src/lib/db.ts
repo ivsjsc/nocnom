@@ -1359,46 +1359,76 @@ export const mockDb = {
       });
     }
   },
+  updateDishNutrition: (id: string, input: UserNutritionInput) => {
+    const current = dishesData.find(dish => dish.id === id);
+    if (!current) {
+      throw new Error('Không tìm thấy món cần cập nhật.');
+    }
+
+    const fields = userNutritionToDishFields(input, current);
+    dishesData = dishesData.map(dish =>
+      dish.id === id
+        ? {
+            ...dish,
+            ...fields
+          }
+        : dish
+    );
+    saveToLocalStorage('dishes');
+    dishListeners.forEach(listener => listener(dishesData));
+  },
   updateDishCalories: (id: string, calories: number) => {
+    const current = dishesData.find(dish => dish.id === id);
+    if (!current) {
+      throw new Error('Không tìm thấy món cần cập nhật.');
+    }
+
     const normalizedCalories = normalizeKcalInternal(calories);
     if (
       normalizedCalories === null ||
       normalizedCalories <= 0 ||
       normalizedCalories > 5000
     ) {
-      throw new Error('Calo phải là số hợp lệ từ 0 đến 5.000 kcal/phần.');
+      throw new Error('Calo phải là số hợp lệ từ 1 đến 5.000 kcal/phần.');
     }
+
+    const hasMacros =
+      typeof current.proteinG === 'number' &&
+      typeof current.carbsG === 'number' &&
+      typeof current.fatG === 'number';
+
+    const fields = userNutritionToDishFields(
+      {
+        mode: 'manual',
+        calories: normalizedCalories,
+        servingAmount: current.servingAmount,
+        servingUnit: current.servingUnit,
+        ...(hasMacros
+          ? {
+              proteinG: current.proteinG,
+              carbsG: current.carbsG,
+              fatG: current.fatG
+            }
+          : {}),
+        sourceKind:
+          current.nutritionSourceKind === 'reference-db' ||
+          current.nutritionSourceKind === 'recipe'
+            ? 'self-entered'
+            : current.nutritionSourceKind,
+        sourceUrl:
+          current.nutritionDataOrigin === 'user-manual'
+            ? current.nutritionSourceUrl
+            : undefined,
+        sourceNote: current.nutritionSourceNote
+      },
+      current
+    );
 
     dishesData = dishesData.map(d =>
       d.id === id
         ? {
             ...d,
-            calories: normalizedCalories,
-            calorieSource: 'manual',
-            calorieBasis: 'serving',
-            portionSize: undefined,
-            portionGrams: undefined,
-            servingAmount: undefined,
-            servingUnit: undefined,
-            kcalMin: undefined,
-            kcalMax: undefined,
-            proteinG: undefined,
-            carbsG: undefined,
-            fatG: undefined,
-            macroSource: undefined,
-            nutritionRecordId: undefined,
-            nutritionCanonicalName: undefined,
-            nutritionConfidence: undefined,
-            nutritionVerificationState: undefined,
-            nutritionCalorieStatus: undefined,
-            nutritionValidationResult: undefined,
-            nutritionTrainingEligibility: undefined,
-            nutritionReferenceOnly: undefined,
-            nutritionSource: undefined,
-            nutritionSourceId: undefined,
-            nutritionSourceUrl: undefined,
-            nutritionMatchType: undefined,
-            nutritionMatchScore: undefined
+            ...fields
           }
         : d
     );
@@ -1409,24 +1439,40 @@ export const mockDb = {
     id: string,
     macros: { proteinG: number; carbsG: number; fatG: number }
   ) => {
-    const values = [macros.proteinG, macros.carbsG, macros.fatG];
-    if (
-      values.some(
-        value => !Number.isFinite(value) || value < 0 || value > 500
-      )
-    ) {
-      throw new Error('Macro phải là số hợp lệ từ 0 đến 500 g/phần.');
+    const current = dishesData.find(dish => dish.id === id);
+    if (!current) {
+      throw new Error('Không tìm thấy món cần cập nhật.');
     }
 
-    const round1 = (value: number) => Math.round(value * 10) / 10;
+    const calories = estimateDishCalories(current);
+    const fields = userNutritionToDishFields(
+      {
+        mode: 'manual',
+        calories,
+        servingAmount: current.servingAmount,
+        servingUnit: current.servingUnit,
+        proteinG: macros.proteinG,
+        carbsG: macros.carbsG,
+        fatG: macros.fatG,
+        sourceKind:
+          current.nutritionSourceKind === 'reference-db' ||
+          current.nutritionSourceKind === 'recipe'
+            ? 'self-entered'
+            : current.nutritionSourceKind,
+        sourceUrl:
+          current.nutritionDataOrigin === 'user-manual'
+            ? current.nutritionSourceUrl
+            : undefined,
+        sourceNote: current.nutritionSourceNote
+      },
+      current
+    );
+
     dishesData = dishesData.map(dish =>
       dish.id === id
         ? {
             ...dish,
-            proteinG: round1(macros.proteinG),
-            carbsG: round1(macros.carbsG),
-            fatG: round1(macros.fatG),
-            macroSource: 'manual' as const
+            ...fields
           }
         : dish
     );
