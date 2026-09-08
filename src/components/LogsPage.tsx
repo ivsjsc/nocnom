@@ -899,7 +899,6 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                       <div className="mt-1 text-[9px] font-bold text-slate-500 dark:text-slate-400">
                         Dữ liệu {row.coveragePct}% · {row.knownCount}/{todayMacros.totalItems} mục
                       </div>
-                      </div>
                       <div className="health-value mt-1 text-sm font-black">
                         {valueLabel} / {row.target.toLocaleString('vi-VN', {
                           maximumFractionDigits: 1
