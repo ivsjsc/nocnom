@@ -39,6 +39,13 @@ service cloud.firestore {
           'activityLevel',
           'healthGoal',
           'dailyCalorieTarget',
+          'macroTargetMode',
+          'macroProteinPct',
+          'macroCarbsPct',
+          'macroFatPct',
+          'macroProteinG',
+          'macroCarbsG',
+          'macroFatG',
           'email',
           'authProvider',
           'updatedAt'
@@ -63,7 +70,62 @@ service cloud.firestore {
           || request.resource.data.dailyCalorieTarget == ''
           || (request.resource.data.dailyCalorieTarget is number
             && request.resource.data.dailyCalorieTarget >= 800
-            && request.resource.data.dailyCalorieTarget <= 6000));
+            && request.resource.data.dailyCalorieTarget <= 6000))
+        && (!('macroTargetMode' in request.resource.data)
+          || request.resource.data.macroTargetMode in ['auto', 'ratio', 'grams'])
+        && (!('macroProteinPct' in request.resource.data)
+          || request.resource.data.macroProteinPct == ''
+          || (request.resource.data.macroProteinPct is number
+            && request.resource.data.macroProteinPct >= 0
+            && request.resource.data.macroProteinPct <= 100))
+        && (!('macroCarbsPct' in request.resource.data)
+          || request.resource.data.macroCarbsPct == ''
+          || (request.resource.data.macroCarbsPct is number
+            && request.resource.data.macroCarbsPct >= 0
+            && request.resource.data.macroCarbsPct <= 100))
+        && (!('macroFatPct' in request.resource.data)
+          || request.resource.data.macroFatPct == ''
+          || (request.resource.data.macroFatPct is number
+            && request.resource.data.macroFatPct >= 0
+            && request.resource.data.macroFatPct <= 100))
+        && (!('macroProteinG' in request.resource.data)
+          || request.resource.data.macroProteinG == ''
+          || (request.resource.data.macroProteinG is number
+            && request.resource.data.macroProteinG >= 0
+            && request.resource.data.macroProteinG <= 500))
+        && (!('macroCarbsG' in request.resource.data)
+          || request.resource.data.macroCarbsG == ''
+          || (request.resource.data.macroCarbsG is number
+            && request.resource.data.macroCarbsG >= 0
+            && request.resource.data.macroCarbsG <= 500))
+        && (!('macroFatG' in request.resource.data)
+          || request.resource.data.macroFatG == ''
+          || (request.resource.data.macroFatG is number
+            && request.resource.data.macroFatG >= 0
+            && request.resource.data.macroFatG <= 500))
+        && (!('macroTargetMode' in request.resource.data)
+          || request.resource.data.macroTargetMode != 'ratio'
+          || (
+            request.resource.data.macroProteinPct is number
+            && request.resource.data.macroCarbsPct is number
+            && request.resource.data.macroFatPct is number
+            && request.resource.data.macroProteinPct
+              + request.resource.data.macroCarbsPct
+              + request.resource.data.macroFatPct >= 99.9
+            && request.resource.data.macroProteinPct
+              + request.resource.data.macroCarbsPct
+              + request.resource.data.macroFatPct <= 100.1
+          ))
+        && (!('macroTargetMode' in request.resource.data)
+          || request.resource.data.macroTargetMode != 'grams'
+          || (
+            request.resource.data.macroProteinG is number
+            && request.resource.data.macroCarbsG is number
+            && request.resource.data.macroFatG is number
+            && request.resource.data.macroProteinG
+              + request.resource.data.macroCarbsG
+              + request.resource.data.macroFatG > 0
+          ));
       allow delete: if isOwner(userId);
     }
 
