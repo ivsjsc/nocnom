@@ -41,7 +41,7 @@ export type NutritionSelection = {
   proteinG?: number;
   carbsG?: number;
   fatG?: number;
-  macroSource?: 'nutrition-db' | 'manual';
+  macroSource?: 'nutrition-db' | 'manual' | 'recipe';
   confidence: NutritionConfidenceLevel;
   confidenceLabel: string;
   verificationState: string;
@@ -71,7 +71,7 @@ export type DishNutritionFields = {
   proteinG?: number;
   carbsG?: number;
   fatG?: number;
-  macroSource?: 'nutrition-db' | 'manual';
+  macroSource?: 'nutrition-db' | 'manual' | 'recipe';
   nutritionRecordId?: string;
   nutritionCanonicalName?: string;
   nutritionConfidence?: NutritionConfidenceLevel | 'verified' | 'estimated';
