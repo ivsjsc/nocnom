@@ -57,6 +57,22 @@ assert(
     css.includes('opacity: 1 !important'),
   'Health card titles enforce readable contrast in both themes'
 );
+assert(
+  health.includes('health-macro-note mt-3') &&
+    health.includes('health-macro-note-warning') &&
+    health.includes('health-macro-note-success') &&
+    !health.includes('health-copy mt-3 rounded-2xl border border-slate-200 bg-white'),
+  'Macro guidance panel owns its surface and foreground instead of inheriting light-surface text'
+);
+assert(
+  css.includes('.health-macro-note {') &&
+    css.includes('background: #475569;') &&
+    css.includes('color: #f8fafc;') &&
+    css.includes('.health-macro-note-warning') &&
+    css.includes('color: #fde047;') &&
+    css.includes('.dark .health-macro-note {'),
+  'Macro guidance panel defines high-contrast colors for light and dark themes'
+);
 
 if (failures > 0) process.exit(1);
 console.log('UI readability tests: PASS');
