@@ -356,6 +356,20 @@ export const normalizeUserNutritionInput = (
   const fatG =
     input.fatG === undefined ? undefined : round1(input.fatG * scale);
 
+  if (!isFiniteInRange(calories, 1, 5000)) {
+    throw new Error('Năng lượng sau quy đổi phải từ 1 đến 5.000 kcal cho khẩu phần thực tế.');
+  }
+
+  [
+    ['Protein', proteinG],
+    ['Carb', carbsG],
+    ['Fat', fatG]
+  ].forEach(([label, value]) => {
+    if (value !== undefined && !isFiniteInRange(value, 0, 500)) {
+      throw new Error(`${label} sau quy đổi phải từ 0 đến 500 g cho khẩu phần thực tế.`);
+    }
+  });
+
   const consistency = assessMacroEnergyConsistency({
     calories,
     proteinG,
