@@ -125,6 +125,13 @@ assert(
   'Edit Dish UI uses the public URL media policy'
 );
 assert(
+  menuPage.includes('Tổng danh mục') &&
+    menuPage.includes('{categories.length}') &&
+    !menuPage.includes('Lượt phục vụ') &&
+    !menuPage.includes('subscribeLogs(setLogs)'),
+  'Kho mon summary reports category count without subscribing to unrelated meal logs'
+);
+assert(
   !editDishModal.includes('type="file"') &&
     !menuPage.includes("window.prompt('URL hình ảnh:"),
   'Dish image editing no longer uses file uploads or browser URL prompts'
