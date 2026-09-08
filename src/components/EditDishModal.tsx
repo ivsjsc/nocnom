@@ -31,6 +31,15 @@ export default function EditDishModal({
   const [calories, setCalories] = useState(
     String(estimateDishCalories(dish))
   );
+  const [proteinG, setProteinG] = useState(
+    dish.proteinG === undefined ? '' : String(dish.proteinG)
+  );
+  const [carbsG, setCarbsG] = useState(
+    dish.carbsG === undefined ? '' : String(dish.carbsG)
+  );
+  const [fatG, setFatG] = useState(
+    dish.fatG === undefined ? '' : String(dish.fatG)
+  );
   const [vendorName, setVendorName] = useState('');
   const [vendorPrice, setVendorPrice] = useState('');
   const [vendorPhone, setVendorPhone] = useState('');
@@ -73,6 +82,27 @@ export default function EditDishModal({
       return;
     }
 
+    const macroInputs = [proteinG, carbsG, fatG];
+    const hasMacroDraft = macroInputs.some(value => value.trim() !== '');
+    const parsedMacros = hasMacroDraft
+      ? macroInputs.map(value => Number(value))
+      : null;
+
+    if (
+      parsedMacros &&
+      (
+        macroInputs.some(value => value.trim() === '') ||
+        parsedMacros.some(
+          value => !Number.isFinite(value) || value < 0 || value > 500
+        )
+      )
+    ) {
+      setSaveError(
+        'Nếu nhập Macro, cần nhập đủ Protein / Carb / Fat từ 0 đến 500 g cho cùng khẩu phần.'
+      );
+      return;
+    }
+
     const hasVendorDraft = [
       vendorName,
       vendorPrice,
@@ -104,6 +134,21 @@ export default function EditDishModal({
 
       if (parsedCalories !== estimateDishCalories(dish)) {
         mockDb.updateDishCalories(dish.id, parsedCalories);
+      }
+
+      if (parsedMacros) {
+        const [nextProteinG, nextCarbsG, nextFatG] = parsedMacros;
+        if (
+          nextProteinG !== dish.proteinG ||
+          nextCarbsG !== dish.carbsG ||
+          nextFatG !== dish.fatG
+        ) {
+          mockDb.updateDishMacros(dish.id, {
+            proteinG: nextProteinG,
+            carbsG: nextCarbsG,
+            fatG: nextFatG
+          });
+        }
       }
 
       if (hasVendorDraft && normalizedVendorPrice !== null) {
@@ -249,6 +294,64 @@ export default function EditDishModal({
               className="mt-2 h-12 w-full rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 text-sm font-bold text-slate-950 dark:text-white focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/20"
             />
           </label>
+
+          <section className="rounded-[22px] border border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/20 p-4">
+            <div className="text-sm font-black text-slate-950 dark:text-white">
+              Macro theo khẩu phần hiện tại
+            </div>
+            <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600 dark:text-slate-300">
+              Nhập đủ Protein / Carb / Fat nếu có dữ liệu đáng tin cậy. Để trống cả 3 nếu chưa rõ; nOcnOm không tự suy ra macro từ kcal.
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <label className="block">
+                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">Protein (g)</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="500"
+                  step="0.1"
+                  inputMode="decimal"
+                  value={proteinG}
+                  onChange={event => setProteinG(event.target.value)}
+                  placeholder="--"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-sm font-bold"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">Carb (g)</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="500"
+                  step="0.1"
+                  inputMode="decimal"
+                  value={carbsG}
+                  onChange={event => setCarbsG(event.target.value)}
+                  placeholder="--"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-sm font-bold"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">Fat (g)</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="500"
+                  step="0.1"
+                  inputMode="decimal"
+                  value={fatG}
+                  onChange={event => setFatG(event.target.value)}
+                  placeholder="--"
+                  className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-sm font-bold"
+                />
+              </label>
+            </div>
+            {dish.macroSource && (
+              <div className="mt-2 text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
+                Nguồn macro hiện tại: {dish.macroSource === 'nutrition-db' ? 'Nutrition Knowledge Base' : 'nhập thủ công'}.
+              </div>
+            )}
+          </section>
 
           <section className="rounded-[22px] border border-slate-200 dark:border-slate-800 p-4">
             <div className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white">
