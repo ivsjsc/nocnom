@@ -143,10 +143,14 @@ export const calculateConsumedMacros = (logs: AnalyticsLog[]) => {
   let carbsG = 0;
   let fatG = 0;
   let knownItems = 0;
+  let knownProteinItems = 0;
+  let knownCarbsItems = 0;
+  let knownFatItems = 0;
   let totalItems = 0;
   const missingItems: Array<{
     label: string;
     kind: 'dish' | 'addon';
+    missing: Array<'protein' | 'carbs' | 'fat'>;
   }> = [];
 
   const collect = (
@@ -155,14 +159,34 @@ export const calculateConsumedMacros = (logs: AnalyticsLog[]) => {
     kind: 'dish' | 'addon'
   ) => {
     totalItems++;
-    if (!completeMacro(item)) {
-      missingItems.push({ label, kind });
+
+    const hasProtein = validMacro(item.proteinG);
+    const hasCarbs = validMacro(item.carbsG);
+    const hasFat = validMacro(item.fatG);
+
+    if (hasProtein) {
+      knownProteinItems++;
+      proteinG += item.proteinG;
+    }
+    if (hasCarbs) {
+      knownCarbsItems++;
+      carbsG += item.carbsG;
+    }
+    if (hasFat) {
+      knownFatItems++;
+      fatG += item.fatG;
+    }
+
+    if (hasProtein && hasCarbs && hasFat) {
+      knownItems++;
       return;
     }
-    knownItems++;
-    proteinG += item.proteinG;
-    carbsG += item.carbsG;
-    fatG += item.fatG;
+
+    const missing: Array<'protein' | 'carbs' | 'fat'> = [];
+    if (!hasProtein) missing.push('protein');
+    if (!hasCarbs) missing.push('carbs');
+    if (!hasFat) missing.push('fat');
+    missingItems.push({ label, kind, missing });
   };
 
   for (const log of logs) {
@@ -182,15 +206,23 @@ export const calculateConsumedMacros = (logs: AnalyticsLog[]) => {
   }
 
   const round1 = (value: number) => Math.round(value * 10) / 10;
+  const coverage = (known: number) =>
+    totalItems > 0 ? Math.round((known / totalItems) * 100) : 0;
+
   return {
     proteinG: round1(proteinG),
     carbsG: round1(carbsG),
     fatG: round1(fatG),
     knownItems,
+    knownProteinItems,
+    knownCarbsItems,
+    knownFatItems,
     totalItems,
     missingItems,
-    coveragePct:
-      totalItems > 0 ? Math.round((knownItems / totalItems) * 100) : 0,
+    proteinCoveragePct: coverage(knownProteinItems),
+    carbsCoveragePct: coverage(knownCarbsItems),
+    fatCoveragePct: coverage(knownFatItems),
+    coveragePct: coverage(knownItems),
     isComplete: totalItems > 0 && knownItems === totalItems
   };
 };

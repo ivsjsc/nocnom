@@ -205,11 +205,46 @@ assert(
   partialMacros.knownItems === 1 &&
     partialMacros.totalItems === 2 &&
     partialMacros.coveragePct === 50 &&
+    partialMacros.knownProteinItems === 1 &&
+    partialMacros.knownCarbsItems === 1 &&
+    partialMacros.knownFatItems === 1 &&
+    partialMacros.proteinCoveragePct === 50 &&
+    partialMacros.carbsCoveragePct === 50 &&
+    partialMacros.fatCoveragePct === 50 &&
     !partialMacros.isComplete &&
     partialMacros.proteinG === 30 &&
     partialMacros.missingItems.length === 1 &&
-    partialMacros.missingItems[0]?.label === 'Nước cam',
-  'Macro aggregation reports partial coverage instead of treating missing data as zero'
+    partialMacros.missingItems[0]?.label === 'Nước cam' &&
+    partialMacros.missingItems[0]?.missing.join(',') === 'protein,carbs,fat',
+  'Macro aggregation reports nutrient-specific coverage instead of treating missing data as zero'
+);
+
+const mixedCoverage = calculateConsumedMacros([
+  {
+    timestamp: Date.parse('2026-09-07T12:00:00+07:00'),
+    mealKey: 'B',
+    dishName: 'Chicken',
+    proteinG: 40,
+    fatG: 18
+  },
+  {
+    timestamp: Date.parse('2026-09-07T18:00:00+07:00'),
+    mealKey: 'C',
+    dishName: 'Rice',
+    proteinG: 5,
+    carbsG: 70,
+    fatG: 1
+  }
+]);
+assert(
+  mixedCoverage.proteinG === 45 &&
+    mixedCoverage.carbsG === 70 &&
+    mixedCoverage.fatG === 19 &&
+    mixedCoverage.proteinCoveragePct === 100 &&
+    mixedCoverage.carbsCoveragePct === 50 &&
+    mixedCoverage.fatCoveragePct === 100 &&
+    mixedCoverage.missingItems[0]?.missing.join(',') === 'carbs',
+  'Known Protein/Fat remain countable when only Carb is missing from an item'
 );
 
 const distribution = calculateMealDistribution(todayLogs, dishes, estimate);

@@ -1,5 +1,7 @@
 export type UserNutritionMode = 'manual' | 'recipe';
 
+export type NutritionInputBasis = 'serving' | '100g' | '100ml';
+
 export type NutritionDataOrigin =
   | 'reference-db'
   | 'user-manual'
@@ -46,6 +48,7 @@ export type NutritionRecipeSnapshot = {
 
 export type UserNutritionInput = {
   mode: UserNutritionMode;
+  inputBasis?: NutritionInputBasis;
   calories?: number;
   servingAmount?: number;
   servingUnit?: 'g' | 'ml' | 'portion';
@@ -60,6 +63,11 @@ export type UserNutritionInput = {
 
 export type NormalizedUserNutrition = {
   calories: number;
+  inputBasis: NutritionInputBasis;
+  sourceCalories: number;
+  sourceProteinG?: number;
+  sourceCarbsG?: number;
+  sourceFatG?: number;
   servingAmount?: number;
   servingUnit: 'g' | 'ml' | 'portion';
   proteinG?: number;
@@ -279,6 +287,8 @@ export const normalizeUserNutritionInput = (
 
     return {
       calories: calculated.calories,
+      inputBasis: 'serving',
+      sourceCalories: calculated.calories,
       servingUnit: 'portion',
       proteinG: calculated.proteinG,
       carbsG: calculated.carbsG,
@@ -299,14 +309,18 @@ export const normalizeUserNutritionInput = (
     throw new Error('Calo thủ công phải từ 1 đến 5.000 kcal cho cùng một khẩu phần.');
   }
 
-  const macroValues = [input.proteinG, input.carbsG, input.fatG];
-  const hasAnyMacro = macroValues.some(value => value !== undefined);
-  const completeMacros = hasCompleteMacros(input);
-  if (hasAnyMacro && !completeMacros) {
-    throw new Error(
-      'Nếu nhập macro, cần nhập đủ Protein / Carb / Fat từ 0 đến 500 g cho cùng khẩu phần.'
-    );
-  }
+  const inputBasis: NutritionInputBasis = input.inputBasis || 'serving';
+  const macroEntries = [
+    ['Protein', input.proteinG],
+    ['Carb', input.carbsG],
+    ['Fat', input.fatG]
+  ] as const;
+
+  macroEntries.forEach(([label, value]) => {
+    if (value !== undefined && !isFiniteInRange(value, 0, 500)) {
+      throw new Error(`${label} phải là số hợp lệ từ 0 đến 500 g theo đúng đơn vị nguồn.`);
+    }
+  });
 
   if (
     input.servingAmount !== undefined &&
@@ -315,27 +329,77 @@ export const normalizeUserNutritionInput = (
     throw new Error('Khẩu phần phải từ 0,1 đến 5.000 g/ml.');
   }
 
+  if (
+    inputBasis === '100g' &&
+    (!isFiniteInRange(input.servingAmount, 0.1, 5000) || input.servingUnit !== 'g')
+  ) {
+    throw new Error('Khi số liệu nguồn tính trên 100 g, hãy nhập khối lượng khẩu phần thực tế bằng gram.');
+  }
+
+  if (
+    inputBasis === '100ml' &&
+    (!isFiniteInRange(input.servingAmount, 0.1, 5000) || input.servingUnit !== 'ml')
+  ) {
+    throw new Error('Khi số liệu nguồn tính trên 100 ml, hãy nhập dung tích khẩu phần thực tế bằng ml.');
+  }
+
+  const scale =
+    inputBasis === '100g' || inputBasis === '100ml'
+      ? (input.servingAmount as number) / 100
+      : 1;
+
+  const calories = round1(input.calories * scale);
+  const proteinG =
+    input.proteinG === undefined ? undefined : round1(input.proteinG * scale);
+  const carbsG =
+    input.carbsG === undefined ? undefined : round1(input.carbsG * scale);
+  const fatG =
+    input.fatG === undefined ? undefined : round1(input.fatG * scale);
+
+  if (!isFiniteInRange(calories, 1, 5000)) {
+    throw new Error('Năng lượng sau quy đổi phải từ 1 đến 5.000 kcal cho khẩu phần thực tế.');
+  }
+
+  [
+    ['Protein', proteinG],
+    ['Carb', carbsG],
+    ['Fat', fatG]
+  ].forEach(([label, value]) => {
+    if (value !== undefined && !isFiniteInRange(value, 0, 500)) {
+      throw new Error(`${label} sau quy đổi phải từ 0 đến 500 g cho khẩu phần thực tế.`);
+    }
+  });
+
   const consistency = assessMacroEnergyConsistency({
-    calories: input.calories,
-    proteinG: input.proteinG,
-    carbsG: input.carbsG,
-    fatG: input.fatG
+    calories,
+    proteinG,
+    carbsG,
+    fatG
   });
 
   return {
-    calories: round1(input.calories),
+    calories,
+    inputBasis,
+    sourceCalories: round1(input.calories),
+    sourceProteinG:
+      input.proteinG === undefined ? undefined : round1(input.proteinG),
+    sourceCarbsG:
+      input.carbsG === undefined ? undefined : round1(input.carbsG),
+    sourceFatG:
+      input.fatG === undefined ? undefined : round1(input.fatG),
     servingAmount:
       input.servingAmount === undefined
         ? undefined
         : round1(input.servingAmount),
-    servingUnit: input.servingUnit || 'portion',
-    ...(completeMacros
-      ? {
-          proteinG: round1(input.proteinG as number),
-          carbsG: round1(input.carbsG as number),
-          fatG: round1(input.fatG as number)
-        }
-      : {}),
+    servingUnit:
+      inputBasis === '100g'
+        ? 'g'
+        : inputBasis === '100ml'
+          ? 'ml'
+          : input.servingUnit || 'portion',
+    proteinG,
+    carbsG,
+    fatG,
     sourceKind:
       input.sourceKind && input.sourceKind !== 'reference-db' && input.sourceKind !== 'recipe'
         ? input.sourceKind

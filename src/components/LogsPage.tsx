@@ -459,21 +459,27 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
           label: 'Protein',
           value: todayMacros.proteinG,
           target: macroTargetPlan.proteinG,
-          pct: macroTargetPlan.proteinPct
+          pct: macroTargetPlan.proteinPct,
+          knownCount: todayMacros.knownProteinItems,
+          coveragePct: todayMacros.proteinCoveragePct
         },
         {
           key: 'carbs',
           label: 'Carb',
           value: todayMacros.carbsG,
           target: macroTargetPlan.carbsG,
-          pct: macroTargetPlan.carbsPct
+          pct: macroTargetPlan.carbsPct,
+          knownCount: todayMacros.knownCarbsItems,
+          coveragePct: todayMacros.carbsCoveragePct
         },
         {
           key: 'fat',
           label: 'Fat',
           value: todayMacros.fatG,
           target: macroTargetPlan.fatG,
-          pct: macroTargetPlan.fatPct
+          pct: macroTargetPlan.fatPct,
+          knownCount: todayMacros.knownFatItems,
+          coveragePct: todayMacros.fatCoveragePct
         }
       ]
     : [];
@@ -867,13 +873,13 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
               <div className="mt-4 grid grid-cols-3 gap-2">
                 {macroRows.map(row => {
                   const progress =
-                    todayMacros.knownItems > 0 && row.target > 0
+                    row.knownCount > 0 && row.target > 0
                       ? Math.min(100, Math.round((row.value / row.target) * 100))
                       : 0;
                   const valueLabel =
-                    todayMacros.knownItems === 0
+                    row.knownCount === 0
                       ? '--'
-                      : `${todayMacros.isComplete ? '' : '≥ '}${row.value.toLocaleString('vi-VN', {
+                      : `${row.coveragePct === 100 ? '' : '≥ '}${row.value.toLocaleString('vi-VN', {
                           maximumFractionDigits: 1
                         })}`;
 
@@ -889,6 +895,9 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                         <span className="health-meta text-[9px] font-black">
                           {row.pct}% kcal
                         </span>
+                      </div>
+                      <div className="mt-1 text-[9px] font-bold text-slate-500 dark:text-slate-400">
+                        Dữ liệu {row.coveragePct}% · {row.knownCount}/{todayMacros.totalItems} mục
                       </div>
                       <div className="health-value mt-1 text-sm font-black">
                         {valueLabel} / {row.target.toLocaleString('vi-VN', {
@@ -931,12 +940,23 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                     Dữ liệu có thể đến từ Nutrition DB, bản người dùng nhập hoặc công thức nguyên liệu. nOcnOm không suy ra protein/carb/fat từ kcal.
                     {todayMacros.missingItems.length > 0 ? (
                       <span className="mt-1 block">
-                        Chưa đủ Macro: {todayMacros.missingItems
+                        Thiếu dữ liệu Macro: {todayMacros.missingItems
                           .slice(0, 4)
-                          .map(item => item.label)
-                          .join(', ')}
+                          .map(item => {
+                            const missingLabel = item.missing
+                              .map(value =>
+                                value === 'protein'
+                                  ? 'Protein'
+                                  : value === 'carbs'
+                                    ? 'Carb'
+                                    : 'Fat'
+                              )
+                              .join('/');
+                            return `${item.label} — thiếu ${missingLabel}`;
+                          })
+                          .join('; ')}
                         {todayMacros.missingItems.length > 4
-                          ? ` và ${todayMacros.missingItems.length - 4} mục khác`
+                          ? `; và ${todayMacros.missingItems.length - 4} mục khác`
                           : ''}.
                         {' '}Có thể bổ sung tại Kho món → Sửa món.
                       </span>

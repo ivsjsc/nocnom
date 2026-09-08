@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
+  ChevronDown,
+  ChevronUp,
   Image as ImageIcon,
   Link2,
   Loader2,
@@ -14,7 +16,13 @@ import {
 import { normalizePriceVnd } from '../domain/menu/vendorOffer';
 import { normalizeExternalImageUrl } from '../lib/url';
 import DishImage from './DishImage';
-import type { NutritionSourceKind } from '../domain/nutrition/userNutrition';
+import CustomNutritionEditor, {
+  type CustomNutritionEditorState
+} from './CustomNutritionEditor';
+import type {
+  UserNutritionInput,
+  UserNutritionMode
+} from '../domain/nutrition/userNutrition';
 
 type Props = {
   dish: Dish;
@@ -29,39 +37,53 @@ export default function EditDishModal({
 }: Props) {
   const [name, setName] = useState(dish.name);
   const [imageUrl, setImageUrl] = useState(dish.imageUrl || '');
-  const [calories, setCalories] = useState(
-    String(estimateDishCalories(dish))
+  const initialNutritionInput = useMemo<UserNutritionInput>(() => {
+    if (dish.nutritionRecipe) {
+      return {
+        mode: 'recipe',
+        sourceKind: 'recipe',
+        sourceUrl: dish.nutritionSourceUrl,
+        sourceNote: dish.nutritionSourceNote,
+        recipe: dish.nutritionRecipe
+      };
+    }
+
+    return {
+      mode: 'manual',
+      inputBasis: dish.nutritionInputBasis || 'serving',
+      calories: dish.nutritionSourceCalories ?? estimateDishCalories(dish),
+      servingAmount: dish.servingAmount,
+      servingUnit: dish.servingUnit || 'portion',
+      proteinG: dish.nutritionSourceProteinG ?? dish.proteinG,
+      carbsG: dish.nutritionSourceCarbsG ?? dish.carbsG,
+      fatG: dish.nutritionSourceFatG ?? dish.fatG,
+      sourceKind:
+        dish.nutritionSourceKind &&
+        dish.nutritionSourceKind !== 'reference-db' &&
+        dish.nutritionSourceKind !== 'recipe'
+          ? dish.nutritionSourceKind
+          : 'self-entered',
+      sourceUrl:
+        dish.nutritionDataOrigin === 'user-manual'
+          ? dish.nutritionSourceUrl
+          : undefined,
+      sourceNote:
+        dish.nutritionDataOrigin === 'user-manual'
+          ? dish.nutritionSourceNote
+          : undefined
+    };
+  }, [dish]);
+
+  const [nutritionEditing, setNutritionEditing] = useState(false);
+  const [nutritionMode, setNutritionMode] = useState<UserNutritionMode>(
+    dish.nutritionRecipe ? 'recipe' : 'manual'
   );
-  const [proteinG, setProteinG] = useState(
-    dish.proteinG === undefined ? '' : String(dish.proteinG)
-  );
-  const [carbsG, setCarbsG] = useState(
-    dish.carbsG === undefined ? '' : String(dish.carbsG)
-  );
-  const [fatG, setFatG] = useState(
-    dish.fatG === undefined ? '' : String(dish.fatG)
-  );
-  const [nutritionSourceKind, setNutritionSourceKind] = useState<
-    Exclude<NutritionSourceKind, 'reference-db' | 'recipe'>
-  >(
-    dish.nutritionDataOrigin === 'user-manual' &&
-      dish.nutritionSourceKind &&
-      dish.nutritionSourceKind !== 'reference-db' &&
-      dish.nutritionSourceKind !== 'recipe'
-      ? dish.nutritionSourceKind
-      : 'self-entered'
-  );
-  const [nutritionSourceUrl, setNutritionSourceUrl] = useState(
-    dish.nutritionDataOrigin === 'user-manual'
-      ? dish.nutritionSourceUrl || ''
-      : ''
-  );
-  const [nutritionSourceNote, setNutritionSourceNote] = useState(
-    dish.nutritionDataOrigin === 'user-manual'
-      ? dish.nutritionSourceNote || ''
-      : ''
-  );
-  const [nutritionSourceTouched, setNutritionSourceTouched] = useState(false);
+  const [nutritionEditorState, setNutritionEditorState] =
+    useState<CustomNutritionEditorState>({
+      input: initialNutritionInput,
+      normalized: null,
+      error: ''
+    });
   const [vendorName, setVendorName] = useState('');
   const [vendorPrice, setVendorPrice] = useState('');
   const [vendorPhone, setVendorPhone] = useState('');
@@ -94,33 +116,9 @@ export default function EditDishModal({
       return;
     }
 
-    const parsedCalories = Number(calories);
-    if (
-      !Number.isFinite(parsedCalories) ||
-      parsedCalories <= 0 ||
-      parsedCalories > 5000
-    ) {
-      setSaveError('Calo phải là số từ 1 đến 5.000 kcal/phần.');
-      return;
-    }
-
-    const macroInputs = [proteinG, carbsG, fatG];
-    const hasMacroDraft = macroInputs.some(value => value.trim() !== '');
-    const parsedMacros = hasMacroDraft
-      ? macroInputs.map(value => Number(value))
-      : null;
-
-    if (
-      parsedMacros &&
-      (
-        macroInputs.some(value => value.trim() === '') ||
-        parsedMacros.some(
-          value => !Number.isFinite(value) || value < 0 || value > 500
-        )
-      )
-    ) {
+    if (nutritionEditing && !nutritionEditorState.input) {
       setSaveError(
-        'Nếu nhập Macro, cần nhập đủ Protein / Carb / Fat từ 0 đến 500 g cho cùng khẩu phần.'
+        nutritionEditorState.error || 'Dữ liệu dinh dưỡng chưa hợp lệ.'
       );
       return;
     }
@@ -154,33 +152,8 @@ export default function EditDishModal({
         mockDb.updateDishName(dish.id, cleanName);
       }
 
-      const caloriesChanged =
-        parsedCalories !== estimateDishCalories(dish);
-      const macrosChanged = parsedMacros
-        ? parsedMacros[0] !== dish.proteinG ||
-          parsedMacros[1] !== dish.carbsG ||
-          parsedMacros[2] !== dish.fatG
-        : dish.proteinG !== undefined ||
-          dish.carbsG !== undefined ||
-          dish.fatG !== undefined;
-
-      if (caloriesChanged || macrosChanged || nutritionSourceTouched) {
-        mockDb.updateDishNutrition(dish.id, {
-          mode: 'manual',
-          calories: parsedCalories,
-          servingAmount: dish.servingAmount,
-          servingUnit: dish.servingUnit,
-          ...(parsedMacros
-            ? {
-                proteinG: parsedMacros[0],
-                carbsG: parsedMacros[1],
-                fatG: parsedMacros[2]
-              }
-            : {}),
-          sourceKind: nutritionSourceKind,
-          sourceUrl: nutritionSourceUrl.trim() || undefined,
-          sourceNote: nutritionSourceNote.trim() || undefined
-        });
+      if (nutritionEditing && nutritionEditorState.input) {
+        mockDb.updateDishNutrition(dish.id, nutritionEditorState.input);
       }
 
       if (hasVendorDraft && normalizedVendorPrice !== null) {
@@ -312,138 +285,102 @@ export default function EditDishModal({
             </div>
           </section>
 
-          <label className="block">
-            <span className="text-xs font-black text-slate-800 dark:text-slate-200">
-              Năng lượng ước tính (kcal/phần)
-            </span>
-            <input
-              type="number"
-              min="1"
-              max="5000"
-              inputMode="numeric"
-              value={calories}
-              onChange={event => setCalories(event.target.value)}
-              className="mt-2 h-12 w-full rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 text-sm font-bold text-slate-950 dark:text-white focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/20"
-            />
-          </label>
-
           <section className="rounded-[22px] border border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/20 p-4">
-            <div className="text-sm font-black text-slate-950 dark:text-white">
-              Macro theo khẩu phần hiện tại
-            </div>
-            <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600 dark:text-slate-300">
-              Nhập đủ Protein / Carb / Fat nếu có dữ liệu đáng tin cậy. Để trống cả 3 nếu chưa rõ; nOcnOm không tự suy ra macro từ kcal.
-            </p>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              <label className="block">
-                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">Protein (g)</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="500"
-                  step="0.1"
-                  inputMode="decimal"
-                  value={proteinG}
-                  onChange={event => setProteinG(event.target.value)}
-                  placeholder="--"
-                  className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-sm font-bold"
-                />
-              </label>
-              <label className="block">
-                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">Carb (g)</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="500"
-                  step="0.1"
-                  inputMode="decimal"
-                  value={carbsG}
-                  onChange={event => setCarbsG(event.target.value)}
-                  placeholder="--"
-                  className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-sm font-bold"
-                />
-              </label>
-              <label className="block">
-                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">Fat (g)</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="500"
-                  step="0.1"
-                  inputMode="decimal"
-                  value={fatG}
-                  onChange={event => setFatG(event.target.value)}
-                  placeholder="--"
-                  className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-sm font-bold"
-                />
-              </label>
-            </div>
-            {dish.macroSource && (
-              <div className="mt-2 text-[10px] font-bold text-emerald-800 dark:text-emerald-300">
-                Nguồn macro hiện tại:{' '}
-                {dish.macroSource === 'nutrition-db'
-                  ? 'Nutrition Knowledge Base'
-                  : dish.macroSource === 'recipe'
-                    ? 'tính từ công thức'
-                    : 'nhập thủ công'}.
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-sm font-black text-slate-950 dark:text-white">
+                  Dinh dưỡng & Macro
+                </div>
+                <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600 dark:text-slate-300">
+                  Calo {estimateDishCalories(dish).toLocaleString('vi-VN')} kcal
+                  {' '}· Protein {dish.proteinG ?? '—'} g
+                  {' '}· Carb {dish.carbsG ?? '—'} g
+                  {' '}· Fat {dish.fatG ?? '—'} g
+                </p>
+                {dish.proteinG === undefined ||
+                dish.carbsG === undefined ||
+                dish.fatG === undefined ? (
+                  <div className="mt-1.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                    Thiếu dữ liệu:{' '}
+                    {[
+                      dish.proteinG === undefined ? 'Protein' : '',
+                      dish.carbsG === undefined ? 'Carb' : '',
+                      dish.fatG === undefined ? 'Fat' : ''
+                    ].filter(Boolean).join(' / ')}.
+                  </div>
+                ) : (
+                  <div className="mt-1.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                    Đã có đủ Protein / Carb / Fat cho khẩu phần hiện tại.
+                  </div>
+                )}
               </div>
-            )}
+              <button
+                type="button"
+                onClick={() => setNutritionEditing(value => !value)}
+                className="min-h-10 shrink-0 rounded-xl border border-emerald-200 bg-white px-3 text-[10px] font-black text-emerald-800 flex items-center gap-1.5 dark:border-emerald-900 dark:bg-slate-900 dark:text-emerald-300"
+              >
+                {nutritionEditing ? (
+                  <>
+                    <ChevronUp className="h-3.5 w-3.5" />
+                    Thu gọn
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-3.5 w-3.5" />
+                    Bổ sung Macro
+                  </>
+                )}
+              </button>
+            </div>
 
             {dish.nutritionRecordId && (
               <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[10px] font-semibold leading-relaxed text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
                 Món này đang liên kết với bản tham khảo
                 {dish.nutritionCanonicalName ? ` “${dish.nutritionCanonicalName}”` : ''}.
-                Nếu bạn sửa calo/macro, nOcnOm sẽ tạo <strong>bản ghi cá nhân</strong> và giữ liên kết này thay vì sửa Nutrition DB chung.
+                Dữ liệu bạn chỉnh sẽ được lưu thành bản cá nhân, không sửa Nutrition DB chung.
               </div>
             )}
 
-            <div className="mt-3 grid grid-cols-1 gap-2">
-              <label className="block">
-                <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">
-                  Nguồn dữ liệu khi tùy chỉnh
-                </span>
-                <select
-                  value={nutritionSourceKind}
-                  onChange={event => {
-                    setNutritionSourceKind(
-                      event.target.value as Exclude<
-                        NutritionSourceKind,
-                        'reference-db' | 'recipe'
-                      >
-                    );
-                    setNutritionSourceTouched(true);
-                  }}
-                  className="mt-1.5 h-10 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-xs font-bold"
-                >
-                  <option value="self-entered">Tự nhập / tự cân</option>
-                  <option value="nutrition-label">Nhãn dinh dưỡng</option>
-                  <option value="manufacturer">Website nhà sản xuất</option>
-                  <option value="other">Nguồn tham khảo khác</option>
-                </select>
-              </label>
+            {nutritionEditing && (
+              <div className="mt-4 space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNutritionMode('manual')}
+                    className={
+                      'h-11 rounded-xl border text-xs font-black ' +
+                      (nutritionMode === 'manual'
+                        ? 'border-blue-500 bg-blue-50 text-blue-800'
+                        : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300')
+                    }
+                  >
+                    Nhãn / nhập số liệu
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNutritionMode('recipe')}
+                    className={
+                      'h-11 rounded-xl border text-xs font-black ' +
+                      (nutritionMode === 'recipe'
+                        ? 'border-violet-500 bg-violet-50 text-violet-800'
+                        : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300')
+                    }
+                  >
+                    Tính từ nguyên liệu
+                  </button>
+                </div>
 
-              <input
-                type="url"
-                value={nutritionSourceUrl}
-                onChange={event => {
-                  setNutritionSourceUrl(event.target.value);
-                  setNutritionSourceTouched(true);
-                }}
-                placeholder="URL nguồn dinh dưỡng (không bắt buộc)"
-                className="h-10 w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-xs font-semibold"
-              />
-
-              <textarea
-                value={nutritionSourceNote}
-                onChange={event => {
-                  setNutritionSourceNote(event.target.value);
-                  setNutritionSourceTouched(true);
-                }}
-                rows={2}
-                placeholder="Ghi chú về khẩu phần, nhãn hoặc cách cân..."
-                className="w-full resize-none rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold"
-              />
-            </div>
+                <CustomNutritionEditor
+                  mode={nutritionMode}
+                  initialValue={
+                    initialNutritionInput.mode === nutritionMode
+                      ? initialNutritionInput
+                      : undefined
+                  }
+                  onChange={setNutritionEditorState}
+                />
+              </div>
+            )}
           </section>
 
           <section className="rounded-[22px] border border-slate-200 dark:border-slate-800 p-4">

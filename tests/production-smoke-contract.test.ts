@@ -174,8 +174,17 @@ assert(
 );
 assert(
   logsPage.includes('todayMacros.missingItems') &&
-    logsPage.includes('Chưa đủ Macro:'),
-  'Health macro card identifies consumed items with missing P/C/F instead of inventing values'
+    logsPage.includes('Thiếu dữ liệu Macro:') &&
+    logsPage.includes('proteinCoveragePct') &&
+    logsPage.includes('carbsCoveragePct') &&
+    logsPage.includes('fatCoveragePct'),
+  'Health macro card identifies exact missing nutrients and tracks P/C/F coverage independently'
+);
+assert(
+  editDishModal.includes('Bổ sung Macro') &&
+    editDishModal.includes('CustomNutritionEditor') &&
+    addDishModal.includes('CustomNutritionEditor'),
+  'Add/Edit dish flows use the guided nutrition editor instead of raw macro-only fields'
 );
 assert(
   loginMenu.includes('<span>Quản lý tài khoản</span>') &&

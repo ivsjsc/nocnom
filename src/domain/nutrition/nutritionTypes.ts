@@ -2,6 +2,7 @@ import type {
   MacroEnergyConsistency,
   NutritionDataOrigin,
   NutritionDataStatus,
+  NutritionInputBasis,
   NutritionRecipeSnapshot,
   NutritionSourceKind
 } from './userNutrition';
@@ -89,6 +90,11 @@ export type DishNutritionFields = {
   nutritionDataStatus?: NutritionDataStatus;
   nutritionSourceKind?: NutritionSourceKind;
   nutritionSourceNote?: string;
+  nutritionInputBasis?: NutritionInputBasis;
+  nutritionSourceCalories?: number;
+  nutritionSourceProteinG?: number;
+  nutritionSourceCarbsG?: number;
+  nutritionSourceFatG?: number;
   userOverrideOfNutritionRecordId?: string;
   macroEnergyKcal?: number;
   macroEnergyDeltaPct?: number;
@@ -128,6 +134,11 @@ export type MealNutritionSnapshot = Pick<
   | 'nutritionDataStatus'
   | 'nutritionSourceKind'
   | 'nutritionSourceNote'
+  | 'nutritionInputBasis'
+  | 'nutritionSourceCalories'
+  | 'nutritionSourceProteinG'
+  | 'nutritionSourceCarbsG'
+  | 'nutritionSourceFatG'
   | 'userOverrideOfNutritionRecordId'
   | 'macroEnergyKcal'
   | 'macroEnergyDeltaPct'

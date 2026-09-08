@@ -269,10 +269,10 @@ export default function HealthMethodologyPage({ onBack }: Props) {
           <div className="methodology-card rounded-2xl border p-3.5 md:col-span-2">
             <div className="methodology-source text-xs font-black uppercase tracking-wide">Nguồn Macro của món đã ăn</div>
             <p className="methodology-copy mt-2 text-sm font-semibold leading-relaxed">
-              Macro tiêu thụ chỉ cộng khi một món hoặc món kèm có đủ cả <strong>Protein + Carb + Fat</strong>. Dữ liệu có thể đến từ Nutrition Reference DB, dữ liệu người dùng nhập, nhãn dinh dưỡng hoặc công thức nguyên liệu.
+              Protein / Carb / Fat được theo dõi <strong>độc lập theo từng chất</strong>. Nếu một món có Protein và Fat nhưng chưa biết Carb, Protein/Fat vẫn được cộng; Carb của món đó giữ trạng thái chưa biết.
             </p>
             <p className="methodology-copy mt-2 text-[11px] font-semibold leading-relaxed">
-              Nếu thiếu bất kỳ thành phần nào, item đó không được cộng vào tổng Macro và được liệt kê là “Chưa đủ Macro”. nOcnOm không suy ngược P/C/F từ kcal để lấp dữ liệu.
+              Dữ liệu có thể đến từ Nutrition Reference DB, nhãn dinh dưỡng, website nhà sản xuất, dữ liệu người dùng nhập hoặc công thức nguyên liệu. Khi nguồn ghi theo 100 g/100 ml, app quy đổi sang khẩu phần thực tế và vẫn lưu số liệu gốc để truy vết. nOcnOm không suy ngược P/C/F từ kcal để lấp dữ liệu.
             </p>
           </div>
         </div>

@@ -45,15 +45,51 @@ assert(manual.sourceKind === 'nutrition-label', 'Manual source kind is preserved
 assert(manual.macroEnergyKcal === 522, 'Atwater 4-4-9 energy is calculated');
 assert(manual.macroEnergyConsistency === 'consistent', 'Near-equal kcal and macro energy is consistent');
 
+const partialManual = normalizeUserNutritionInput({
+  mode: 'manual',
+  calories: 500,
+  proteinG: 25,
+  carbsG: 60
+});
+assert(
+  partialManual.proteinG === 25 &&
+    partialManual.carbsG === 60 &&
+    partialManual.fatG === undefined &&
+    partialManual.macroEnergyConsistency === 'not-applicable',
+  'Partial macro entry preserves known nutrients and leaves missing fat unknown'
+);
+
+const labelPer100g = normalizeUserNutritionInput({
+  mode: 'manual',
+  inputBasis: '100g',
+  calories: 400,
+  servingAmount: 55,
+  servingUnit: 'g',
+  proteinG: 8,
+  carbsG: 60,
+  fatG: 14,
+  sourceKind: 'nutrition-label'
+});
+assert(
+  labelPer100g.calories === 220 &&
+    labelPer100g.proteinG === 4.4 &&
+    labelPer100g.carbsG === 33 &&
+    labelPer100g.fatG === 7.7 &&
+    labelPer100g.inputBasis === '100g' &&
+    labelPer100g.sourceCalories === 400,
+  '100g nutrition-label values are converted to the actual serving while retaining source values'
+);
+
 expectThrow(
   () =>
     normalizeUserNutritionInput({
       mode: 'manual',
-      calories: 500,
-      proteinG: 25,
-      carbsG: 60
+      inputBasis: '100g',
+      calories: 400,
+      servingUnit: 'g',
+      proteinG: 8
     }),
-  'Partial macro entry is rejected instead of inventing missing fat'
+  'Per-100g input requires the actual serving weight'
 );
 
 expectThrow(
