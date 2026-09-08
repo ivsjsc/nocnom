@@ -371,7 +371,6 @@ export default function EditDishModal({
                 </div>
 
                 <CustomNutritionEditor
-                  key={nutritionMode}
                   mode={nutritionMode}
                   initialValue={
                     initialNutritionInput.mode === nutritionMode
