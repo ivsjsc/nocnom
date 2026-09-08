@@ -300,6 +300,24 @@ html:not(.dark) .app-bottom-nav {
   color: #334155;
 }
 
+.health-macro-note {
+  background: #475569;
+  border-color: #64748b;
+  color: #f8fafc;
+}
+
+.health-macro-note-strong {
+  color: #ffffff;
+}
+
+.health-macro-note-warning {
+  color: #fde047;
+}
+
+.health-macro-note-success {
+  color: #86efac;
+}
+
 html:not(.dark) .health-card .health-value,
 html:not(.dark) .health-card .health-label,
 html:not(.dark) .health-card .health-meta,
@@ -385,6 +403,24 @@ html:not(.dark) .health-card .health-coverage-badge {
   background: #1e293b;
   border-color: #475569;
   color: #e2e8f0;
+}
+
+.dark .health-macro-note {
+  background: #1e293b;
+  border-color: #475569;
+  color: #f8fafc;
+}
+
+.dark .health-macro-note-strong {
+  color: #ffffff;
+}
+
+.dark .health-macro-note-warning {
+  color: #fde047;
+}
+
+.dark .health-macro-note-success {
+  color: #86efac;
 }
 
 .warning-title {
