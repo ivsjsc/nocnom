@@ -87,6 +87,9 @@ const emptyProfile: ProfileForm = {
 
 const toStringValue = (value: unknown) => (typeof value === 'string' ? value : '');
 
+const optionalNumberValue = (value: string): number | undefined =>
+  value.trim() ? Number(value) : undefined;
+
 export default function ProfileModal({
   user,
   onClose,
@@ -260,16 +263,16 @@ export default function ProfileModal({
         form.macroTargetMode === 'ratio'
           ? {
               mode: 'ratio',
-              proteinPct: Number(form.macroProteinPct),
-              carbsPct: Number(form.macroCarbsPct),
-              fatPct: Number(form.macroFatPct)
+              proteinPct: optionalNumberValue(form.macroProteinPct),
+              carbsPct: optionalNumberValue(form.macroCarbsPct),
+              fatPct: optionalNumberValue(form.macroFatPct)
             }
           : form.macroTargetMode === 'grams'
             ? {
                 mode: 'grams',
-                proteinG: Number(form.macroProteinG),
-                carbsG: Number(form.macroCarbsG),
-                fatG: Number(form.macroFatG)
+                proteinG: optionalNumberValue(form.macroProteinG),
+                carbsG: optionalNumberValue(form.macroCarbsG),
+                fatG: optionalNumberValue(form.macroFatG)
               }
             : { mode: 'auto' }
       ),
