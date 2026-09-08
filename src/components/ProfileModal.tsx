@@ -20,6 +20,8 @@ import {
 import {
   calculateAge,
   calculateBMI,
+  calculateDailyCalorieTargetFromProfile,
+  calculateMacroTargetPlan,
   getBMICategory,
   getIdealWeightRange,
   HEALTH_LIMITS,
@@ -27,7 +29,8 @@ import {
   BMI_REFERENCE_LABELS,
   type ActivityLevel,
   type Gender,
-  type HealthGoal
+  type HealthGoal,
+  type MacroTargetMode
 } from '../lib/healthUtils';
 
 type Props = {
@@ -50,6 +53,13 @@ type ProfileForm = {
   activityLevel: ActivityLevel;
   healthGoal: HealthGoal;
   dailyCalorieTarget: string;
+  macroTargetMode: MacroTargetMode;
+  macroProteinPct: string;
+  macroCarbsPct: string;
+  macroFatPct: string;
+  macroProteinG: string;
+  macroCarbsG: string;
+  macroFatG: string;
 };
 
 const emptyProfile: ProfileForm = {
@@ -65,7 +75,14 @@ const emptyProfile: ProfileForm = {
   weightKg: '',
   activityLevel: '',
   healthGoal: '',
-  dailyCalorieTarget: ''
+  dailyCalorieTarget: '',
+  macroTargetMode: 'auto',
+  macroProteinPct: '',
+  macroCarbsPct: '',
+  macroFatPct: '',
+  macroProteinG: '',
+  macroCarbsG: '',
+  macroFatG: ''
 };
 
 const toStringValue = (value: unknown) => (typeof value === 'string' ? value : '');
@@ -118,7 +135,32 @@ export default function ProfileModal({
           healthGoal: (data.healthGoal as HealthGoal) || '',
           dailyCalorieTarget: data.dailyCalorieTarget
             ? String(data.dailyCalorieTarget)
-            : ''
+            : '',
+          macroTargetMode: (data.macroTargetMode as MacroTargetMode) || 'auto',
+          macroProteinPct:
+            data.macroProteinPct !== undefined && data.macroProteinPct !== ''
+              ? String(data.macroProteinPct)
+              : '',
+          macroCarbsPct:
+            data.macroCarbsPct !== undefined && data.macroCarbsPct !== ''
+              ? String(data.macroCarbsPct)
+              : '',
+          macroFatPct:
+            data.macroFatPct !== undefined && data.macroFatPct !== ''
+              ? String(data.macroFatPct)
+              : '',
+          macroProteinG:
+            data.macroProteinG !== undefined && data.macroProteinG !== ''
+              ? String(data.macroProteinG)
+              : '',
+          macroCarbsG:
+            data.macroCarbsG !== undefined && data.macroCarbsG !== ''
+              ? String(data.macroCarbsG)
+              : '',
+          macroFatG:
+            data.macroFatG !== undefined && data.macroFatG !== ''
+              ? String(data.macroFatG)
+              : ''
         });
       } catch (error) {
         if (!active) return;
