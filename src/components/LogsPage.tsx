@@ -104,6 +104,13 @@ const emptyDrafts = (): Record<MealKey, MealDraft> => ({
 const timestampForDateKey = (dateKey: string) =>
   getVietnamTimestampForDateKey(dateKey, '12:00:00') ?? 0;
 
+const optionalProfileNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'string' && !value.trim()) return undefined;
+  if (typeof value !== 'string' && typeof value !== 'number') return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+};
+
 const formatDay = (timestamp: number) =>
   new Intl.DateTimeFormat('vi-VN', {
     timeZone: VIETNAM_TIME_ZONE,
@@ -428,16 +435,16 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
     macroTargetMode === 'ratio'
       ? {
           mode: 'ratio',
-          proteinPct: Number(profile?.macroProteinPct),
-          carbsPct: Number(profile?.macroCarbsPct),
-          fatPct: Number(profile?.macroFatPct)
+          proteinPct: optionalProfileNumber(profile?.macroProteinPct),
+          carbsPct: optionalProfileNumber(profile?.macroCarbsPct),
+          fatPct: optionalProfileNumber(profile?.macroFatPct)
         }
       : macroTargetMode === 'grams'
         ? {
             mode: 'grams',
-            proteinG: Number(profile?.macroProteinG),
-            carbsG: Number(profile?.macroCarbsG),
-            fatG: Number(profile?.macroFatG)
+            proteinG: optionalProfileNumber(profile?.macroProteinG),
+            carbsG: optionalProfileNumber(profile?.macroCarbsG),
+            fatG: optionalProfileNumber(profile?.macroFatG)
           }
         : { mode: 'auto' }
   );
