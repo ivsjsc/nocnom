@@ -266,6 +266,67 @@ html:not(.dark) .app-bottom-nav {
   color: #1e293b;
 }
 
+/*
+ * Health dashboard typography contract.
+ * Explicit semantic foregrounds prevent light-theme values from inheriting
+ * low-contrast utility colors after Tailwind/build ordering changes.
+ */
+.health-value {
+  color: #0b1220;
+}
+
+.health-label {
+  color: #1e293b;
+}
+
+.health-meta {
+  color: #475569;
+}
+
+.health-goal-badge {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.health-coverage-badge {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+html:not(.dark) .health-card .health-value,
+html:not(.dark) .health-card .health-label,
+html:not(.dark) .health-card .health-meta,
+html:not(.dark) .health-card .health-goal-badge,
+html:not(.dark) .health-card .health-coverage-badge {
+  opacity: 1;
+}
+
+html:not(.dark) .health-card .health-value {
+  color: #0b1220 !important;
+}
+
+html:not(.dark) .health-card .health-label {
+  color: #1e293b !important;
+}
+
+html:not(.dark) .health-card .health-meta {
+  color: #475569 !important;
+}
+
+html:not(.dark) .health-card .health-goal-badge {
+  background: #eff6ff !important;
+  border-color: #93c5fd !important;
+  color: #1e40af !important;
+}
+
+html:not(.dark) .health-card .health-coverage-badge {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
 .dark .health-card {
   background: var(--health-card-dark);
   border-color: var(--health-border-dark);
@@ -284,6 +345,30 @@ html:not(.dark) .app-bottom-nav {
   background: #1e293b;
   border-color: #64748b;
   color: var(--health-text-dark);
+}
+
+.dark .health-value {
+  color: #f8fafc;
+}
+
+.dark .health-label {
+  color: #e2e8f0;
+}
+
+.dark .health-meta {
+  color: #cbd5e1;
+}
+
+.dark .health-goal-badge {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #1d4ed8;
+  color: #bfdbfe;
+}
+
+.dark .health-coverage-badge {
+  background: #1e293b;
+  border-color: #475569;
+  color: #e2e8f0;
 }
 
 .warning-title {
