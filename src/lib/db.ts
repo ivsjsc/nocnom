@@ -1162,7 +1162,17 @@ const upsertMealLogData = ({
           nutritionSourceId: nutritionSnapshot.nutritionSourceId,
           nutritionSourceUrl: nutritionSnapshot.nutritionSourceUrl,
           nutritionMatchType: nutritionSnapshot.nutritionMatchType,
-          nutritionMatchScore: nutritionSnapshot.nutritionMatchScore
+          nutritionMatchScore: nutritionSnapshot.nutritionMatchScore,
+          nutritionDataOrigin: nutritionSnapshot.nutritionDataOrigin,
+          nutritionDataStatus: nutritionSnapshot.nutritionDataStatus,
+          nutritionSourceKind: nutritionSnapshot.nutritionSourceKind,
+          nutritionSourceNote: nutritionSnapshot.nutritionSourceNote,
+          userOverrideOfNutritionRecordId:
+            nutritionSnapshot.userOverrideOfNutritionRecordId,
+          macroEnergyKcal: nutritionSnapshot.macroEnergyKcal,
+          macroEnergyDeltaPct: nutritionSnapshot.macroEnergyDeltaPct,
+          macroEnergyConsistency: nutritionSnapshot.macroEnergyConsistency,
+          nutritionRecipe: nutritionSnapshot.nutritionRecipe
         }
       : {}),
     timestamp: timestampForMealDate(dateKey, mealKey)
