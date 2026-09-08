@@ -54,6 +54,19 @@ export type CalorieGoalPlan = {
   type: 'estimate';
 };
 
+export type MacroTargetPlan = {
+  calorieTarget: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  proteinPct: number;
+  carbsPct: number;
+  fatPct: number;
+  strategy: 'goal_ratio';
+  goal: Exclude<HealthGoal, ''>;
+  type: 'estimate';
+};
+
 export type WaterEstimate = {
   valueMl: number;
   ml: number;
