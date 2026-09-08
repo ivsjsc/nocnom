@@ -98,6 +98,14 @@ const logsPage = fs.readFileSync(
   'src/components/LogsPage.tsx',
   'utf8'
 );
+const loginMenu = fs.readFileSync(
+  'src/components/Login.tsx',
+  'utf8'
+);
+const healthMethodologyPage = fs.readFileSync(
+  'src/components/HealthMethodologyPage.tsx',
+  'utf8'
+);
 
 assert(
   addDishModal.includes('Ảnh công khai qua URL') &&
@@ -148,6 +156,20 @@ assert(
     profileModal.includes("updateField('dailyCalorieTarget'") &&
     logsPage.includes('profile?.dailyCalorieTarget'),
   'Custom calorie target is editable in profile and reused on the Health screen'
+);
+assert(
+  loginMenu.includes('<span>Quản lý tài khoản</span>') &&
+    !loginMenu.includes('<span>Quản lý tài khoản nOcnOm</span>') &&
+    loginMenu.includes('<span>Chỉ số & cơ sở tính toán</span>'),
+  'Account menu exposes methodology between account management and logout with concise labels'
+);
+assert(
+  healthMethodologyPage.includes('BMI = kg / m²') &&
+    healthMethodologyPage.includes('10W + 6.25H') &&
+    healthMethodologyPage.includes('TDEE ≈ RMR × hệ số vận động') &&
+    healthMethodologyPage.includes('Carb = (kcal mục tiêu') &&
+    healthMethodologyPage.includes('Nguồn học thuật chính'),
+  'Health methodology page documents formulas, estimates and academic bibliography'
 );
 assert(
   !homePage.includes('≈ {plannedCalories.toLocaleString'),
