@@ -198,6 +198,71 @@ html:not(.dark) .app-bottom-nav {
 }
 
 /*
+ * App-wide contrast floor.
+ * Tailwind utilities remain available for layout/accent work, but neutral
+ * foreground/background utilities are normalized here so build order cannot
+ * produce white-on-white or dark-on-dark text.
+ */
+html:not(.dark) .app-shell .text-slate-950,
+html:not(.dark) .app-shell .text-slate-900 {
+  color: #0b1220 !important;
+}
+
+html:not(.dark) .app-shell .text-slate-800,
+html:not(.dark) .app-shell .text-slate-700 {
+  color: #1e293b !important;
+}
+
+html:not(.dark) .app-shell .text-slate-600,
+html:not(.dark) .app-shell .text-slate-500,
+html:not(.dark) .app-shell .text-slate-400 {
+  color: #475569 !important;
+}
+
+html:not(.dark) .app-shell .bg-white {
+  background-color: #ffffff !important;
+}
+
+html:not(.dark) .app-shell .bg-slate-50 {
+  background-color: #f8fafc !important;
+}
+
+html:not(.dark) .app-shell .bg-slate-100 {
+  background-color: #f1f5f9 !important;
+}
+
+html:not(.dark) .app-shell input:not([type='checkbox']):not([type='radio']),
+html:not(.dark) .app-shell select,
+html:not(.dark) .app-shell textarea {
+  color: #0b1220 !important;
+}
+
+.dark .app-shell .text-slate-950,
+.dark .app-shell .text-slate-900,
+.dark .app-shell .text-slate-100 {
+  color: #f8fafc !important;
+}
+
+.dark .app-shell .text-slate-800,
+.dark .app-shell .text-slate-700,
+.dark .app-shell .text-slate-600,
+.dark .app-shell .text-slate-300,
+.dark .app-shell .text-slate-200 {
+  color: #d5deea !important;
+}
+
+.dark .app-shell .text-slate-500,
+.dark .app-shell .text-slate-400 {
+  color: #aebccd !important;
+}
+
+.dark .app-shell input:not([type='checkbox']):not([type='radio']),
+.dark .app-shell select,
+.dark .app-shell textarea {
+  color: #f8fafc !important;
+}
+
+/*
  * Semantic contrast helpers.
  * Use these for small descriptive copy instead of opacity-based text colors.
  */
@@ -750,6 +815,187 @@ body {
 .theme-card-subtle {
   background: var(--app-surface-soft);
   border-color: var(--app-border);
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Methodology / academic transparency surfaces                                */
+/* -------------------------------------------------------------------------- */
+.methodology-hero {
+  background: #0f1b2d;
+  border-color: #24344d;
+  color: #f8fafc;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
+}
+
+.methodology-hero-kicker {
+  color: #93c5fd;
+}
+
+.methodology-hero-title {
+  color: #ffffff;
+}
+
+.methodology-hero-copy {
+  color: #dbeafe;
+}
+
+.methodology-back-button {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.methodology-hero-note {
+  background: #132238;
+  border-color: #3153a5;
+  color: #e0edff;
+}
+
+.methodology-card,
+.methodology-section {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0b1220;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.methodology-card-title {
+  color: #0f172a;
+}
+
+.methodology-copy {
+  color: #334155;
+}
+
+.methodology-source {
+  color: #475569;
+}
+
+.methodology-formula,
+.methodology-formula-row,
+.methodology-step {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.methodology-formula {
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.08);
+}
+
+.methodology-accent-panel {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e3a8a;
+}
+
+.methodology-reference {
+  background: #ffffff;
+  border-color: #cbd5e1;
+}
+
+.methodology-reference-index {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.methodology-badge-formula {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.methodology-badge-estimate {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.methodology-badge-preset {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.dark .methodology-hero {
+  background: #0b1220;
+  border-color: #26364d;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+}
+
+.dark .methodology-back-button {
+  background: #17263a;
+  border-color: #3b526f;
+  color: #e2e8f0;
+}
+
+.dark .methodology-hero-note {
+  background: #111c33;
+  border-color: #3153a5;
+  color: #e0edff;
+}
+
+.dark .methodology-card,
+.dark .methodology-section {
+  background: #0f1b2d;
+  border-color: #2b3c53;
+  color: #f8fafc;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+}
+
+.dark .methodology-card-title {
+  color: #f8fafc;
+}
+
+.dark .methodology-copy {
+  color: #d5deea;
+}
+
+.dark .methodology-source {
+  color: #aebccd;
+}
+
+.dark .methodology-formula,
+.dark .methodology-formula-row,
+.dark .methodology-step {
+  background: #17263a;
+  border-color: #3b526f;
+  color: #f8fafc;
+}
+
+.dark .methodology-accent-panel {
+  background: #162c4a;
+  border-color: #3153a5;
+  color: #dbeafe;
+}
+
+.dark .methodology-reference {
+  background: #111c2d;
+  border-color: #2b3c53;
+}
+
+.dark .methodology-reference-index {
+  background: #17263a;
+  color: #d5deea;
+}
+
+.dark .methodology-badge-formula {
+  background: #073b32;
+  border-color: #0f766e;
+  color: #a7f3d0;
+}
+
+.dark .methodology-badge-estimate {
+  background: #422006;
+  border-color: #92400e;
+  color: #fde68a;
+}
+
+.dark .methodology-badge-preset {
+  background: #172554;
+  border-color: #1d4ed8;
+  color: #bfdbfe;
 }
 
 .dark .bg-slate-950 {
