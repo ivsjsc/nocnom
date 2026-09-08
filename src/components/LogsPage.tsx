@@ -636,7 +636,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   <span className="health-kicker block text-[11px] font-black tracking-wide">
                     Chỉ số thể trạng
                   </span>
-                  <span className="text-sm font-black text-slate-950 dark:text-white">
+                  <span className="health-card-title text-sm font-black">
                     BMI · {BMI_REFERENCE_LABELS[DEFAULT_BMI_REFERENCE_SYSTEM]}
                   </span>
                 </div>
@@ -682,7 +682,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
             {idealWeight ? (
               <div className="flex items-center justify-between">
                 <span>Khoảng cân nặng tham khảo:</span>
-                <span className="font-black text-slate-900 dark:text-slate-100">
+                <span className="health-card-strong font-black">
                   {idealWeight.min} - {idealWeight.max} kg
                 </span>
               </div>
@@ -709,7 +709,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   <span className="health-kicker block text-[11px] font-black tracking-wide">
                     Năng lượng hôm nay
                   </span>
-                  <span className="text-sm font-black text-slate-950 dark:text-white">
+                  <span className="health-card-title text-sm font-black">
                     Calo nạp / Mục tiêu
                   </span>
                 </div>
@@ -805,7 +805,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                 <span className="health-kicker block text-[11px] font-black tracking-wide">
                   Cân bằng dinh dưỡng
                 </span>
-                <span className="text-sm font-black text-slate-950 dark:text-white">
+                <span className="health-card-title text-sm font-black">
                   Macro · Protein / Carb / Fat
                 </span>
               </div>
@@ -901,7 +901,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   <span className="health-kicker block text-[11px] font-black tracking-wide">
                     Theo dõi tuần
                   </span>
-                  <span className="text-sm font-black text-slate-950 dark:text-white">
+                  <span className="health-card-title text-sm font-black">
                     Calo 7 ngày gần nhất
                   </span>
                 </div>
@@ -980,7 +980,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                   <span className="health-kicker block text-[11px] font-black tracking-wide">
                     Cân bằng bữa ăn
                   </span>
-                  <span className="text-sm font-black text-slate-950 dark:text-white">
+                  <span className="health-card-title text-sm font-black">
                     Phân bổ Sáng / Trưa / Tối
                   </span>
                 </div>
