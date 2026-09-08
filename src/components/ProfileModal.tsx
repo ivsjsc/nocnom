@@ -221,6 +221,72 @@ export default function ProfileModal({
     return !isNaN(currentHeight) ? getIdealWeightRange(currentHeight) : null;
   }, [currentHeight]);
 
+  const automaticCalorieTarget = useMemo(
+    () =>
+      calculateDailyCalorieTargetFromProfile({
+        weightKg: form.weightKg,
+        heightCm: form.heightCm,
+        dateOfBirth: form.dateOfBirth,
+        gender: form.gender,
+        activityLevel: form.activityLevel,
+        healthGoal: form.healthGoal
+      }),
+    [
+      form.activityLevel,
+      form.dateOfBirth,
+      form.gender,
+      form.healthGoal,
+      form.heightCm,
+      form.weightKg
+    ]
+  );
+
+  const effectiveCalorieTarget = useMemo(() => {
+    const custom = Number(form.dailyCalorieTarget);
+    return form.dailyCalorieTarget.trim() &&
+      Number.isFinite(custom) &&
+      custom >= 800 &&
+      custom <= 6000
+      ? custom
+      : automaticCalorieTarget;
+  }, [automaticCalorieTarget, form.dailyCalorieTarget]);
+
+  const macroTargetPreview = useMemo(
+    () =>
+      calculateMacroTargetPlan(
+        effectiveCalorieTarget,
+        form.healthGoal,
+        Number.isFinite(currentWeight) ? currentWeight : null,
+        form.macroTargetMode === 'ratio'
+          ? {
+              mode: 'ratio',
+              proteinPct: Number(form.macroProteinPct),
+              carbsPct: Number(form.macroCarbsPct),
+              fatPct: Number(form.macroFatPct)
+            }
+          : form.macroTargetMode === 'grams'
+            ? {
+                mode: 'grams',
+                proteinG: Number(form.macroProteinG),
+                carbsG: Number(form.macroCarbsG),
+                fatG: Number(form.macroFatG)
+              }
+            : { mode: 'auto' }
+      ),
+    [
+      currentWeight,
+      effectiveCalorieTarget,
+      form.healthGoal,
+      form.macroCarbsG,
+      form.macroCarbsPct,
+      form.macroFatG,
+      form.macroFatPct,
+      form.macroProteinG,
+      form.macroProteinPct,
+      form.macroTargetMode
+    ]
+  );
+
   const handleSave = async () => {
     if (!form.fullName.trim()) {
       setStatus({ type: 'error', message: 'Vui lòng nhập họ và tên.' });
@@ -284,6 +350,66 @@ export default function ProfileModal({
       return;
     }
 
+    const ratioValues = [
+      form.macroProteinPct,
+      form.macroCarbsPct,
+      form.macroFatPct
+    ];
+    const ratioNumbers = ratioValues.map(value => Number(value));
+    if (form.macroTargetMode === 'ratio') {
+      if (
+        ratioValues.some(value => !value.trim()) ||
+        ratioNumbers.some(
+          value => !Number.isFinite(value) || value < 0 || value > 100
+        )
+      ) {
+        setStatus({
+          type: 'error',
+          message: 'Tỷ lệ Macro cần đủ Protein / Carb / Fat, mỗi giá trị từ 0 đến 100%.'
+        });
+        return;
+      }
+
+      const ratioTotal = ratioNumbers.reduce((sum, value) => sum + value, 0);
+      if (Math.abs(ratioTotal - 100) > 0.1) {
+        setStatus({
+          type: 'error',
+          message: `Tổng tỷ lệ Macro phải bằng 100%. Hiện tại là ${ratioTotal.toFixed(1)}%.`
+        });
+        return;
+      }
+
+      if (!effectiveCalorieTarget) {
+        setStatus({
+          type: 'error',
+          message: 'Chế độ tỷ lệ % cần có mục tiêu calo/ngày. Hãy hoàn thiện hồ sơ hoặc nhập mục tiêu calo tùy chỉnh.'
+        });
+        return;
+      }
+    }
+
+    const gramValues = [
+      form.macroProteinG,
+      form.macroCarbsG,
+      form.macroFatG
+    ];
+    const gramNumbers = gramValues.map(value => Number(value));
+    if (form.macroTargetMode === 'grams') {
+      if (
+        gramValues.some(value => !value.trim()) ||
+        gramNumbers.some(
+          value => !Number.isFinite(value) || value < 0 || value > 500
+        ) ||
+        gramNumbers.every(value => value === 0)
+      ) {
+        setStatus({
+          type: 'error',
+          message: 'Mục tiêu gram cần đủ Protein / Carb / Fat từ 0 đến 500 g/ngày và không thể đồng thời bằng 0.'
+        });
+        return;
+      }
+    }
+
     setSaving(true);
     setStatus(null);
 
@@ -309,7 +435,20 @@ export default function ProfileModal({
         dailyCalorieTarget:
           form.dailyCalorieTarget.trim()
             ? Math.round(dailyCalorieTargetValue)
-            : ''
+            : '',
+        macroTargetMode: form.macroTargetMode,
+        macroProteinPct:
+          form.macroTargetMode === 'ratio' ? ratioNumbers[0] : '',
+        macroCarbsPct:
+          form.macroTargetMode === 'ratio' ? ratioNumbers[1] : '',
+        macroFatPct:
+          form.macroTargetMode === 'ratio' ? ratioNumbers[2] : '',
+        macroProteinG:
+          form.macroTargetMode === 'grams' ? gramNumbers[0] : '',
+        macroCarbsG:
+          form.macroTargetMode === 'grams' ? gramNumbers[1] : '',
+        macroFatG:
+          form.macroTargetMode === 'grams' ? gramNumbers[2] : ''
       });
 
       onProfileSaved?.(photoUrl, fullName);
