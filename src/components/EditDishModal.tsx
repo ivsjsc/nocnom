@@ -132,13 +132,16 @@ export default function EditDishModal({
         mockDb.updateDishName(dish.id, cleanName);
       }
 
-      if (parsedCalories !== estimateDishCalories(dish)) {
+      const caloriesChanged =
+        parsedCalories !== estimateDishCalories(dish);
+      if (caloriesChanged) {
         mockDb.updateDishCalories(dish.id, parsedCalories);
       }
 
       if (parsedMacros) {
         const [nextProteinG, nextCarbsG, nextFatG] = parsedMacros;
         if (
+          caloriesChanged ||
           nextProteinG !== dish.proteinG ||
           nextCarbsG !== dish.carbsG ||
           nextFatG !== dish.fatG
