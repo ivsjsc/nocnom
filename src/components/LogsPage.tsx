@@ -862,12 +862,12 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                 })}
               </div>
 
-              <div className="health-copy mt-3 rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-[11px] font-semibold leading-relaxed dark:border-slate-700 dark:bg-slate-950/70">
+              <div className="health-macro-note mt-3 rounded-2xl border px-3.5 py-3 text-[11px] font-semibold leading-relaxed">
                 Mục tiêu macro được ước tính từ mục tiêu năng lượng hiện tại và mục tiêu
-                <strong className="font-black"> {GOAL_LABELS[healthGoal].label.toLowerCase()}</strong>:
+                <strong className="health-macro-note-strong font-black"> {GOAL_LABELS[healthGoal].label.toLowerCase()}</strong>:
                 {' '}Protein {macroTargetPlan.proteinPct}% · Carb {macroTargetPlan.carbsPct}% · Fat {macroTargetPlan.fatPct}%.
                 {todayMacros.totalItems > 0 && !todayMacros.isComplete ? (
-                  <span className="mt-1 block font-bold text-amber-700 dark:text-amber-300">
+                  <span className="health-macro-note-warning mt-1 block font-bold">
                     Số đã ăn chỉ cộng các món có đủ dữ liệu macro ({todayMacros.knownItems}/{todayMacros.totalItems} mục).
                     nOcnOm không suy ra protein/carb/fat từ kcal còn thiếu.
                   </span>
@@ -876,7 +876,7 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                     Ghi nhận bữa ăn để bắt đầu theo dõi lượng macro thực tế.
                   </span>
                 ) : (
-                  <span className="mt-1 block font-bold text-emerald-700 dark:text-emerald-300">
+                  <span className="health-macro-note-success mt-1 block font-bold">
                     Dữ liệu macro của các mục đã ăn hôm nay đã đầy đủ.
                   </span>
                 )}
