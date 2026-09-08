@@ -105,3 +105,44 @@ JavaScript bundle.
 
 Meal add-ons keep a nutrition record ID and their own calorie snapshot. Historical
 logs therefore remain stable even if the reference dataset is updated later.
+
+
+## Runtime nutrition ownership
+
+nOcnOm deliberately separates the static reference catalog from account-owned nutrition data.
+
+| Layer | Storage | Mutable by app user | Purpose |
+|---|---|---:|---|
+| Reference Nutrition DB | `data/nutrition/source/*` -> generated `public/data/nutrition/*` | No | Shared food reference, portions, provenance and curated/verified states |
+| User manual nutrition | `users/{uid}/state/dishes` | Yes | Nutrition label, manufacturer data, user weighing or other explicit user input |
+| User recipe nutrition | `users/{uid}/state/dishes` | Yes | Per-serving calculation from ingredient quantities and per-100g values |
+| Meal history snapshot | `users/{uid}/state/logs` | Through the bounded history editor | Immutable nutrition snapshot for the recorded meal |
+
+The current reference catalog size is only a dataset snapshot, not a closed list of foods. A user may create foods that do not exist in the reference catalog.
+
+### Override rule
+
+A user edit MUST NOT mutate the canonical reference record. When a personal dish is linked to a reference food and the user changes calories or macros, the dish keeps the canonical link in `nutritionRecordId` / `userOverrideOfNutritionRecordId` while the active values are stored as a user-owned override.
+
+### Provenance states
+
+Runtime dishes distinguish:
+
+- `reference-db`: shared reference data.
+- `user-manual`: user-provided values.
+- `user-recipe`: calculated from the user's ingredient recipe.
+- `verified` / `curated`: reserved for data that has actually passed the corresponding data-governance process. User-entered values are never automatically promoted to verified.
+
+### Macro integrity
+
+Protein / carbohydrate / fat are never inferred from calories alone.
+
+For a manual serving, macro tracking becomes complete only when all three values are present. For a recipe, macro tracking becomes complete only when every ingredient has all three per-100g macro values.
+
+When complete macro values are available, nOcnOm computes an Atwater consistency check:
+
+```
+macro_energy_kcal = protein_g * 4 + carbs_g * 4 + fat_g * 9
+```
+
+This check is a data-quality signal, not a replacement for source nutrition data. Differences may occur because of fibre, sugar alcohols, alcohol, analytical methods and rounding.
