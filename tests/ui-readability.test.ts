@@ -44,6 +44,19 @@ assert(
     css.includes('.health-goal-badge'),
   'Health dashboard defines explicit light/dark foreground contracts'
 );
+assert(
+  health.includes('health-card-title text-sm font-black') &&
+    health.includes('BMI · {BMI_REFERENCE_LABELS[DEFAULT_BMI_REFERENCE_SYSTEM]}') &&
+    health.includes('Calo nạp / Mục tiêu') &&
+    health.includes('Macro · Protein / Carb / Fat'),
+  'Health dashboard secondary titles use semantic foregrounds instead of light/dark utility collisions'
+);
+assert(
+  css.includes('html:not(.dark) .health-card .health-card-title') &&
+    css.includes('.dark .health-card-title') &&
+    css.includes('opacity: 1 !important'),
+  'Health card titles enforce readable contrast in both themes'
+);
 
 if (failures > 0) process.exit(1);
 console.log('UI readability tests: PASS');
