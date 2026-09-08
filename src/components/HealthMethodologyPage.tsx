@@ -252,12 +252,35 @@ export default function HealthMethodologyPage({ onBack }: Props) {
           </div>
 
           <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-3.5 dark:border-blue-900/60 dark:bg-blue-950/20">
-            <div className="text-xs font-black uppercase tracking-wide text-blue-700 dark:text-blue-300">Override hiện có</div>
+            <div className="text-xs font-black uppercase tracking-wide text-blue-700 dark:text-blue-300">Override mục tiêu</div>
             <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-700 dark:text-slate-300">
               Bạn có thể đặt thủ công <strong>mục tiêu kcal/ngày</strong>. Nếu để trống, app tự tính từ hồ sơ + RMR/TDEE + mục tiêu dinh dưỡng.
             </p>
             <p className="mt-2 text-[11px] font-bold leading-relaxed text-slate-500">
-              Macro và nước hiện được engine tự suy ra theo mục tiêu; chưa có trường override trực tiếp từng Protein/Carb/Fat/nước.
+              Macro mục tiêu và nước hiện được engine suy ra theo hồ sơ/mục tiêu; chưa có trường override trực tiếp từng Protein/Carb/Fat mục tiêu hoặc nước.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-violet-200 bg-violet-50/50 p-3.5 dark:border-violet-900/60 dark:bg-violet-950/20 md:col-span-2">
+            <div className="text-xs font-black uppercase tracking-wide text-violet-700 dark:text-violet-300">
+              Macro của món ăn đã tiêu thụ
+            </div>
+            <div className="mt-2 grid gap-2 text-[11px] font-semibold leading-relaxed text-slate-700 dark:text-slate-300 sm:grid-cols-3">
+              <div className="rounded-xl bg-white/80 p-3 dark:bg-slate-950/60">
+                <strong className="block text-slate-950 dark:text-white">Tra cứu DB</strong>
+                Dùng bản Nutrition Reference nếu món và khẩu phần phù hợp.
+              </div>
+              <div className="rounded-xl bg-white/80 p-3 dark:bg-slate-950/60">
+                <strong className="block text-slate-950 dark:text-white">Nhập thủ công</strong>
+                Nhập kcal và, nếu có, đủ Protein / Carb / Fat từ nhãn, nhà sản xuất hoặc số liệu tự cân.
+              </div>
+              <div className="rounded-xl bg-white/80 p-3 dark:bg-slate-950/60">
+                <strong className="block text-slate-950 dark:text-white">Tính từ nguyên liệu</strong>
+                Cộng từng nguyên liệu theo gram và giá trị/100g, sau đó chia theo số khẩu phần.
+              </div>
+            </div>
+            <p className="mt-2 text-[10px] font-bold leading-relaxed text-violet-800 dark:text-violet-300">
+              Dữ liệu cá nhân không sửa Nutrition DB chung và không tự được gắn nhãn “Đã xác minh”. Nếu liên kết một món tham khảo rồi tùy chỉnh, app giữ liên kết nguồn nhưng lưu giá trị cá nhân riêng.
             </p>
           </div>
         </div>
