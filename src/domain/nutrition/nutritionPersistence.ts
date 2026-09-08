@@ -49,7 +49,11 @@ export const nutritionSelectionToDishFields = (
   nutritionSourceId: selection.sourceId,
   nutritionSourceUrl: selection.sourceUrl,
   nutritionMatchType: selection.matchType,
-  nutritionMatchScore: selection.matchScore
+  nutritionMatchScore: selection.matchScore,
+  nutritionDataOrigin: 'reference-db',
+  nutritionDataStatus:
+    selection.verificationState === 'VERIFIED' ? 'verified' : 'reference',
+  nutritionSourceKind: 'reference-db'
 });
 
 export const dishNutritionFieldsToMealSnapshot = (
@@ -81,5 +85,14 @@ export const dishNutritionFieldsToMealSnapshot = (
   nutritionSourceId: fields.nutritionSourceId,
   nutritionSourceUrl: fields.nutritionSourceUrl,
   nutritionMatchType: fields.nutritionMatchType,
-  nutritionMatchScore: fields.nutritionMatchScore
+  nutritionMatchScore: fields.nutritionMatchScore,
+  nutritionDataOrigin: fields.nutritionDataOrigin,
+  nutritionDataStatus: fields.nutritionDataStatus,
+  nutritionSourceKind: fields.nutritionSourceKind,
+  nutritionSourceNote: fields.nutritionSourceNote,
+  userOverrideOfNutritionRecordId: fields.userOverrideOfNutritionRecordId,
+  macroEnergyKcal: fields.macroEnergyKcal,
+  macroEnergyDeltaPct: fields.macroEnergyDeltaPct,
+  macroEnergyConsistency: fields.macroEnergyConsistency,
+  nutritionRecipe: fields.nutritionRecipe
 });
