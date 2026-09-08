@@ -335,10 +335,9 @@ export function calculateMacroTargetPlan(
     return null;
   }
 
-  // Balanced adult presets used as an app planning aid, not a clinical
-  // prescription. All three presets stay within commonly used broad
-  // macronutrient percentage ranges; the weight-loss preset prioritizes
-  // protein while the gain preset keeps carbohydrate availability higher.
+  // Internal balanced presets used as an app planning aid, not a clinical
+  // prescription. The weight-loss preset prioritizes protein while the gain
+  // preset keeps carbohydrate availability higher.
   const ratios: Record<
     Exclude<HealthGoal, ''>,
     { protein: number; carbs: number; fat: number }
