@@ -62,7 +62,9 @@ export type MacroTargetPlan = {
   proteinPct: number;
   carbsPct: number;
   fatPct: number;
-  strategy: 'goal_ratio';
+  strategy: 'goal_ratio' | 'goal_weight_based';
+  proteinPerKg?: number;
+  fatPerKg?: number;
   goal: Exclude<HealthGoal, ''>;
   type: 'estimate';
 };
