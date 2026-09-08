@@ -129,6 +129,32 @@ assert(
   'Macro target does not guess a missing goal or calorie target'
 );
 
+const weightedLoseMacros = calculateMacroTargetPlan(1800, 'lose', 60);
+assert(
+  Boolean(
+    weightedLoseMacros &&
+      weightedLoseMacros.strategy === 'goal_weight_based' &&
+      weightedLoseMacros.proteinG === 108 &&
+      weightedLoseMacros.fatG === 48 &&
+      weightedLoseMacros.carbsG === 234 &&
+      weightedLoseMacros.proteinPerKg === 1.8 &&
+      weightedLoseMacros.fatPerKg === 0.8
+  ),
+  'Weight-loss macro target uses body-weight anchors and fills remaining energy with carbs'
+);
+
+const weightedGainMacros = calculateMacroTargetPlan(2400, 'gain', 60);
+assert(
+  Boolean(
+    weightedGainMacros &&
+      weightedGainMacros.strategy === 'goal_weight_based' &&
+      weightedGainMacros.proteinG === 96 &&
+      weightedGainMacros.fatG === 54 &&
+      weightedGainMacros.carbsG === 382.5
+  ),
+  'Weight-gain macro target uses goal-specific protein and fat anchors'
+);
+
 assert(
   calculateDailyCalorieTargetFromProfile({
     weightKg: 60,
