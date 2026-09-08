@@ -86,7 +86,10 @@ export default function DishDetailModal({
         servingAmount: item.servingAmount ?? item.servingG,
         servingUnit: item.servingUnit ?? (item.kind === 'drink' ? 'ml' : 'g'),
         kcalMin: item.kcalMin,
-        kcalMax: item.kcalMax
+        kcalMax: item.kcalMax,
+        proteinG: item.proteinG,
+        carbsG: item.carbsG,
+        fatG: item.fatG
       }));
 
     mockDb.addLog(
@@ -215,6 +218,29 @@ export default function DishDetailModal({
                     ? ` · ${dish.portionGrams}g`
                     : ''}
               </div>
+
+              {dish.proteinG !== undefined &&
+                dish.carbsG !== undefined &&
+                dish.fatG !== undefined ? (
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-xl bg-emerald-50 px-2.5 py-2 text-center">
+                    <div className="text-[9px] font-black uppercase text-emerald-700">Protein</div>
+                    <div className="mt-0.5 text-sm font-black text-emerald-950">{dish.proteinG} g</div>
+                  </div>
+                  <div className="rounded-xl bg-blue-50 px-2.5 py-2 text-center">
+                    <div className="text-[9px] font-black uppercase text-blue-700">Carb</div>
+                    <div className="mt-0.5 text-sm font-black text-blue-950">{dish.carbsG} g</div>
+                  </div>
+                  <div className="rounded-xl bg-amber-50 px-2.5 py-2 text-center">
+                    <div className="text-[9px] font-black uppercase text-amber-700">Fat</div>
+                    <div className="mt-0.5 text-sm font-black text-amber-950">{dish.fatG} g</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-600">
+                  Chưa có đủ Protein / Carb / Fat cho khẩu phần này. nOcnOm không suy ra macro từ kcal.
+                </div>
+              )}
 
               {dish.nutritionReferenceOnly ? (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-900">
