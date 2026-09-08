@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Clipboard, Eye, Pencil, Plus, Search, Star, X } from 'lucide-react';
-import { estimateDishCalories, mockDb, type Category, type Dish, type LogEntry } from '../lib/db';
+import { estimateDishCalories, mockDb, type Category, type Dish } from '../lib/db';
 import DishDetailModal from './DishDetailModal';
 import AddDishModal from './AddDishModal';
 import DishImage from './DishImage';
@@ -18,7 +18,6 @@ const normalizeText = (value: string) =>
 export default function MenuPage({ canManage = false }: { canManage?: boolean }) {
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
@@ -28,11 +27,9 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
   useEffect(() => {
     const unsubDishes = mockDb.subscribeDishes(setDishes);
     const unsubCategories = mockDb.subscribeCategories(setCategories);
-    const unsubLogs = mockDb.subscribeLogs(setLogs);
     return () => {
       unsubDishes();
       unsubCategories();
-      unsubLogs();
     };
   }, []);
 
@@ -153,9 +150,9 @@ export default function MenuPage({ canManage = false }: { canManage?: boolean })
           </div>
           <div className="theme-card rounded-2xl border p-3.5">
             <div className="theme-text-secondary text-[11px] font-black uppercase tracking-wide">
-              Lượt phục vụ
+              Tổng danh mục
             </div>
-            <div className="mt-1 text-xl font-black text-amber-700 dark:text-amber-300">{logs.length}</div>
+            <div className="theme-text-primary mt-1 text-xl font-black">{categories.length}</div>
           </div>
         </div>
 
