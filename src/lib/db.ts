@@ -10,6 +10,15 @@ import {
   nutritionSelectionToDishFields
 } from '../domain/nutrition/nutritionPersistence';
 import { normalizeKcalInternal } from '../domain/nutrition/caloriePrecision';
+import {
+  normalizeUserNutritionInput,
+  type MacroEnergyConsistency,
+  type NutritionDataOrigin,
+  type NutritionDataStatus,
+  type NutritionRecipeSnapshot,
+  type NutritionSourceKind,
+  type UserNutritionInput
+} from '../domain/nutrition/userNutrition';
 import { migrateDefaultDishRecords } from '../domain/menu/defaultDishMigration';
 import { normalizePriceVnd } from '../domain/menu/vendorOffer';
 import {
@@ -75,6 +84,7 @@ export type AddDishOptions = {
   vendors?: NewVendorInput[];
   dishId?: string;
   nutritionSelection?: NutritionSelection;
+  userNutrition?: UserNutritionInput;
 };
 
 export type Dish = {
@@ -103,7 +113,7 @@ export type Dish = {
   proteinG?: number;
   carbsG?: number;
   fatG?: number;
-  macroSource?: 'nutrition-db' | 'manual';
+  macroSource?: 'nutrition-db' | 'manual' | 'recipe';
   nutritionRecordId?: string;
   nutritionCanonicalName?: string;
   nutritionConfidence?:
@@ -121,6 +131,15 @@ export type Dish = {
   nutritionSourceUrl?: string;
   nutritionMatchType?: string;
   nutritionMatchScore?: number;
+  nutritionDataOrigin?: NutritionDataOrigin;
+  nutritionDataStatus?: NutritionDataStatus;
+  nutritionSourceKind?: NutritionSourceKind;
+  nutritionSourceNote?: string;
+  userOverrideOfNutritionRecordId?: string;
+  macroEnergyKcal?: number;
+  macroEnergyDeltaPct?: number;
+  macroEnergyConsistency?: MacroEnergyConsistency;
+  nutritionRecipe?: NutritionRecipeSnapshot;
   legacyNames?: string[];
   vendors: Vendor[];
 };
@@ -153,7 +172,7 @@ export type LogEntry = {
   proteinG?: number;
   carbsG?: number;
   fatG?: number;
-  macroSource?: 'nutrition-db' | 'manual';
+  macroSource?: 'nutrition-db' | 'manual' | 'recipe';
   nutritionRecordId?: string;
   nutritionCanonicalName?: string;
   nutritionConfidence?:
@@ -171,6 +190,15 @@ export type LogEntry = {
   nutritionSourceUrl?: string;
   nutritionMatchType?: string;
   nutritionMatchScore?: number;
+  nutritionDataOrigin?: NutritionDataOrigin;
+  nutritionDataStatus?: NutritionDataStatus;
+  nutritionSourceKind?: NutritionSourceKind;
+  nutritionSourceNote?: string;
+  userOverrideOfNutritionRecordId?: string;
+  macroEnergyKcal?: number;
+  macroEnergyDeltaPct?: number;
+  macroEnergyConsistency?: MacroEnergyConsistency;
+  nutritionRecipe?: NutritionRecipeSnapshot;
   timestamp: number;
 };
 
