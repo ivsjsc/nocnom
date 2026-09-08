@@ -324,7 +324,8 @@ export function calculateCalorieGoal(
 
 export function calculateMacroTargetPlan(
   calorieTarget: number | null,
-  goal: HealthGoal
+  goal: HealthGoal,
+  weightKg?: number | null
 ): MacroTargetPlan | null {
   if (
     calorieTarget === null ||
@@ -335,9 +336,60 @@ export function calculateMacroTargetPlan(
     return null;
   }
 
-  // Internal balanced presets used as an app planning aid, not a clinical
-  // prescription. The weight-loss preset prioritizes protein while the gain
-  // preset keeps carbohydrate availability higher.
+  const round1 = (value: number) => Math.round(value * 10) / 10;
+
+  // Prefer a weight-based planning model when a valid body weight is known.
+  // Protein and fat are anchored to g/kg by goal; carbohydrate receives the
+  // remaining energy. This is a planning aid, not a clinical prescription.
+  const weightBased: Record<
+    Exclude<HealthGoal, ''>,
+    { proteinPerKg: number; fatPerKg: number }
+  > = {
+    maintain: { proteinPerKg: 1.4, fatPerKg: 0.8 },
+    lose: { proteinPerKg: 1.8, fatPerKg: 0.8 },
+    gain: { proteinPerKg: 1.6, fatPerKg: 0.9 }
+  };
+
+  const validWeight =
+    typeof weightKg === 'number' &&
+    Number.isFinite(weightKg) &&
+    weightKg >= HEALTH_LIMITS.weightKg.min &&
+    weightKg <= HEALTH_LIMITS.weightKg.max;
+
+  if (validWeight) {
+    const preset = weightBased[goal];
+    const proteinG = round1(weightKg * preset.proteinPerKg);
+    const fatG = round1(weightKg * preset.fatPerKg);
+    const remainingKcal =
+      calorieTarget - proteinG * 4 - fatG * 9;
+
+    // Keep the plan internally energy-consistent. If an unusually low calorie
+    // target leaves no practical room for carbohydrate, fall back to the
+    // percentage model instead of emitting a negative target.
+    if (remainingKcal > 0) {
+      const carbsG = round1(remainingKcal / 4);
+      const proteinPct = Math.round((proteinG * 4 / calorieTarget) * 100);
+      const fatPct = Math.round((fatG * 9 / calorieTarget) * 100);
+      const carbsPct = Math.max(0, 100 - proteinPct - fatPct);
+
+      return {
+        calorieTarget: Math.round(calorieTarget),
+        proteinG,
+        carbsG,
+        fatG,
+        proteinPct,
+        carbsPct,
+        fatPct,
+        strategy: 'goal_weight_based',
+        proteinPerKg: preset.proteinPerKg,
+        fatPerKg: preset.fatPerKg,
+        goal,
+        type: 'estimate'
+      };
+    }
+  }
+
+  // Fallback for incomplete profiles: balanced calorie-ratio presets.
   const ratios: Record<
     Exclude<HealthGoal, ''>,
     { protein: number; carbs: number; fat: number }
@@ -348,7 +400,6 @@ export function calculateMacroTargetPlan(
   };
 
   const ratio = ratios[goal];
-  const round1 = (value: number) => Math.round(value * 10) / 10;
 
   return {
     calorieTarget: Math.round(calorieTarget),
