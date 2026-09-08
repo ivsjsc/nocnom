@@ -921,7 +921,19 @@ export default function LogsPage({ currentUser, onOpenProfile }: Props) {
                 {todayMacros.totalItems > 0 && !todayMacros.isComplete ? (
                   <span className="health-macro-note-warning mt-1 block font-bold">
                     Số đã ăn chỉ cộng các mục có đủ Protein / Carb / Fat ({todayMacros.knownItems}/{todayMacros.totalItems} mục).
-                    Dữ liệu có thể đến từ Nutrition DB, bản người dùng nhập hoặc công thức nguyên liệu. nOcnOm không suy ra protein/carb/fat từ kcal; có thể bổ sung tại Kho món → Sửa món.
+                    Dữ liệu có thể đến từ Nutrition DB, bản người dùng nhập hoặc công thức nguyên liệu. nOcnOm không suy ra protein/carb/fat từ kcal.
+                    {todayMacros.missingItems.length > 0 ? (
+                      <span className="mt-1 block">
+                        Chưa đủ Macro: {todayMacros.missingItems
+                          .slice(0, 4)
+                          .map(item => item.label)
+                          .join(', ')}
+                        {todayMacros.missingItems.length > 4
+                          ? ` và ${todayMacros.missingItems.length - 4} mục khác`
+                          : ''}.
+                        {' '}Có thể bổ sung tại Kho món → Sửa món.
+                      </span>
+                    ) : null}
                   </span>
                 ) : todayMacros.totalItems === 0 ? (
                   <span className="mt-1 block">
