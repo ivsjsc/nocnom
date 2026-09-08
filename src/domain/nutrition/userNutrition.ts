@@ -7,6 +7,7 @@ export type NutritionDataOrigin =
 
 export type NutritionDataStatus =
   | 'reference'
+  | 'estimated'
   | 'user-provided'
   | 'recipe-calculated'
   | 'curated'
