@@ -28,6 +28,35 @@ import {
 } from './nutritionRepository';
 import { normalizeSearchQuery, searchNutritionFoods, type SearchOptions } from './nutritionSearch';
 
+const macroForServing = (
+  food: NutritionFood,
+  grams: number | undefined
+): { proteinG: number; carbsG: number; fatG: number } | null => {
+  if (!food.macros || !Number.isFinite(grams) || !grams || grams <= 0) {
+    return null;
+  }
+
+  const { protein_g_per_100g, carbs_g_per_100g, fat_g_per_100g } = food.macros;
+  if (
+    !Number.isFinite(protein_g_per_100g) ||
+    !Number.isFinite(carbs_g_per_100g) ||
+    !Number.isFinite(fat_g_per_100g) ||
+    protein_g_per_100g < 0 ||
+    carbs_g_per_100g < 0 ||
+    fat_g_per_100g < 0
+  ) {
+    return null;
+  }
+
+  const scale = grams / 100;
+  const round1 = (value: number) => Math.round(value * 10) / 10;
+  return {
+    proteinG: round1(protein_g_per_100g * scale),
+    carbsG: round1(carbs_g_per_100g * scale),
+    fatG: round1(fat_g_per_100g * scale)
+  };
+};
+
 export class NutritionService {
   private static instance: NutritionService;
   private addonCatalog: NutritionAddonOption[] | null = null;
@@ -205,6 +234,7 @@ export class NutritionService {
     if (!calculation) return null;
 
     const food = result.food;
+    const macro = macroForServing(food, calculation.grams);
     const servingUnit =
       food.classification?.domain_id === 'beverage' ||
       food.classification?.category_id === 'beverages'
@@ -226,6 +256,12 @@ export class NutritionService {
       kcalTypical: calculation.kcalTypical,
       kcalMin: calculation.kcalMin,
       kcalMax: calculation.kcalMax,
+      ...(macro
+        ? {
+            ...macro,
+            macroSource: 'nutrition-db' as const
+          }
+        : {}),
       confidence: nutritionConfidenceLevel(result),
       confidenceLabel: result.confidenceLabel,
       verificationState: calculation.verificationState,
@@ -311,6 +347,9 @@ export class NutritionService {
                 : 'ml',
             kcalMin: f.energy.kcal_min,
             kcalMax: f.energy.kcal_max,
+            ...(
+              macroForServing(f, f.serving?.standard_g) || {}
+            ),
             source: f.provenance?.source_role || 'canonical',
             sourceUrl: f.provenance?.source_url || '',
             confidence: f.confidence.label_vi,
