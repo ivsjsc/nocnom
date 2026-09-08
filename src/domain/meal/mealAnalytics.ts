@@ -124,9 +124,15 @@ export const calculateConsumedCalories = (
 const validMacro = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0;
 
+type CompleteMacro = {
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+};
+
 const completeMacro = (
   item: Pick<AnalyticsLog, 'proteinG' | 'carbsG' | 'fatG'> | AnalyticsAddon
-) =>
+): item is CompleteMacro =>
   validMacro(item.proteinG) &&
   validMacro(item.carbsG) &&
   validMacro(item.fatG);
