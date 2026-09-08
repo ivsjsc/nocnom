@@ -30,6 +30,20 @@ assert(health.includes('text-xs font-extrabold text-slate-700'), 'History modal 
 assert(menu.includes('border-2 border-slate-400') && menu.includes('placeholder:text-slate-700'), 'Kho mon search has a clear border and readable placeholder');
 assert(menu.includes('h-5 w-5') && menu.includes('text-slate-700'), 'Kho mon search icon is visually stronger');
 assert(css.includes('.surface-info-strip') && css.includes('.surface-warning-readable'), 'Semantic readable surfaces are defined');
+assert(
+  health.includes('health-value text-3xl font-black') &&
+    health.includes('health-label text-[11px] font-black') &&
+    health.includes('health-goal-badge') &&
+    health.includes('health-coverage-badge'),
+  'Health dashboard primary values and badges use semantic contrast hooks'
+);
+assert(
+  css.includes('html:not(.dark) .health-card .health-value') &&
+    css.includes('color: #0b1220 !important') &&
+    css.includes('.dark .health-value') &&
+    css.includes('.health-goal-badge'),
+  'Health dashboard defines explicit light/dark foreground contracts'
+);
 
 if (failures > 0) process.exit(1);
 console.log('UI readability tests: PASS');
