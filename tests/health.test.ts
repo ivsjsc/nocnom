@@ -6,6 +6,7 @@ import {
   calculateCalorieGoal,
   calculateCalorieGoalPlan,
   calculateDailyCalorieTargetFromProfile,
+  calculateMacroTargetPlan,
   calculateTDEE,
   calculateTDEEEstimate,
   calculateWaterRequirement,
@@ -85,6 +86,48 @@ assert(
   'Calorie goal exposes fixed_300 strategy metadata'
 );
 assert(calculateCalorieGoal(tdee, '') === null, 'Calorie goal does not assume a user goal');
+
+const maintainMacros = calculateMacroTargetPlan(2000, 'maintain');
+assert(
+  Boolean(
+    maintainMacros &&
+      maintainMacros.proteinG === 100 &&
+      maintainMacros.carbsG === 250 &&
+      maintainMacros.fatG === 66.7 &&
+      maintainMacros.proteinPct === 20 &&
+      maintainMacros.carbsPct === 50 &&
+      maintainMacros.fatPct === 30
+  ),
+  'Maintenance macro preset balances a 2,000 kcal target'
+);
+
+const loseMacros = calculateMacroTargetPlan(2000, 'lose');
+assert(
+  Boolean(
+    loseMacros &&
+      loseMacros.proteinG === 150 &&
+      loseMacros.carbsG === 225 &&
+      loseMacros.fatG === 55.6 &&
+      loseMacros.proteinPct === 30
+  ),
+  'Weight-loss macro preset raises protein while preserving energy balance'
+);
+
+const gainMacros = calculateMacroTargetPlan(2000, 'gain');
+assert(
+  Boolean(
+    gainMacros &&
+      gainMacros.proteinG === 125 &&
+      gainMacros.carbsG === 250 &&
+      gainMacros.fatG === 55.6
+  ),
+  'Weight-gain macro preset keeps carbohydrate availability higher'
+);
+assert(
+  calculateMacroTargetPlan(2000, '') === null &&
+    calculateMacroTargetPlan(null, 'maintain') === null,
+  'Macro target does not guess a missing goal or calorie target'
+);
 
 assert(
   calculateDailyCalorieTargetFromProfile({
