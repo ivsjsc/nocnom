@@ -43,6 +43,32 @@ const main = async () => {
     ['fruits', 'fruit']
   ]);
 
+  const macroForServing = (food, grams) => {
+    if (!food.macros || !Number.isFinite(grams) || grams <= 0) return {};
+    const {
+      protein_g_per_100g: protein,
+      carbs_g_per_100g: carbs,
+      fat_g_per_100g: fat
+    } = food.macros;
+    if (
+      !Number.isFinite(protein) ||
+      !Number.isFinite(carbs) ||
+      !Number.isFinite(fat) ||
+      protein < 0 ||
+      carbs < 0 ||
+      fat < 0
+    ) {
+      return {};
+    }
+    const scale = grams / 100;
+    const round1 = value => Math.round(value * 10) / 10;
+    return {
+      proteinG: round1(protein * scale),
+      carbsG: round1(carbs * scale),
+      fatG: round1(fat * scale)
+    };
+  };
+
   const addons = foods
     .filter(food => {
       const dom = food.classification?.domain_id;
@@ -76,6 +102,7 @@ const main = async () => {
         servingUnit: kind === 'drink' ? 'ml' : 'g',
         kcalMin: food.energy?.kcal_min,
         kcalMax: food.energy?.kcal_max,
+        ...macroForServing(food, food.serving?.standard_g),
         source: food.provenance?.legacy_source_description || food.provenance?.source_role || 'canonical',
         sourceUrl: food.provenance?.source_url || '',
         confidence: food.confidence?.label_vi || 'Trung bình',
