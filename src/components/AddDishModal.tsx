@@ -405,7 +405,7 @@ export default function AddDishModal({
                 {
                   id: 'reference' as const,
                   label: 'Tra cứu DB',
-                  desc: '590+ món tham khảo',
+                  desc: 'Kho tham khảo chung',
                   Icon: Database
                 },
                 {
@@ -595,7 +595,7 @@ export default function AddDishModal({
             ) : nutritionMode === 'reference' && name.trim().length >= 2 && !isAnalyzing ? (
               <div className="mt-3">
                 <div className="rounded-2xl bg-amber-50 border border-amber-100 p-3 text-xs font-semibold text-amber-800">
-                  Chưa khớp Nutrition Knowledge Base. Món vẫn có thể được thêm thủ công.
+                  Chưa khớp Nutrition Knowledge Base. Hãy chọn “Thủ công” hoặc “Nguyên liệu” để tạo dữ liệu cá nhân.
                 </div>
                 <label className="mt-3 block text-[11px] font-black uppercase text-slate-500">
                   Danh mục
