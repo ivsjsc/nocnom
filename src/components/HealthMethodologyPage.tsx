@@ -74,43 +74,40 @@ const references: Reference[] = [
 ];
 
 const badgeClass = {
-  formula:
-    'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/35 dark:text-emerald-300',
-  estimate:
-    'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-300',
-  preset:
-    'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/70 dark:bg-blue-950/35 dark:text-blue-300'
+  formula: 'methodology-badge-formula',
+  estimate: 'methodology-badge-estimate',
+  preset: 'methodology-badge-preset'
 };
 
 export default function HealthMethodologyPage({ onBack }: Props) {
   return (
     <div className="space-y-5 pb-28">
-      <section className="rounded-[28px] border border-slate-200 bg-white p-4.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+      <section className="methodology-hero rounded-[28px] border p-4.5 sm:p-6">
         <div className="flex items-start gap-3">
           <button
             type="button"
             onClick={onBack}
             aria-label="Quay lại"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition active:scale-95 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+            className="methodology-back-button flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition active:scale-95"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-blue-700 dark:text-blue-300">
+            <div className="methodology-hero-kicker flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em]">
               <BookOpenCheck className="h-4 w-4" />
               Minh bạch phương pháp
             </div>
-            <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-950 dark:text-white sm:text-3xl">
+            <h1 className="methodology-hero-title mt-1 text-2xl font-black tracking-tight sm:text-3xl">
               Chỉ số & cơ sở tính toán
             </h1>
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-600 dark:text-slate-300">
+            <p className="methodology-hero-copy mt-2 text-sm font-semibold leading-relaxed">
               Giải thích nOcnOm tính BMI, năng lượng, macro và nước như thế nào; dữ liệu nào do bạn cung cấp; phần nào là công thức chuẩn, phần nào chỉ là ước tính hoặc preset hỗ trợ lập kế hoạch.
             </p>
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50/70 p-3.5 text-xs font-semibold leading-relaxed text-blue-950 dark:border-blue-900/70 dark:bg-blue-950/25 dark:text-blue-100">
+        <div className="methodology-hero-note mt-4 rounded-2xl border p-3.5 text-xs font-semibold leading-relaxed">
           <div className="flex gap-2">
             <Info className="mt-0.5 h-4 w-4 shrink-0" />
             <p>
@@ -121,128 +118,128 @@ export default function HealthMethodologyPage({ onBack }: Props) {
       </section>
 
       <section className="grid gap-3 md:grid-cols-2">
-        <article className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <article className="methodology-card rounded-[24px] border p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Scale className="h-5 w-5 text-violet-600" />
-              <h2 className="font-black text-slate-950 dark:text-white">BMI</h2>
+              <h2 className="methodology-card-title font-black">BMI</h2>
             </div>
             <span className={'rounded-full border px-2 py-1 text-[9px] font-black uppercase ' + badgeClass.formula}>
               Công thức chuẩn
             </span>
           </div>
-          <div className="mt-3 rounded-2xl bg-slate-50 p-3 font-mono text-sm font-black text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+          <div className="methodology-formula mt-3 rounded-2xl border p-3 font-mono text-sm font-black">
             BMI = kg / m²
           </div>
-          <p className="mt-3 text-xs font-semibold leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="methodology-copy mt-3 text-xs font-semibold leading-relaxed">
             Dùng cân nặng và chiều cao. Mặc định app tham chiếu Asia-Pacific; BMI là chỉ số sàng lọc, không phản ánh trực tiếp tỷ lệ mỡ hay khối cơ.
           </p>
-          <div className="mt-3 text-[10px] font-bold text-slate-500">
+          <div className="methodology-source mt-3 text-[10px] font-bold">
             Nguồn: WHO Asia-Pacific 2000; WHO Expert Consultation 2004.
           </div>
         </article>
 
-        <article className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <article className="methodology-card rounded-[24px] border p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Flame className="h-5 w-5 text-orange-600" />
-              <h2 className="font-black text-slate-950 dark:text-white">RMR / BMR ước tính</h2>
+              <h2 className="methodology-card-title font-black">RMR / BMR ước tính</h2>
             </div>
             <span className={'rounded-full border px-2 py-1 text-[9px] font-black uppercase ' + badgeClass.formula}>
               Phương trình công bố
             </span>
           </div>
-          <div className="mt-3 space-y-2 rounded-2xl bg-slate-50 p-3 font-mono text-xs font-black text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+          <div className="methodology-formula mt-3 space-y-2 rounded-2xl border p-3 font-mono text-xs font-black">
             <div>Nam: 10W + 6.25H − 5A + 5</div>
             <div>Nữ: 10W + 6.25H − 5A − 161</div>
           </div>
-          <p className="mt-3 text-xs font-semibold leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="methodology-copy mt-3 text-xs font-semibold leading-relaxed">
             W = kg, H = cm, A = tuổi. Engine dùng Mifflin–St Jeor. Đây là dự báo năng lượng khi nghỉ, không phải phép đo calorimetry.
           </p>
-          <div className="mt-3 text-[10px] font-bold text-slate-500">
+          <div className="methodology-source mt-3 text-[10px] font-bold">
             Nguồn: Mifflin et al., American Journal of Clinical Nutrition, 1990.
           </div>
         </article>
 
-        <article className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <article className="methodology-card rounded-[24px] border p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-blue-600" />
-              <h2 className="font-black text-slate-950 dark:text-white">TDEE</h2>
+              <h2 className="methodology-card-title font-black">TDEE</h2>
             </div>
             <span className={'rounded-full border px-2 py-1 text-[9px] font-black uppercase ' + badgeClass.estimate}>
               Ước tính
             </span>
           </div>
-          <div className="mt-3 rounded-2xl bg-slate-50 p-3 font-mono text-sm font-black text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+          <div className="methodology-formula mt-3 rounded-2xl border p-3 font-mono text-sm font-black">
             TDEE ≈ RMR × hệ số vận động
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+          <div className="methodology-copy mt-3 grid grid-cols-2 gap-2 text-[11px] font-bold">
             <div>Ít vận động · 1.20</div>
             <div>Nhẹ · 1.375</div>
             <div>Vừa · 1.55</div>
             <div>Cao · 1.725</div>
           </div>
-          <p className="mt-3 text-xs font-semibold leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="methodology-copy mt-3 text-xs font-semibold leading-relaxed">
             TDEE thực tế có thể lệch do NEAT, cường độ tập, thành phần cơ thể và sinh lý cá nhân.
           </p>
         </article>
 
-        <article className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <article className="methodology-card rounded-[24px] border p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Utensils className="h-5 w-5 text-emerald-600" />
-              <h2 className="font-black text-slate-950 dark:text-white">Protein / Carb / Fat</h2>
+              <h2 className="methodology-card-title font-black">Protein / Carb / Fat</h2>
             </div>
             <span className={'rounded-full border px-2 py-1 text-[9px] font-black uppercase ' + badgeClass.preset}>
               Preset lập kế hoạch
             </span>
           </div>
-          <div className="mt-3 space-y-2 text-xs font-bold text-slate-700 dark:text-slate-300">
-            <div className="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-950">Duy trì: Protein 1.4 g/kg · Fat 0.8 g/kg</div>
-            <div className="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-950">Giảm: Protein 1.8 g/kg · Fat 0.8 g/kg</div>
-            <div className="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-950">Tăng: Protein 1.6 g/kg · Fat 0.9 g/kg</div>
+          <div className="methodology-copy mt-3 space-y-2 text-xs font-bold">
+            <div className="methodology-formula-row rounded-xl border px-3 py-2">Duy trì: Protein 1.4 g/kg · Fat 0.8 g/kg</div>
+            <div className="methodology-formula-row rounded-xl border px-3 py-2">Giảm: Protein 1.8 g/kg · Fat 0.8 g/kg</div>
+            <div className="methodology-formula-row rounded-xl border px-3 py-2">Tăng: Protein 1.6 g/kg · Fat 0.9 g/kg</div>
           </div>
-          <div className="mt-3 rounded-2xl bg-slate-50 p-3 font-mono text-xs font-black text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+          <div className="methodology-formula mt-3 rounded-2xl border p-3 font-mono text-xs font-black">
             Carb = (kcal mục tiêu − Protein×4 − Fat×9) / 4
           </div>
-          <p className="mt-3 text-xs font-semibold leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="methodology-copy mt-3 text-xs font-semibold leading-relaxed">
             4/4/9 kcal/g là hệ số năng lượng Atwater. Các mức g/kg là preset nội bộ nằm trong vùng thường dùng cho người trưởng thành khỏe mạnh và người tập luyện, không phải chỉ định lâm sàng.
           </p>
-          <div className="mt-3 text-[10px] font-bold text-slate-500">
+          <div className="methodology-source mt-3 text-[10px] font-bold">
             Nguồn nền: ACSM/AND/DC 2016; Jäger et al. 2017; Morton et al. 2018; Dietary Reference Intakes.
           </div>
         </article>
 
-        <article className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:col-span-2">
+        <article className="methodology-card rounded-[24px] border p-4 md:col-span-2">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Droplets className="h-5 w-5 text-cyan-600" />
-              <h2 className="font-black text-slate-950 dark:text-white">Nước</h2>
+              <h2 className="methodology-card-title font-black">Nước</h2>
             </div>
             <span className={'rounded-full border px-2 py-1 text-[9px] font-black uppercase ' + badgeClass.estimate}>
               Ước tính cơ bản
             </span>
           </div>
-          <div className="mt-3 rounded-2xl bg-slate-50 p-3 font-mono text-sm font-black text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+          <div className="methodology-formula mt-3 rounded-2xl border p-3 font-mono text-sm font-black">
             Gợi ý cơ bản ≈ 35 ml × cân nặng (kg)
           </div>
-          <p className="mt-3 text-xs font-semibold leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="methodology-copy mt-3 text-xs font-semibold leading-relaxed">
             Đây là heuristic của app để tạo mốc theo dõi. Nhu cầu nước thực tế phụ thuộc đồ ăn, thời tiết, vận động, mồ hôi, thai kỳ và tình trạng sức khỏe; không đồng nghĩa với Adequate Intake chính thức của National Academies.
           </p>
         </article>
       </section>
 
-      <section className="rounded-[28px] border border-slate-200 bg-white p-4.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+      <section className="methodology-section rounded-[28px] border p-4.5 sm:p-6">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="h-5 w-5 text-blue-600" />
-          <h2 className="text-lg font-black text-slate-950 dark:text-white">Người dùng có thể tùy chỉnh gì?</h2>
+          <h2 className="methodology-card-title text-lg font-black">Người dùng có thể tùy chỉnh gì?</h2>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 p-3.5 dark:border-slate-800">
-            <div className="text-xs font-black uppercase tracking-wide text-slate-500">Dữ liệu đầu vào</div>
-            <ul className="mt-2 space-y-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
+          <div className="methodology-card rounded-2xl border p-3.5">
+            <div className="methodology-source text-xs font-black uppercase tracking-wide">Dữ liệu đầu vào</div>
+            <ul className="methodology-copy mt-2 space-y-1.5 text-sm font-semibold">
               <li>• Ngày sinh</li>
               <li>• Giới tính dùng cho phương trình RMR</li>
               <li>• Chiều cao và cân nặng</li>
@@ -251,22 +248,22 @@ export default function HealthMethodologyPage({ onBack }: Props) {
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-3.5 dark:border-blue-900/60 dark:bg-blue-950/20">
-            <div className="text-xs font-black uppercase tracking-wide text-blue-700 dark:text-blue-300">Override hiện có</div>
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="methodology-accent-panel rounded-2xl border p-3.5">
+            <div className="text-xs font-black uppercase tracking-wide">Override hiện có</div>
+            <p className="mt-2 text-sm font-semibold leading-relaxed">
               Bạn có thể đặt thủ công <strong>mục tiêu kcal/ngày</strong>. Nếu để trống, app tự tính từ hồ sơ + RMR/TDEE + mục tiêu dinh dưỡng.
             </p>
-            <p className="mt-2 text-[11px] font-bold leading-relaxed text-slate-500">
+            <p className="mt-2 text-[11px] font-bold leading-relaxed">
               Macro và nước hiện được engine tự suy ra theo mục tiêu; chưa có trường override trực tiếp từng Protein/Carb/Fat/nước.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-slate-200 bg-white p-4.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+      <section className="methodology-section rounded-[28px] border p-4.5 sm:p-6">
         <div className="flex items-center gap-2">
           <Calculator className="h-5 w-5 text-indigo-600" />
-          <h2 className="text-lg font-black text-slate-950 dark:text-white">Luồng tính toán</h2>
+          <h2 className="methodology-card-title text-lg font-black">Luồng tính toán</h2>
         </div>
 
         <div className="mt-4 grid gap-2 text-center text-xs font-black sm:grid-cols-5">
@@ -277,20 +274,20 @@ export default function HealthMethodologyPage({ onBack }: Props) {
             'Mục tiêu kcal',
             'Macro + nước'
           ].map((item, index) => (
-            <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-slate-800 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
-              <div className="text-[9px] text-slate-400">BƯỚC {index + 1}</div>
+            <div key={item} className="methodology-step rounded-2xl border px-3 py-3">
+              <div className="methodology-source text-[9px]">BƯỚC {index + 1}</div>
               <div className="mt-1">{item}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-slate-200 bg-white p-4.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+      <section className="methodology-section rounded-[28px] border p-4.5 sm:p-6">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-emerald-600" />
-          <h2 className="text-lg font-black text-slate-950 dark:text-white">Nguồn học thuật chính</h2>
+          <h2 className="methodology-card-title text-lg font-black">Nguồn học thuật chính</h2>
         </div>
-        <p className="mt-1 text-xs font-semibold text-slate-500">
+        <p className="methodology-source mt-1 text-xs font-semibold">
           Bibliography dùng để định nghĩa công thức, ngưỡng tham chiếu và vùng dinh dưỡng nền của engine.
         </p>
 
@@ -298,17 +295,17 @@ export default function HealthMethodologyPage({ onBack }: Props) {
           {references.map((reference, index) => (
             <article
               key={reference.id}
-              className="rounded-2xl border border-slate-200 p-3.5 dark:border-slate-800"
+              className="methodology-reference rounded-2xl border p-3.5"
             >
               <div className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xs font-black text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <div className="methodology-reference-index flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black">
                   {index + 1}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-black text-slate-950 dark:text-white">
+                  <h3 className="methodology-card-title text-sm font-black">
                     {reference.title}
                   </h3>
-                  <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600 dark:text-slate-300">
+                  <p className="methodology-copy mt-1 text-[11px] font-semibold leading-relaxed">
                     {reference.citation}
                   </p>
                   {reference.identifier && (
@@ -322,7 +319,7 @@ export default function HealthMethodologyPage({ onBack }: Props) {
           ))}
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-[11px] font-semibold leading-relaxed text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+        <div className="methodology-formula methodology-copy mt-4 rounded-2xl border p-3 text-[11px] font-semibold leading-relaxed">
           <strong>Quy tắc minh bạch:</strong> nOcnOm không suy ra macro từ kcal khi món chưa có dữ liệu Protein/Carb/Fat đáng tin cậy; các kết quả ước tính được trình bày như tham khảo thay vì chẩn đoán.
         </div>
       </section>
