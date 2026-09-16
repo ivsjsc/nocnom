@@ -1,0 +1,15 @@
+/*
+ * Profile modal layering contract.
+ * The app bottom navigation uses z-index: 999. ProfileModal is rendered via
+ * createPortal(document.body) with Tailwind z-[100], so the navigation could
+ * cover the save action on mobile. Keep this dialog above all app chrome.
+ */
+[role='dialog'][aria-label='Quản lý tài khoản nOcnOm'] {
+  z-index: 1200 !important;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* Preserve a small safe area at the end of the modal's own scroll region. */
+[role='dialog'][aria-label='Quản lý tài khoản nOcnOm'] > div > div:last-child {
+  scroll-padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+}
