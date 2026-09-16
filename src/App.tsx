@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Activity, Home, Menu as MenuIcon, Moon, RefreshCw, RotateCw, Sun, Sparkles } from 'lucide-react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import { syncUserWithFirestore } from './lib/db';
 import { useVersionCheck } from './hooks/useVersionCheck';
+import { useVietnamBusinessDate } from './hooks/useVietnamBusinessDate';
 import HomePage from './components/HomePage';
 import LogsPage from './components/LogsPage';
 import MenuPage from './components/MenuPage';
@@ -23,6 +24,8 @@ export default function App() {
   const [authDestination, setAuthDestination] = useState<Tab | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { hasNewVersion, reloadApp } = useVersionCheck(45000);
+  const businessDate = useVietnamBusinessDate();
+  const previousBusinessDateKey = useRef(businessDate.dateKey);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('nocnom_theme') || localStorage.getItem('unifood_theme');
     return saved ? saved === 'dark' : false;
@@ -58,6 +61,18 @@ export default function App() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (previousBusinessDateKey.current === businessDate.dateKey) return;
+    previousBusinessDateKey.current = businessDate.dateKey;
+
+    // A long-running PWA can stay open across midnight. Re-hydrating the
+    // signed-in user's state at the Vietnam date boundary invokes the same
+    // once-per-day suggestion rotation used on a normal app launch.
+    if (currentUser) {
+      syncUserWithFirestore(currentUser.uid);
+    }
+  }, [businessDate.dateKey, currentUser]);
 
   const openAuth = (destination: Tab | null = null) => {
     setAuthDestination(destination);
