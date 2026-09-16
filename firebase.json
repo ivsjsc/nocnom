@@ -10,6 +10,22 @@
       ],
       "rewrites": [
         {
+          "source": "/privacy",
+          "destination": "/privacy.html"
+        },
+        {
+          "source": "/account-deletion",
+          "destination": "/account-deletion.html"
+        },
+        {
+          "source": "/support",
+          "destination": "/support.html"
+        },
+        {
+          "source": "/terms",
+          "destination": "/terms.html"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -26,6 +42,15 @@
         },
         {
           "source": "/index.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache,no-store,must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/{privacy,account-deletion,support,terms}.html",
           "headers": [
             {
               "key": "Cache-Control",
