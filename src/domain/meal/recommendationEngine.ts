@@ -92,6 +92,9 @@ const normalizeText = (value: string) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
+const hasPhrase = (text: string, phrase: string) =>
+  (` ${text} `).includes(` ${phrase} `);
+
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
 const finitePositive = (value: unknown) => {
@@ -170,6 +173,19 @@ const getDishMinPrice = (dish: Dish) => {
 const isLikelyMainDish = (dish: Dish, categoryName: string) => {
   const name = normalizeText(dish.name);
   const category = normalizeText(categoryName);
+
+  // Category is the stronger semantic signal. Auxiliary categories must never
+  // become a main meal because a short token happens to occur inside a word
+  // (for example "ca" inside "cam").
+  const auxiliary =
+    category.includes('trai cay') ||
+    category.includes('do uong') ||
+    category.includes('thuc uong') ||
+    category.includes('an vat') ||
+    category.includes('trang mieng') ||
+    category.includes('mon ngot');
+  if (auxiliary) return false;
+
   const mainSignals = [
     'com',
     'banh mi',
@@ -191,16 +207,9 @@ const isLikelyMainDish = (dish: Dish, categoryName: string) => {
     'trung',
     'lau'
   ];
-  if (mainSignals.some(signal => name.includes(signal))) return true;
 
-  const auxiliary =
-    category.includes('trai cay') ||
-    category.includes('do uong') ||
-    category.includes('thuc uong') ||
-    category.includes('an vat') ||
-    category.includes('trang mieng') ||
-    category.includes('mon ngot');
-  return !auxiliary;
+  if (mainSignals.some(signal => hasPhrase(name, signal))) return true;
+  return true;
 };
 
 const breakfastAffinity = (mealKey: MealKey, dish: Dish) => {
@@ -219,8 +228,8 @@ const breakfastAffinity = (mealKey: MealKey, dish: Dish) => {
     'hu tieu',
     'trung'
   ];
-  if (preferred.some(signal => name.includes(signal))) return 0.08;
-  if (name.includes('lau')) return -0.12;
+  if (preferred.some(signal => hasPhrase(name, signal))) return 0.08;
+  if (hasPhrase(name, 'lau')) return -0.12;
   return 0;
 };
 
