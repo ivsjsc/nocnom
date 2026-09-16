@@ -111,4 +111,19 @@ assert.equal(
   'an already recorded meal must remain aligned with the eaten dish'
 );
 
+const skippedTimetable = makeTimetable();
+skippedTimetable[todayDayKey].options.B.skipped = true;
+const withSkippedMeal = refreshDailyMealSuggestions({
+  timetable: skippedTimetable,
+  dishes,
+  categories,
+  logs: []
+}, now);
+
+assert.equal(
+  withSkippedMeal.state.timetable[todayDayKey].options.B.skipped,
+  true,
+  'daily rotation must preserve a deliberate skipped meal'
+);
+
 console.log('daily-suggestions.test.ts: ok');
