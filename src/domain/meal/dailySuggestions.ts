@@ -347,6 +347,17 @@ export const refreshDailyMealSuggestions = <T extends DailySuggestionState>(
       return;
     }
 
+    // A deliberate "Không ăn bữa này" choice is user intent, not stale
+    // recommendation data. Daily rotation may change dishes, but must not
+    // silently turn a skipped meal back on.
+    if (currentMenu.options[mealKey].skipped) {
+      nextOptions[mealKey] = {
+        ...currentMenu.options[mealKey],
+        skipped: true
+      };
+      return;
+    }
+
     const selected = chooseDishForMeal({
       mealKey,
       dateKey: todayDateKey,
