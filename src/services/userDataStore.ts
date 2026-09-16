@@ -8,6 +8,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { stripUndefinedFields } from '../lib/firestoreData';
+import { refreshDailyMealSuggestions } from '../domain/meal/dailySuggestions';
 import type {
   Category,
   Dish,
@@ -205,6 +206,10 @@ const readLegacySnapshot = async (
 /**
  * Loads schema v2 state. If the user only has the legacy appState document,
  * it is copied into v2 without deleting or modifying the legacy document.
+ *
+ * The timetable is also refreshed once per Vietnam calendar day. The date
+ * marker is stored with that day's menu so the automatic rotation never
+ * overwrites a user's manual swap again during the same day.
  */
 export const loadOrMigrateUserState = async ({
   uid,
@@ -218,34 +223,49 @@ export const loadOrMigrateUserState = async ({
 }> => {
   const v2 = await readV2Snapshot(uid, fallback);
   if (v2.exists) {
+    const refreshed = refreshDailyMealSuggestions(v2.state);
+
+    if (refreshed.changed) {
+      await persistUserStateDomains({
+        uid,
+        state: refreshed.state,
+        domains: ['timetable'],
+        migrationSource: 'v2'
+      });
+    }
+
     return {
-      state: v2.state,
+      state: refreshed.state,
       source: 'v2'
     };
   }
 
   const legacy = await readLegacySnapshot(uid, fallback);
   if (legacy) {
+    const refreshed = refreshDailyMealSuggestions(legacy);
+
     await persistUserStateDomains({
       uid,
-      state: legacy,
+      state: refreshed.state,
       migrationSource: 'appState-v1'
     });
 
     return {
-      state: legacy,
+      state: refreshed.state,
       source: 'appState-v1'
     };
   }
 
+  const refreshed = refreshDailyMealSuggestions(fallback);
+
   await persistUserStateDomains({
     uid,
-    state: fallback,
+    state: refreshed.state,
     migrationSource: 'new-user'
   });
 
   return {
-    state: fallback,
+    state: refreshed.state,
     source: 'new-user'
   };
 };
