@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { BookOpenCheck, LogOut, Settings2, UserRound } from 'lucide-react';
+import { BookOpenCheck, LogOut, Settings2, Sparkles, UserRound } from 'lucide-react';
 import { signOut, type User } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import ProfileModal from './ProfileModal';
+import MealRecommendationSettingsModal from './MealRecommendationSettingsModal';
 import { loadUserProfile } from '../services/userProfile';
 
 const getInitials = (value?: string | null) => {
@@ -29,6 +30,7 @@ export default function Login({
   const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [recommendationSettingsOpen, setRecommendationSettingsOpen] = useState(false);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState(user?.photoURL || '');
   const [profileFullName, setProfileFullName] = useState(user?.displayName || '');
   const rootRef = useRef<HTMLDivElement>(null);
@@ -63,6 +65,7 @@ export default function Login({
     if (!user) {
       setMenuOpen(false);
       setProfileOpen(false);
+      setRecommendationSettingsOpen(false);
       setProfilePhotoUrl('');
       setProfileFullName('');
       return () => {
@@ -127,6 +130,7 @@ export default function Login({
       await signOut(auth);
       setMenuOpen(false);
       setProfileOpen(false);
+      setRecommendationSettingsOpen(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Không thể đăng xuất.';
       window.alert(message);
@@ -238,6 +242,22 @@ export default function Login({
               role="menuitem"
               onClick={() => {
                 setMenuOpen(false);
+                setRecommendationSettingsOpen(true);
+              }}
+              className={
+                'flex min-h-11 w-full items-center justify-between gap-3 rounded-2xl px-3 text-sm font-bold transition-colors ' +
+                (darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50')
+              }
+            >
+              <span>Gợi ý món mỗi ngày</span>
+              <Sparkles className="w-4 h-4 text-slate-400" aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false);
                 onOpenHealthMethodology();
               }}
               className={
@@ -274,6 +294,13 @@ export default function Login({
             setProfilePhotoUrl(photoUrl);
             setProfileFullName(fullName);
           }}
+        />
+      )}
+
+      {user && recommendationSettingsOpen && (
+        <MealRecommendationSettingsModal
+          user={user}
+          onClose={() => setRecommendationSettingsOpen(false)}
         />
       )}
     </div>
