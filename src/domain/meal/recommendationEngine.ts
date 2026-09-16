@@ -1,4 +1,7 @@
-import { getVietnamDateKey } from '../../lib/dateTime';
+import {
+  getVietnamDateKey,
+  getVietnamDateTimeParts
+} from '../../lib/dateTime';
 import type {
   Category,
   DayMenu,
@@ -263,15 +266,7 @@ export const calculateAdaptiveMealTarget = ({
   return Math.round(Math.max(bounds.min, Math.min(bounds.max, rawTarget)));
 };
 
-const vietnamHour = (now: number) => {
-  const value = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Ho_Chi_Minh',
-    hour: 'numeric',
-    hourCycle: 'h23'
-  }).format(new Date(now));
-  const hour = Number(value);
-  return Number.isFinite(hour) ? hour : 12;
-};
+const vietnamHour = (now: number) => getVietnamDateTimeParts(now).hour;
 
 export const resolveNextMealKey = ({
   menu,
