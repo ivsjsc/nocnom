@@ -11,6 +11,7 @@ import type {
   HealthGoal,
   MacroTargetMode
 } from '../lib/healthUtils';
+import type { RecommendationMode } from '../domain/meal/recommendationEngine';
 
 export type UserProfileData = {
   fullName: string;
@@ -34,6 +35,14 @@ export type UserProfileData = {
   macroProteinG?: number | string;
   macroCarbsG?: number | string;
   macroFatG?: number | string;
+  // Recommendation Engine v2
+  recommendationMode?: RecommendationMode;
+  mealBudgetVnd?: number | string;
+};
+
+export type RecommendationPreferences = {
+  recommendationMode: RecommendationMode;
+  mealBudgetVnd: number | '';
 };
 
 const getFirebaseErrorCode = (error: unknown) => {
@@ -66,12 +75,27 @@ export const getCachedUserProfile = (uid: string): Partial<UserProfileData> | nu
   }
 };
 
+const mergeProfileCache = (
+  uid: string,
+  patch: Partial<UserProfileData>
+): Partial<UserProfileData> => {
+  const merged = {
+    ...(getCachedUserProfile(uid) || {}),
+    ...patch
+  };
+  try {
+    localStorage.setItem(localCacheKey(uid), JSON.stringify(merged));
+  } catch {
+    // Cache is optional; Firestore remains the source of truth.
+  }
+  return merged;
+};
+
 export const loadUserProfile = async (
   uid: string
 ): Promise<Partial<UserProfileData>> => {
   assertCurrentUser(uid);
 
-  // Thử đọc từ cache trước nếu có
   const cached = getCachedUserProfile(uid);
 
   try {
@@ -119,16 +143,10 @@ export const saveUserProfile = async (
       { merge: true }
     );
 
-    // Cập nhật cache local
-    try {
-      localStorage.setItem(localCacheKey(uid), JSON.stringify(data));
-    } catch {
-      // Ignore cache write error
-    }
+    const merged = mergeProfileCache(uid, data);
 
-    // Phát sự kiện toàn cục để các màn hình cập nhật ngay tức thì
     window.dispatchEvent(
-      new CustomEvent('nocnom:profile-updated', { detail: data })
+      new CustomEvent('nocnom:profile-updated', { detail: merged })
     );
   } catch (error) {
     console.error('[firestore-profile]', {
@@ -142,3 +160,61 @@ export const saveUserProfile = async (
   }
 };
 
+export const saveRecommendationPreferences = async (
+  uid: string,
+  preferences: RecommendationPreferences
+) => {
+  assertCurrentUser(uid);
+  const allowedModes: RecommendationMode[] = [
+    'balanced',
+    'budget',
+    'variety',
+    'quick'
+  ];
+  if (!allowedModes.includes(preferences.recommendationMode)) {
+    throw new Error('Chế độ gợi ý không hợp lệ.');
+  }
+
+  const budget = preferences.mealBudgetVnd;
+  if (
+    budget !== '' &&
+    (
+      typeof budget !== 'number' ||
+      !Number.isFinite(budget) ||
+      budget < 5000 ||
+      budget > 2_000_000
+    )
+  ) {
+    throw new Error('Ngân sách/bữa phải từ 5.000đ đến 2.000.000đ.');
+  }
+
+  try {
+    await setDoc(
+      profileRef(uid),
+      {
+        recommendationMode: preferences.recommendationMode,
+        mealBudgetVnd: budget,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    const merged = mergeProfileCache(uid, {
+      recommendationMode: preferences.recommendationMode,
+      mealBudgetVnd: budget
+    });
+
+    window.dispatchEvent(
+      new CustomEvent('nocnom:profile-updated', { detail: merged })
+    );
+  } catch (error) {
+    console.error('[firestore-profile]', {
+      operation: 'write-recommendation-preferences',
+      code: getFirebaseErrorCode(error),
+      path: `users/${uid}/profile/main`,
+      uid,
+      message: error instanceof Error ? error.message : String(error)
+    });
+    throw error;
+  }
+};

@@ -143,7 +143,7 @@ export default function App() {
                 nOcnOm
               </span>
               <span className="app-brand-subtitle mt-1.5 block truncate font-extrabold uppercase">
-                Sinh Viên ĐHQG
+                KTX Sinh Viên Đại Học Quốc Gia
               </span>
             </span>
           </button>

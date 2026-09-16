@@ -46,6 +46,8 @@ service cloud.firestore {
           'macroProteinG',
           'macroCarbsG',
           'macroFatG',
+          'recommendationMode',
+          'mealBudgetVnd',
           'email',
           'authProvider',
           'updatedAt'
@@ -71,6 +73,13 @@ service cloud.firestore {
           || (request.resource.data.dailyCalorieTarget is number
             && request.resource.data.dailyCalorieTarget >= 800
             && request.resource.data.dailyCalorieTarget <= 6000))
+        && (!('recommendationMode' in request.resource.data)
+          || request.resource.data.recommendationMode in ['balanced', 'budget', 'variety', 'quick'])
+        && (!('mealBudgetVnd' in request.resource.data)
+          || request.resource.data.mealBudgetVnd == ''
+          || (request.resource.data.mealBudgetVnd is number
+            && request.resource.data.mealBudgetVnd >= 5000
+            && request.resource.data.mealBudgetVnd <= 2000000))
         && (!('macroTargetMode' in request.resource.data)
           || request.resource.data.macroTargetMode in ['auto', 'ratio', 'grams'])
         && (!('macroProteinPct' in request.resource.data)

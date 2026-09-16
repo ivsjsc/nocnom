@@ -22,6 +22,7 @@ import {
 } from '../lib/db';
 import DishDetailModal from './DishDetailModal';
 import DishImage from './DishImage';
+import MealRecommendationPanel from './MealRecommendationPanel';
 import WeeklyTable from './WeeklyTable';
 import { getDayPhase } from '../lib/dayPhase';
 import {
@@ -42,6 +43,7 @@ import {
 import {
   getCachedUserProfile,
   loadUserProfile,
+  saveRecommendationPreferences,
   type UserProfileData
 } from '../services/userProfile';
 
@@ -278,9 +280,33 @@ export default function HomePage({ currentUser }: Props) {
               </div>
             </div>
           </div>
-
         </div>
       </section>
+
+      <MealRecommendationPanel
+        userId={currentUser?.uid}
+        todayMenu={todayMenu}
+        dishes={dishes}
+        categories={mockDb.getCategoriesSync()}
+        logs={logs}
+        todayDateKey={todayDateKey}
+        dailyCalorieTarget={targetCalories}
+        consumedCalories={consumedCalories}
+        initialMode={profile?.recommendationMode}
+        initialBudgetVnd={profile?.mealBudgetVnd}
+        onSelect={(mealKey, dish) => {
+          mockDb.swapDish(todayKey, mealKey, dish.id);
+        }}
+        onPreferenceChange={
+          currentUser
+            ? (mode, budgetVnd) =>
+                saveRecommendationPreferences(currentUser.uid, {
+                  recommendationMode: mode,
+                  mealBudgetVnd: budgetVnd
+                })
+            : undefined
+        }
+      />
 
       <section className="home-primary-hero rounded-[32px] p-6 sm:p-7">
         <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
