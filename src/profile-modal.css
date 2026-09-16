@@ -1,15 +1,45 @@
 /*
- * Profile modal layering contract.
- * The app bottom navigation uses z-index: 999. ProfileModal is rendered via
- * createPortal(document.body) with Tailwind z-[100], so the navigation could
- * cover the save action on mobile. Keep this dialog above all app chrome.
+ * Profile modal interaction contract.
+ *
+ * The app bottom navigation is fixed and intentionally uses a high z-index.
+ * A full-screen account/profile dialog must take exclusive interaction focus:
+ * app chrome is hidden while the dialog exists, and the dialog is placed in
+ * its own top stacking layer. This avoids the mobile nav covering the final
+ * save action regardless of viewport height or safe-area inset.
  */
 [role='dialog'][aria-label='Quản lý tài khoản nOcnOm'] {
-  z-index: 1200 !important;
+  z-index: 2147483000 !important;
+  isolation: isolate;
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
 }
 
-/* Preserve a small safe area at the end of the modal's own scroll region. */
+/*
+ * ProfileModal is portalled to document.body. While it is present, the main
+ * bottom navigation must not remain interactive or visually overlap the
+ * dialog. :has() is supported by the browsers targeted by the web app.
+ */
+body:has([role='dialog'][aria-label='Quản lý tài khoản nOcnOm']) .app-bottom-nav {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Preserve enough room to scroll the final action fully above the mobile
+ * browser safe area. */
 [role='dialog'][aria-label='Quản lý tài khoản nOcnOm'] > div > div:last-child {
-  scroll-padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Keep the final Save action reachable at the bottom of the modal scroll
+ * region, even on short mobile viewports. */
+[role='dialog'][aria-label='Quản lý tài khoản nOcnOm']
+  > div
+  > div:last-child
+  > div:last-child
+  > button:last-child {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  box-shadow: 0 -10px 24px rgba(15, 23, 42, 0.12);
 }
