@@ -22,7 +22,6 @@ import {
 } from '../lib/db';
 import DishDetailModal from './DishDetailModal';
 import DishImage from './DishImage';
-import MealRecommendationPanel from './MealRecommendationPanel';
 import WeeklyTable from './WeeklyTable';
 import { getDayPhase } from '../lib/dayPhase';
 import {
@@ -43,7 +42,6 @@ import {
 import {
   getCachedUserProfile,
   loadUserProfile,
-  saveRecommendationPreferences,
   type UserProfileData
 } from '../services/userProfile';
 
@@ -283,37 +281,12 @@ export default function HomePage({ currentUser }: Props) {
         </div>
       </section>
 
-      <MealRecommendationPanel
-        userId={currentUser?.uid}
-        todayMenu={todayMenu}
-        dishes={dishes}
-        categories={mockDb.getCategoriesSync()}
-        logs={logs}
-        todayDateKey={todayDateKey}
-        dailyCalorieTarget={targetCalories}
-        consumedCalories={consumedCalories}
-        initialMode={profile?.recommendationMode}
-        initialBudgetVnd={profile?.mealBudgetVnd}
-        onSelect={(mealKey, dish) => {
-          mockDb.swapDish(todayKey, mealKey, dish.id);
-        }}
-        onPreferenceChange={
-          currentUser
-            ? (mode, budgetVnd) =>
-                saveRecommendationPreferences(currentUser.uid, {
-                  recommendationMode: mode,
-                  mealBudgetVnd: budgetVnd
-                })
-            : undefined
-        }
-      />
-
       <section className="home-primary-hero rounded-[32px] p-6 sm:p-7">
         <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
           Hôm nay {dayDisplay[todayKey]}
         </h2>
         <p className="mt-1 text-[11px] font-black uppercase tracking-wider text-blue-50">
-          Menu {plannedMealKeys.length} bữa theo lịch nOcnOm
+          Menu {plannedMealKeys.length} bữa · tự làm mới mỗi ngày
         </p>
 
         <div className="mt-5 space-y-3">
