@@ -1,11 +1,19 @@
 /*
- * App modal interaction contract.
+ * App interaction layering contract.
  *
- * The bottom navigation is fixed and intentionally remains above normal page
- * content. Any full-screen overlay must take exclusive interaction focus, so
- * the app chrome is hidden while a fixed inset overlay is present. This keeps
- * modal footers and primary actions reachable on mobile instead of allowing
- * the bottom navigation to cover them.
+ * The bottom navigation belongs above normal page content, but it must stay
+ * below every application modal. Keeping it at a bounded layer prevents the
+ * fixed nav from covering primary actions such as “Lưu món” and
+ * “Lưu thay đổi”. Existing modal layers start at z-50 and above.
+ */
+.app-bottom-nav {
+  z-index: 40 !important;
+}
+
+/*
+ * Any full-screen overlay takes exclusive interaction focus. Hide the app
+ * chrome while an overlay is present so mobile actions remain visually clear
+ * and cannot be intercepted by the navigation underneath.
  */
 body:has(.fixed.inset-0) .app-bottom-nav {
   visibility: hidden !important;
